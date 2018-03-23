@@ -63,6 +63,9 @@ class BinLayer(DataLayer):
             return array.ravel()
         else:
             return array
+
+    def __getitem__(self, var):
+        return self.get_array(var)
     
     def translate(self, source_var=None, source_layer=None, method=None, dest_var=None):
         '''
@@ -78,6 +81,8 @@ class BinLayer(DataLayer):
         method : string
             "sum" = weighted historgam
             "mean" = weighted histogram / histogram
+            'max" = maximum in each bin
+            "min" = minimum in each bin
             "count" = histogram
         dest_var : string
             name for the destinaty variable name
@@ -95,8 +100,35 @@ class BinLayer(DataLayer):
         if method in ['sum', 'mean']:
             weights = source_layer.get_array(source_var)
             weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=weights)
+
         if method in ['count', 'mean']:
             hist, _ = np.histogramdd(sample=sample, bins=bins)
+
+        if method in ['min', 'max']:
+            indices = self.compute_indices(sample)
+            data = source_layer.get_array(source_var)
+
+	    output_map = np.ones(self.binning.shape)
+            if method == 'min':
+                output_map *= np.max(data)
+            if method == 'max':
+                output_map *= np.min(data)
+            
+            binning_shape = self.binning.shape
+
+	    for i in xrange(len(data)):
+                # check we're inside binning:
+                ind = indices[:,i]
+                inside = True
+                for j in range(len(ind)):
+                    inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
+                if inside:
+                    idx = tuple(ind)
+                    if method == 'min':
+                        output_map[idx] =  min(output_map[idx], data[i])
+                    if method == 'max':
+                        output_map[idx] =  max(output_map[idx], data[i])
+            self.add_data(dest_var, output_map)
 
         # make outputs
         if method == 'count':
@@ -107,8 +139,6 @@ class BinLayer(DataLayer):
             mask = (hist > 0.)
             weighted_hist[mask] /= hist[mask]
             self.add_data(dest_var, weighted_hist)
-        else:
-            raise NotImplementedError()
             
     def lookup(self, var, points, ndef_value=0.):
         '''
@@ -123,33 +153,44 @@ class BinLayer(DataLayer):
         ndef_value : float
             value to assign for points outside the binning
         '''
-        n_bins = self.binning.n_bins
-        
-        if isinstance(points, np.ndarray):
-            assert points.shape[0] == n_bins
-        elif isinstance(points, list):
-            assert len(points) == n_bins
-        
-        # array to hold indices
-        indices = np.empty((self.binning.n_bins, len(points[0])))
-        #calculate bin indices
-        for i in range(n_bins):
-            indices[i] = np.digitize(points[i], self.binning.bin_edges[i])
-        #print indices
+        indices = self.compute_indices(points)
+
+        binning_shape = self.binning.shape
+
         output_array = np.empty(len(points[0]))
         # this is stupid
         for i in xrange(len(output_array)):
             # check we're inside binning:
             ind = indices[:,i]
-            inside = not np.any(ind == 0)
-            for j,idx in enumerate(ind):
-                if idx > len(self.binning.bin_edges[j]):
-                    inside = False
+            inside = True
+            for j in range(len(ind)):
+                inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
             if inside:
                 #print ind
-                idx = tuple(ind.astype(np.int)-1)
+                idx = tuple(ind)
                 output_array[i] = self.data[var][idx]
             else:
                 output_array[i] = ndef_value
                 
         return output_array
+
+    def compute_indices(self, points):
+        '''
+        calculate the bin indices for a a given sample
+        '''
+
+        n_bins = self.binning.n_bins
+
+        if isinstance(points, np.ndarray):
+            assert points.shape[0] == n_bins
+        elif isinstance(points, list):
+            assert len(points) == n_bins
+
+        # array to hold indices
+        indices = np.empty((self.binning.n_bins, len(points[0])), dtype=np.int)
+        #calculate bin indices
+        for i in range(n_bins):
+            indices[i] = np.digitize(points[i], self.binning.bin_edges[i])
+        indices -= 1
+        #print indices
+        return indices

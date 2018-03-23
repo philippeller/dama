@@ -18,35 +18,50 @@ class PointLayer(DataLayer):
         '''
         Available variables in this layer
         '''
-        if isinstance(self.data, pandas.core.frame.DataFrame):
+        if self.type == 'df':
             return list(self.data.columns)
-        elif isinstance(self.data, dict):
+        elif self.type == 'dict':
             return self.data.keys()
+        elif self.type == 'struct_array':
+            return list(self.data.dtype.names)
         else:
-            raise NotImplementedError('data type not implemented')        
+            return []
    
     @property
     def __len__(self):
-        if isinstance(self.data, pandas.core.frame.DataFrame):
+        if self.type == 'df':
             return len(self.data)
-        else:
+        elif self.type == 'dict':
             return len(self.data[self.data.keys()[0]])
+        elif self.type == 'struct_array':
+            return len(self.data.shape[0])
                        
     def set_data(self, data):
         '''
         Set the data
         '''
         # TODO: run some compatibility cheks
+        if isinstance(data, pandas.core.frame.DataFrame):
+            self.type = 'df'
+        elif isinstance(data, dict):
+            self.type = 'dict'
+        elif isinstance(data, np.ndarray):
+            assert data.dtype.names is not None, 'unsctructured arrays not supported'
+            self.type = 'struct_array'
+        else:
+            raise NotImplementedError('data type not supported')
         self.data = data
         
     def get_array(self, var):
-        if isinstance(self.data, pandas.core.frame.DataFrame):
+        if self.type == 'df':
             return self.data[var].values
         else:
             return self.data[var]
         
     def add_data(self, var, data):
         # TODO do some checks of shape etc
+        if self.type == 'struct_array':
+            raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
     
     def __getitem__(self, var):
