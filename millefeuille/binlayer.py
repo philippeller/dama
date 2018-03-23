@@ -67,6 +67,9 @@ class BinLayer(DataLayer):
     def __getitem__(self, var):
         return self.get_array(var)
     
+    def __setitem__(self, var, data):
+        return self.add_data(var, data)
+    
     def translate(self, source_var=None, source_layer=None, method=None, dest_var=None):
         '''
         translation from array data into binned form
