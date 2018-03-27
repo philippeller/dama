@@ -3,6 +3,8 @@ import pandas
 
 from millefeuille.datalayer import DataLayer
 
+__all__ = ['BinLayer']
+
 class BinLayer(DataLayer):
     '''
     Class to hold binned data (like histograms)
@@ -182,17 +184,17 @@ class BinLayer(DataLayer):
         calculate the bin indices for a a given sample
         '''
 
-        n_bins = self.binning.n_bins
+        ndim = self.binning.ndim
 
         if isinstance(points, np.ndarray):
-            assert points.shape[0] == n_bins
+            assert points.shape[0] == ndim
         elif isinstance(points, list):
-            assert len(points) == n_bins
+            assert len(points) == ndim
 
         # array to hold indices
-        indices = np.empty((self.binning.n_bins, len(points[0])), dtype=np.int)
+        indices = np.empty((ndim, len(points[0])), dtype=np.int)
         #calculate bin indices
-        for i in range(n_bins):
+        for i in range(ndim):
             indices[i] = np.digitize(points[i], self.binning.bin_edges[i])
         indices -= 1
         #print indices

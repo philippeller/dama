@@ -3,6 +3,8 @@ import pandas
 
 from millefeuille.datalayer import DataLayer
 
+__all__ = ['PointLayer']
+
 class PointLayer(DataLayer):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
