@@ -6,7 +6,7 @@ setup(
     packages=['millefeuille',],
     license='Apache 2.0',
     author='Philipp Eller',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
 
     setup_requires=[
         'pip>=1.8',
