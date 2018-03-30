@@ -72,15 +72,15 @@ class BinLayer(DataLayer):
     def __setitem__(self, var, data):
         return self.add_data(var, data)
     
-    def translate(self, source_var=None, source_layer=None, method=None, dest_var=None):
+    def translate(self, source_var=None, source_layer=None, method=None, function=None, dest_var=None):
         '''
         translation from array data into binned form
         
         Parameters:
         -----------
         
-        var : string
-            input variable name
+        var : string or array
+            input variable
         source_layer : DataLayer
             source data layer
         method : string
@@ -89,9 +89,13 @@ class BinLayer(DataLayer):
             'max" = maximum in each bin
             "min" = minimum in each bin
             "count" = histogram
+        function : callable
         dest_var : string
             name for the destinaty variable name
         '''
+
+        if isinstance(source_var, basestring):
+            source_var = source_layer.get_array(source_var)
         
         # check source layer has binning variables
         for bin_name in self.binning.bin_names:
@@ -100,50 +104,71 @@ class BinLayer(DataLayer):
         # prepare arrays
         sample = [source_layer.get_array(bin_name) for bin_name in self.binning.bin_names]
         bins = self.binning.bin_edges    
-        
-        # generate hists
-        if method in ['sum', 'mean']:
-            weights = source_layer.get_array(source_var)
-            weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=weights)
+       
 
-        if method in ['count', 'mean']:
-            hist, _ = np.histogramdd(sample=sample, bins=bins)
+        if method is not None:
+            # generate hists
+            if method in ['sum', 'mean']:
+                weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_var)
 
-        if method in ['min', 'max']:
+            if method in ['count', 'mean']:
+                hist, _ = np.histogramdd(sample=sample, bins=bins)
+
+            if method in ['min', 'max']:
+                indices = self.compute_indices(sample)
+
+                output_map = np.ones(self.binning.shape)
+                if method == 'min':
+                    output_map *= np.max(source_var)
+                if method == 'max':
+                    output_map *= np.min(source_var)
+                
+                binning_shape = self.binning.shape
+
+                for i in xrange(len(source_var)):
+                    # check we're inside binning:
+                    ind = indices[:,i]
+                    inside = True
+                    for j in range(len(ind)):
+                        inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
+                    if inside:
+                        idx = tuple(ind)
+                        if method == 'min':
+                            output_map[idx] =  min(output_map[idx], source_var[i])
+                        if method == 'max':
+                            output_map[idx] =  max(output_map[idx], source_var[i])
+                self.add_source_var(dest_var, output_map)
+
+            # make outputs
+            if method == 'count':
+                self.add_source_var(dest_var, hist)
+            elif method == 'sum':
+                self.add_source_var(dest_var, weighted_hist)
+            elif method == 'mean':
+                mask = (hist > 0.)
+                weighted_hist[mask] /= hist[mask]
+                self.add_source_var(dest_var, weighted_hist)
+
+        elif function is not None:
+
             indices = self.compute_indices(sample)
-            data = source_layer.get_array(source_var)
 
-	    output_map = np.ones(self.binning.shape)
-            if method == 'min':
-                output_map *= np.max(data)
-            if method == 'max':
-                output_map *= np.min(data)
-            
+            output_map = np.ones(self.binning.shape)
             binning_shape = self.binning.shape
 
-	    for i in xrange(len(data)):
-                # check we're inside binning:
-                ind = indices[:,i]
-                inside = True
-                for j in range(len(ind)):
-                    inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
-                if inside:
-                    idx = tuple(ind)
-                    if method == 'min':
-                        output_map[idx] =  min(output_map[idx], data[i])
-                    if method == 'max':
-                        output_map[idx] =  max(output_map[idx], data[i])
-            self.add_data(dest_var, output_map)
+            it = np.nditer(output_map, flags=['multi_index'])
 
-        # make outputs
-        if method == 'count':
-            self.add_data(dest_var, hist)
-        elif method == 'sum':
-            self.add_data(dest_var, weighted_hist)
-        elif method == 'mean':
-            mask = (hist > 0.)
-            weighted_hist[mask] /= hist[mask]
-            self.add_data(dest_var, weighted_hist)
+            while not it.finished:
+                out_idx = it.multi_index
+                mask = True
+                for i,idx in enumerate(out_idx):
+                    mask = np.logical_and(indices[i] == idx, mask)
+                bin_source_var = source_var[mask]
+                result = function(bin_source_var)
+                output_map[out_idx] = result
+                it.iternext()
+
+            self.add_data(dest_var, output_map)
             
     def lookup(self, var, points, ndef_value=0.):
         '''
