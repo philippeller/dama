@@ -2,6 +2,7 @@ import numpy as np
 import pandas
 
 from millefeuille.datalayer import DataLayer
+from millefeuille.stat_plot import *
 
 __all__ = ['BinLayer']
 
@@ -9,37 +10,37 @@ class BinLayer(DataLayer):
     '''
     Class to hold binned data (like histograms)
     '''
-    def __init__(self, binning, name=None):
+    def __init__(self, grid, name=None):
         '''
-        Set the binning
+        Set the grid
         '''
         super(BinLayer, self).__init__(data=None,
                                        name=name,
                                        )
-        self.binning = binning
+        self.grid = grid
         self.data = {}
 
     @property
     def function_args(self):
-        return self.binning.vars
+        return self.grid.vars
     
     @property
     def vars(self):
         '''
         Available variables in this layer
         '''
-        return self.binning.vars + self.data.keys()
+        return self.grid.vars + self.data.keys()
     
     @property
     def shape(self):
-        return self.binning.shape
+        return self.grid.shape
     
     @property
     def meshgrid(self):
         '''
-        return meshgrid of binning
+        return meshgrid of grid
         '''
-        return self.binning.edge_meshgrid
+        return self.grid.edge_meshgrid
     
     def add_data(self, var, data):
         # TODO do some checks of shape etc
@@ -57,8 +58,8 @@ class BinLayer(DataLayer):
         flat : bool
             if true return flattened (1d) array
         '''
-        if var in self.binning.vars:
-            array = self.meshgrid[self.binning.vars.index(var)]
+        if var in self.grid.vars:
+            array = self.meshgrid[self.grid.vars.index(var)]
         else:
             array = self.data[var]
         if flat:
@@ -97,13 +98,13 @@ class BinLayer(DataLayer):
         if isinstance(source_var, basestring):
             source_var = source_layer.get_array(source_var)
         
-        # check source layer has binning variables
-        for bin_name in self.binning.vars:
+        # check source layer has grid variables
+        for bin_name in self.grid.vars:
             assert(bin_name in source_layer.vars), '%s not in %s'%(bin_name, source_layer.vars)
 
         # prepare arrays
-        sample = [source_layer.get_array(bin_name) for bin_name in self.binning.vars]
-        bins = self.binning.bin_edges    
+        sample = [source_layer.get_array(bin_name) for bin_name in self.grid.vars]
+        bins = self.grid.edges    
        
 
         if method is not None:
@@ -117,20 +118,20 @@ class BinLayer(DataLayer):
             if method in ['min', 'max']:
                 indices = self.compute_indices(sample)
 
-                output_map = np.ones(self.binning.shape)
+                output_map = np.ones(self.grid.shape)
                 if method == 'min':
                     output_map *= np.max(source_var)
                 if method == 'max':
                     output_map *= np.min(source_var)
                 
-                binning_shape = self.binning.shape
+                grid_shape = self.grid.shape
 
                 for i in xrange(len(source_var)):
-                    # check we're inside binning:
+                    # check we're inside grid:
                     ind = indices[:,i]
                     inside = True
                     for j in range(len(ind)):
-                        inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
+                        inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
                     if inside:
                         idx = tuple(ind)
                         if method == 'min':
@@ -153,8 +154,8 @@ class BinLayer(DataLayer):
 
             indices = self.compute_indices(sample)
 
-            output_map = np.ones(self.binning.shape)
-            binning_shape = self.binning.shape
+            output_map = np.ones(self.grid.shape)
+            grid_shape = self.grid.shape
 
             it = np.nditer(output_map, flags=['multi_index'])
 
@@ -181,20 +182,20 @@ class BinLayer(DataLayer):
         ponints : list of k length n arrays or 2-d array with shape (k, n)
             where k is number of bins
         ndef_value : float
-            value to assign for points outside the binning
+            value to assign for points outside the grid
         '''
         indices = self.compute_indices(points)
 
-        binning_shape = self.binning.shape
+        grid_shape = self.grid.shape
 
         output_array = np.empty(len(points[0]))
         # this is stupid
         for i in xrange(len(output_array)):
-            # check we're inside binning:
+            # check we're inside grid:
             ind = indices[:,i]
             inside = True
             for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= binning_shape[j]
+                inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
             if inside:
                 #print ind
                 idx = tuple(ind)
@@ -209,7 +210,7 @@ class BinLayer(DataLayer):
         calculate the bin indices for a a given sample
         '''
 
-        ndim = self.binning.ndim
+        ndim = self.grid.ndim
 
         if isinstance(points, np.ndarray):
             assert points.shape[0] == ndim
@@ -220,7 +221,20 @@ class BinLayer(DataLayer):
         indices = np.empty((ndim, len(points[0])), dtype=np.int)
         #calculate bin indices
         for i in range(ndim):
-            indices[i] = np.digitize(points[i], self.binning.bin_edges[i])
+            indices[i] = np.digitize(points[i], self.grid.edges[i])
         indices -= 1
         #print indices
         return indices
+
+    def plot_map(self, fig, ax, var, cbar=False, **kwargs):
+        '''
+        plot a variable as a map
+
+        ax : pyplot axes object
+        var : str
+        '''
+        if self.grid.ndim == 2:
+            return plot_map(fig, ax, self, var, cbar=cbar, **kwargs)
+
+    def plot_contour(self, fig, ax, var, **kwargs):
+        return plot_contour(fig, ax, self, var, **kwargs)

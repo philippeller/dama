@@ -8,9 +8,13 @@ class Dimension(object):
     Class to hold a single dimension of a Grid
     which can have points and/or edges
     '''
-    def __init__(self, var=None, mode=None, edges=None, points=None):
+    def __init__(self, var=None, mode=None, edges=None, points=None, min=None, max=None, n_points=None, n_edges=None):
         self.var = var
-        self.mode = mode
+        self._mode = mode
+        self._min = min
+        self._max = max
+        self._n_points = n_points
+        self._n_edges = n_edges
         self._edges = edges
         self._points = points
 

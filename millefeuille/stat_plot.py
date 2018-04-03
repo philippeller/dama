@@ -9,7 +9,7 @@ def plot_map(fig, ax, layer, var, cbar=False, **kwargs):
     assert layer.grid.ndim == 2
     X, Y = layer.grid.edge_meshgrid
 
-    pc = ax.pcolormesh(X, Y, layer[var], linewidth=0, rasterized=True, **kwargs)
+    pc = ax.pcolormesh(X, Y, layer[var].T, linewidth=0, rasterized=True, **kwargs)
     if cbar:
         fig.colorbar(pc, ax=ax, label=var)
 
@@ -17,6 +17,7 @@ def plot_map(fig, ax, layer, var, cbar=False, **kwargs):
     ax.set_ylabel(layer.grid.vars[1])
     ax.set_xlim(layer.grid.edges[0][0], layer.grid.edges[0][-1])
     ax.set_ylim(layer.grid.edges[1][0], layer.grid.edges[1][-1])
+    return pc
 
 def plot_points_2d(fig, ax, layer, x, y, s=None, c=None, cbar=False, **kwargs):
     if c is not None:
@@ -32,3 +33,14 @@ def plot_points_2d(fig, ax, layer, x, y, s=None, c=None, cbar=False, **kwargs):
         fig.colorbar(sc, ax=ax, label=c_label)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
+    return sc
+
+def plot_contour(fig, ax, layer, var, **kwargs):
+    '''
+    contours from gird data
+    '''
+    assert layer.grid.ndim == 2
+    X, Y = layer.grid.point_meshgrid
+
+    cs = ax.contour(X, Y, layer[var].T, **kwargs)
+    return cs

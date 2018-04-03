@@ -109,17 +109,20 @@ class GridLayer(DataLayer):
        
         output = griddata(points=sample.T, values=source_var, xi=tuple(xi), method=method)
 
-        self.add_data(dest_var, output)
+        self.add_data(dest_var, output.T)
             
     def lookup(self, var, points, ndef_value=0.):
         pass
 
-    def plot(self, fig, ax, var, cbar=False, **kwargs):
+    def plot_map(self, fig, ax, var, cbar=False, **kwargs):
         '''
-        plot a variable
+        plot a variable as a map
 
         ax : pyplot axes object
         var : str
         '''
         if self.grid.ndim == 2:
-            plot_map(fig, ax, self, var, cbar=cbar, **kwargs)
+            return plot_map(fig, ax, self, var, cbar=cbar, **kwargs)
+
+    def plot_contour(self, fig, ax, var, **kwargs):
+        return plot_contour(fig, ax, self, var, **kwargs)
