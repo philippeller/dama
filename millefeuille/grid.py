@@ -159,6 +159,22 @@ class Grid(object):
         return [dim.points for dim in self.dims.values()]
 
     @property
+    def point_meshgrid(self):
+        return np.meshgrid(self.points)
+
+    @property
+    def edge_meshgrid(self):
+        return np.meshgrid(self.edges)
+
+    @property
+    def point_mgrid(self):
+        return np.mgrid(self.points)
+
+    @property
+    def edge_mgrid(self):
+        return np.mgrid(self.edges)
+
+    @property
     def size(self):
         '''
         size = total number of bins / points

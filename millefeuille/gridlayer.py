@@ -1,5 +1,6 @@
 import numpy as np
 import pandas
+from scipy.interpolate import griddata
 
 from millefeuille.datalayer import DataLayer
 
@@ -36,11 +37,12 @@ class GridLayer(DataLayer):
     
     @property
     def meshgrid(self):
-        '''
-        return meshgrid of grid
-        '''
-        return np.meshgrid(*self.grid.bin_edges)
+        return self.grid.point_meshgrid
     
+    @property
+    def mgrid(self):
+        return self.grid.point_mgrid
+
     def add_data(self, var, data):
         # TODO do some checks of shape etc
         self.data[var] = data
@@ -84,143 +86,29 @@ class GridLayer(DataLayer):
         source_layer : DataLayer
             source data layer
         method : string
-            "sum" = weighted historgam
-            "mean" = weighted histogram / histogram
-            'max" = maximum in each bin
-            "min" = minimum in each bin
-            "count" = histogram
-        function : callable
+            nearest
+            linear
+            cubic (only for 1d or 2d grids)
         dest_var : string
             name for the destinaty variable name
         '''
+        if method == 'cubic' and self.grid.ndim > 2:
+            raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
 
         if isinstance(source_var, basestring):
             source_var = source_layer.get_array(source_var)
         
         # check source layer has grid variables
-        for bin_name in self.grid.vars:
-            assert(bin_name in source_layer.vars), '%s not in %s'%(bin_name, source_layer.vars)
+        for var in self.grid.vars:
+            assert(var in source_layer.vars), '%s not in %s'%(var, source_layer.vars)
 
         # prepare arrays
-        sample = [source_layer.get_array(bin_name) for bin_name in self.grid.vars]
-        bins = self.grid.bin_edges    
+        sample = (source_layer.get_array(bin_name) for bin_name in self.grid.vars)
        
+        output = griddata(sample, source_var, self.grid.mgrid, method=method)
 
-        if method is not None:
-            # generate hists
-            if method in ['sum', 'mean']:
-                weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_var)
-
-            if method in ['count', 'mean']:
-                hist, _ = np.histogramdd(sample=sample, bins=bins)
-
-            if method in ['min', 'max']:
-                indices = self.compute_indices(sample)
-
-                output_map = np.ones(self.grid.shape)
-                if method == 'min':
-                    output_map *= np.max(source_var)
-                if method == 'max':
-                    output_map *= np.min(source_var)
-                
-                grid_shape = self.grid.shape
-
-                for i in xrange(len(source_var)):
-                    # check we're inside grid:
-                    ind = indices[:,i]
-                    inside = True
-                    for j in range(len(ind)):
-                        inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
-                    if inside:
-                        idx = tuple(ind)
-                        if method == 'min':
-                            output_map[idx] =  min(output_map[idx], source_var[i])
-                        if method == 'max':
-                            output_map[idx] =  max(output_map[idx], source_var[i])
-                self.add_data(dest_var, output_map)
-
-            # make outputs
-            if method == 'count':
-                self.add_data(dest_var, hist)
-            elif method == 'sum':
-                self.add_data(dest_var, weighted_hist)
-            elif method == 'mean':
-                mask = (hist > 0.)
-                weighted_hist[mask] /= hist[mask]
-                self.add_data(dest_var, weighted_hist)
-
-        elif function is not None:
-
-            indices = self.compute_indices(sample)
-
-            output_map = np.ones(self.grid.shape)
-            grid_shape = self.grid.shape
-
-            it = np.nditer(output_map, flags=['multi_index'])
-
-            while not it.finished:
-                out_idx = it.multi_index
-                mask = True
-                for i,idx in enumerate(out_idx):
-                    mask = np.logical_and(indices[i] == idx, mask)
-                bin_source_var = source_var[mask]
-                result = function(bin_source_var)
-                output_map[out_idx] = result
-                it.iternext()
-
-            self.add_data(dest_var, output_map)
+        self.add_data(dest_var, output)
             
     def lookup(self, var, points, ndef_value=0.):
-        '''
-        lookup the bin content at given points
-        
-        Parameters:
-        -----------
-        
-        var : string
-        ponints : list of k length n arrays or 2-d array with shape (k, n)
-            where k is number of bins
-        ndef_value : float
-            value to assign for points outside the grid
-        '''
-        indices = self.compute_indices(points)
+        pass
 
-        grid_shape = self.grid.shape
-
-        output_array = np.empty(len(points[0]))
-        # this is stupid
-        for i in xrange(len(output_array)):
-            # check we're inside grid:
-            ind = indices[:,i]
-            inside = True
-            for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
-            if inside:
-                #print ind
-                idx = tuple(ind)
-                output_array[i] = self.data[var][idx]
-            else:
-                output_array[i] = ndef_value
-                
-        return output_array
-
-    def compute_indices(self, points):
-        '''
-        calculate the bin indices for a a given sample
-        '''
-
-        ndim = self.grid.ndim
-
-        if isinstance(points, np.ndarray):
-            assert points.shape[0] == ndim
-        elif isinstance(points, list):
-            assert len(points) == ndim
-
-        # array to hold indices
-        indices = np.empty((ndim, len(points[0])), dtype=np.int)
-        #calculate bin indices
-        for i in range(ndim):
-            indices[i] = np.digitize(points[i], self.grid.bin_edges[i])
-        indices -= 1
-        #print indices
-        return indices

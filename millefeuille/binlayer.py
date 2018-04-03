@@ -39,7 +39,7 @@ class BinLayer(DataLayer):
         '''
         return meshgrid of binning
         '''
-        return np.meshgrid(*self.binning.bin_edges)
+        return self.binning.edge_meshgrid
     
     def add_data(self, var, data):
         # TODO do some checks of shape etc
