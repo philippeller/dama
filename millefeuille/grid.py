@@ -22,7 +22,7 @@ class Dimension(object):
         if self._points is not None:
             return len(self._points)
         elif self._edges is not None:
-            return len(self._edges - 1)
+            return len(self._edges) - 1
         return None
 
     def __str__(self):
@@ -201,7 +201,7 @@ class Grid(object):
         shape
         '''
         shape = []
-        for dim in self.dims:
+        for dim in self:
             shape.append(len(dim))
         return tuple(shape)
 
