@@ -39,10 +39,6 @@ class GridLayer(DataLayer):
     def meshgrid(self):
         return self.grid.point_meshgrid
     
-    @property
-    def mgrid(self):
-        return self.grid.point_mgrid
-
     def add_data(self, var, data):
         # TODO do some checks of shape etc
         self.data[var] = data
@@ -103,9 +99,14 @@ class GridLayer(DataLayer):
             assert(var in source_layer.vars), '%s not in %s'%(var, source_layer.vars)
 
         # prepare arrays
-        sample = (source_layer.get_array(bin_name) for bin_name in self.grid.vars)
+        sample = [source_layer.get_array(bin_name) for bin_name in self.grid.vars]
+        sample = np.vstack(sample)
+
+        xi = self.meshgrid
+        #xi = np.stack(xi)
+        #print xi.shape
        
-        output = griddata(sample, source_var, self.grid.mgrid, method=method)
+        output = griddata(points=sample.T, values=source_var, xi=tuple(xi), method=method)
 
         self.add_data(dest_var, output)
             

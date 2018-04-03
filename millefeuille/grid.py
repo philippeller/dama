@@ -99,7 +99,7 @@ class Grid(object):
         self.dims = OrderedDict()
 
         if dims is None:
-            if kwargs is not None:
+            if len(kwargs) > 0:
                 self.add_dim(kwargs)
         elif isinstance(dims, (list, self.__class__, Grid)):
             for d in dims:
@@ -160,19 +160,11 @@ class Grid(object):
 
     @property
     def point_meshgrid(self):
-        return np.meshgrid(self.points)
+        return np.meshgrid(*self.points)
 
     @property
     def edge_meshgrid(self):
-        return np.meshgrid(self.edges)
-
-    @property
-    def point_mgrid(self):
-        return np.mgrid(self.points)
-
-    @property
-    def edge_mgrid(self):
-        return np.mgrid(self.edges)
+        return np.meshgrid(*self.edges)
 
     @property
     def size(self):
