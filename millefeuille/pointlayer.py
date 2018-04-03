@@ -2,6 +2,7 @@ import numpy as np
 import pandas
 
 from millefeuille.datalayer import DataLayer
+from millefeuille.stat_plot import *
 
 __all__ = ['PointLayer']
 
@@ -9,7 +10,7 @@ class PointLayer(DataLayer):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
-    def __init__(self, data, name):
+    def __init__(self, data={}, name=None):
         super(PointLayer, self).__init__(data=data,
                                          name=name,
                                          )
@@ -93,3 +94,6 @@ class PointLayer(DataLayer):
             points = [self.get_array(arg) for arg in args]
             new_array = source_layer.lookup(source_var, points)
             self.add_data(dest_var, new_array)
+
+    def plot_2d(self, fig, ax, x, y, c=None, s=None, cbar=False, **kwargs):
+        plot_points_2d(fig, ax, self, x, y, c=c, s=s, cbar=cbar, **kwargs)

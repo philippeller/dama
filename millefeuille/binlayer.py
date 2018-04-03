@@ -9,7 +9,7 @@ class BinLayer(DataLayer):
     '''
     Class to hold binned data (like histograms)
     '''
-    def __init__(self, binning, name):
+    def __init__(self, binning, name=None):
         '''
         Set the binning
         '''

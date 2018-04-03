@@ -2,8 +2,7 @@ class DataStack(object):
     '''
     Structure to hold DataLayers and mediate translations between layers
     '''
-    def __init__(self, name):
-        self.name = name
+    def __init__(self):
         self.layers = {}
         self.vars = []
         self.default_layer = {}
@@ -14,6 +13,10 @@ class DataStack(object):
         
     def __getitem__(self, var):
         return self.layers[var]
+
+    def __setitem__(self, var, layer):
+        layer.name = var
+        self.add_layer(layer)
         
     def translate(self, var=None, source=None, dest=None, method=None, function=None, dest_var=None):
         '''

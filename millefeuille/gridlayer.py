@@ -3,6 +3,7 @@ import pandas
 from scipy.interpolate import griddata
 
 from millefeuille.datalayer import DataLayer
+from millefeuille.stat_plot import *
 
 __all__ = ['GridLayer']
 
@@ -10,7 +11,7 @@ class GridLayer(DataLayer):
     '''
     Class to hold grid data
     '''
-    def __init__(self, grid, name):
+    def __init__(self, grid, name=None):
         '''
         Set the grid
         '''
@@ -113,3 +114,12 @@ class GridLayer(DataLayer):
     def lookup(self, var, points, ndef_value=0.):
         pass
 
+    def plot(self, fig, ax, var, cbar=False, **kwargs):
+        '''
+        plot a variable
+
+        ax : pyplot axes object
+        var : str
+        '''
+        if self.grid.ndim == 2:
+            plot_map(fig, ax, self, var, cbar=cbar, **kwargs)
