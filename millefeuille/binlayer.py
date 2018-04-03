@@ -21,18 +21,18 @@ class BinLayer(DataLayer):
 
     @property
     def function_args(self):
-        return self.binning.bin_names
+        return self.binning.vars
     
     @property
     def vars(self):
         '''
         Available variables in this layer
         '''
-        return self.binning.bin_names + self.data.keys()
+        return self.binning.vars + self.data.keys()
     
     @property
     def shape(self):
-        return self.data[self.data.keys()[0]].shape
+        return self.binning.shape
     
     @property
     def meshgrid(self):
@@ -57,8 +57,8 @@ class BinLayer(DataLayer):
         flat : bool
             if true return flattened (1d) array
         '''
-        if var in self.binning.bin_names:
-            array = self.meshgrid[self.binning.bin_names.index(var)]
+        if var in self.binning.vars:
+            array = self.meshgrid[self.binning.vars.index(var)]
         else:
             array = self.data[var]
         if flat:
@@ -98,11 +98,11 @@ class BinLayer(DataLayer):
             source_var = source_layer.get_array(source_var)
         
         # check source layer has binning variables
-        for bin_name in self.binning.bin_names:
+        for bin_name in self.binning.vars:
             assert(bin_name in source_layer.vars), '%s not in %s'%(bin_name, source_layer.vars)
 
         # prepare arrays
-        sample = [source_layer.get_array(bin_name) for bin_name in self.binning.bin_names]
+        sample = [source_layer.get_array(bin_name) for bin_name in self.binning.vars]
         bins = self.binning.bin_edges    
        
 
@@ -137,17 +137,17 @@ class BinLayer(DataLayer):
                             output_map[idx] =  min(output_map[idx], source_var[i])
                         if method == 'max':
                             output_map[idx] =  max(output_map[idx], source_var[i])
-                self.add_source_var(dest_var, output_map)
+                self.add_data(dest_var, output_map)
 
             # make outputs
             if method == 'count':
-                self.add_source_var(dest_var, hist)
+                self.add_data(dest_var, hist)
             elif method == 'sum':
-                self.add_source_var(dest_var, weighted_hist)
+                self.add_data(dest_var, weighted_hist)
             elif method == 'mean':
                 mask = (hist > 0.)
                 weighted_hist[mask] /= hist[mask]
-                self.add_source_var(dest_var, weighted_hist)
+                self.add_data(dest_var, weighted_hist)
 
         elif function is not None:
 
