@@ -238,3 +238,6 @@ class BinLayer(DataLayer):
 
     def plot_contour(self, fig, ax, var, **kwargs):
         return plot_contour(fig, ax, self, var, **kwargs)
+
+    def plot_step(self, fig, ax, var, **kwargs):
+        return plot_step(fig, ax, self, var, **kwargs)

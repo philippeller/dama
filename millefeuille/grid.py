@@ -210,7 +210,7 @@ class Grid(object):
         item : int, str, slice, ierable
         '''
         if isinstance(item, Number):
-            return self.dims.items()[int(item)]
+            return self.dims.values()[int(item)]
         elif isinstance(item, basestring):
             if not item in self.vars:
                 self.add_dim(item)

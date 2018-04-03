@@ -44,3 +44,12 @@ def plot_contour(fig, ax, layer, var, **kwargs):
 
     cs = ax.contour(X, Y, layer[var].T, **kwargs)
     return cs
+
+def plot_step(fig, ax, layer, var, **kwargs):
+    '''
+    plot a step function, for e.g. histogram
+    '''
+    assert layer.grid.ndim == 1
+    ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=layer[var], **kwargs)
+    ax.set_xlabel(layer.grid[0].var)
+    ax.set_ylabel(var)
