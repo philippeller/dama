@@ -241,3 +241,9 @@ class BinLayer(DataLayer):
 
     def plot_step(self, fig, ax, var, **kwargs):
         return plot_step(fig, ax, self, var, **kwargs)
+
+    def plot_band(self, fig, ax, var1, var2, **kwargs):
+        return plot_band(fig, ax, self, var1, var2, **kwargs)
+
+    def plot_errorband(self, fig, ax, var, errors, **kwargs):
+        return plot_errorband(fig, ax, self, var, errors, **kwargs)
