@@ -73,7 +73,7 @@ class BinLayer(DataLayer):
     def __setitem__(self, var, data):
         return self.add_data(var, data)
     
-    def translate(self, source_var=None, source_layer=None, method=None, function=None, dest_var=None):
+    def translate(self, source_var=None, source_layer=None, method=None, function=None, dest_var=None, **kwargs):
         '''
         translation from array data into binned form
         
@@ -93,6 +93,8 @@ class BinLayer(DataLayer):
         function : callable
         dest_var : string
             name for the destinaty variable name
+        kwargs : additional keyword arguments
+            will be passed to `function`
         '''
 
         if isinstance(source_var, basestring):
@@ -165,7 +167,7 @@ class BinLayer(DataLayer):
                 for i,idx in enumerate(out_idx):
                     mask = np.logical_and(indices[i] == idx, mask)
                 bin_source_var = source_var[mask]
-                result = function(bin_source_var)
+                result = function(bin_source_var, **kwargs)
                 output_map[out_idx] = result
                 it.iternext()
 

@@ -18,7 +18,7 @@ class DataStack(object):
         layer.name = var
         self.add_layer(layer)
         
-    def translate(self, var=None, source=None, dest=None, method=None, function=None, dest_var=None):
+    def translate(self, var=None, source=None, dest=None, method=None, function=None, dest_var=None, **kwargs):
         '''
         translation from array data into binned form
         
@@ -51,4 +51,5 @@ class DataStack(object):
                              source_layer=self[source],
                              method=method,
                              function=function,
-                             dest_var=dest_var)
+                             dest_var=dest_var,
+                             **kwargs)
