@@ -1,13 +1,12 @@
 import numpy as np
 import pandas
-from scipy.interpolate import griddata
 
-from millefeuille.datalayer import DataLayer
+from millefeuille.data import Data
 from millefeuille.stat_plot import *
 
-__all__ = ['GridLayer']
+__all__ = ['GridData']
 
-class GridLayer(DataLayer):
+class GridData(Data):
     '''
     Class to hold grid data
     '''
@@ -15,7 +14,7 @@ class GridLayer(DataLayer):
         '''
         Set the grid
         '''
-        super(GridLayer, self).__init__(data=None,
+        super(GridData, self).__init__(data=None,
                                         name=name,
                                         )
         self.grid = grid
@@ -69,47 +68,13 @@ class GridLayer(DataLayer):
         return self.get_array(var)
     
     def __setitem__(self, var, data):
-        return self.add_data(var, data)
+
+        if callable(data):
+            new_data = data(self)
+        else:
+            new_data = data
+        return self.add_data(var, new_data)
     
-    def translate(self, source_var=None, source_layer=None, method=None, function=None, dest_var=None):
-        '''
-        translation from array data into binned form
-        
-        Parameters:
-        -----------
-        
-        var : string or array
-            input variable
-        source_layer : DataLayer
-            source data layer
-        method : string
-            nearest
-            linear
-            cubic (only for 1d or 2d grids)
-        dest_var : string
-            name for the destinaty variable name
-        '''
-        if method == 'cubic' and self.grid.ndim > 2:
-            raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-
-        if isinstance(source_var, basestring):
-            source_var = source_layer.get_array(source_var)
-        
-        # check source layer has grid variables
-        for var in self.grid.vars:
-            assert(var in source_layer.vars), '%s not in %s'%(var, source_layer.vars)
-
-        # prepare arrays
-        sample = [source_layer.get_array(bin_name) for bin_name in self.grid.vars]
-        sample = np.vstack(sample)
-
-        xi = self.meshgrid
-        #xi = np.stack(xi)
-        #print xi.shape
-       
-        output = griddata(points=sample.T, values=source_var, xi=tuple(xi), method=method)
-
-        self.add_data(dest_var, output.T)
             
     def lookup(self, var, points, ndef_value=0.):
         pass

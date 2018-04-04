@@ -1,6 +1,6 @@
-class DataLayer(object):
+class Data(object):
     '''
-    Data layer base class to hold any form of data representation
+    Data base class to hold any form of data representation
     '''
     def __init__(self, data, name):
         self.data = None
