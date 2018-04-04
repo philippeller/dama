@@ -100,7 +100,18 @@ class PointData(Data):
         plot_points_2d(fig, ax, self, x, y, c=c, s=s, cbar=cbar, **kwargs)
 
     def interpolate(self, source_var=None, method=None):
-
+        '''
+        interpolation from array data into grids
+        
+        Parameters:
+        -----------
+        source_var : string
+            input variable
+        method : string
+            "nearest" = nearest neightbour interpolation
+            "linear" = linear interpolation
+            "cubic" = cubic interpolation (only for ndim < 3)
+        '''
         source = self
         def fun(dest):
             if not hasattr(dest, 'grid'):
@@ -141,8 +152,6 @@ class PointData(Data):
         method : string
             "sum" = weighted historgam
             "mean" = weighted histogram / histogram
-            'max" = maximum in each bin
-            "min" = minimum in each bin
             "count" = histogram
         function : callable
         kwargs : additional keyword arguments
@@ -181,35 +190,10 @@ class PointData(Data):
                     weighted_hist[mask] /= hist[mask]
                     output_map = weighted_hist
 
-                if method in ['min', 'max']:
-                    indices = dest.compute_indices(sample)
-
-                    output_map = np.ones(dest.grid.shape)
-                    if method == 'min':
-                        output_map *= np.max(source_data)
-                    elif method == 'max':
-                        output_map *= np.min(source_data)
-                    
-                    grid_shape = dest.grid.shape
-
-                    for i in xrange(len(source_data)):
-                        # check we're inside grid:
-                        ind = indices[:,i]
-                        inside = True
-                        for j in range(len(ind)):
-                            inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
-                        if inside:
-                            idx = tuple(ind)
-                            if method == 'min':
-                                output_map[idx] =  min(output_map[idx], source_data[i])
-                            if method == 'max':
-                                output_map[idx] =  max(output_map[idx], source_data[i])
-
             elif function is not None:
+                indices = dest.grid.compute_indices(sample)
+                output_map = np.zeros(dest.grid.shape) * np.nan
 
-                indices = dest.compute_indices(sample)
-
-                output_map = np.ones(dest.grid.shape)
                 grid_shape = dest.grid.shape
 
                 it = np.nditer(output_map, flags=['multi_index'])
@@ -220,8 +204,9 @@ class PointData(Data):
                     for i,idx in enumerate(out_idx):
                         mask = np.logical_and(indices[i] == idx, mask)
                     bin_source_data = source_data[mask]
-                    result = function(bin_source_data, **kwargs)
-                    output_map[out_idx] = result
+                    if len(bin_source_data) > 0:
+                        result = function(bin_source_data, **kwargs)
+                        output_map[out_idx] = result
                     it.iternext()
 
             return output_map
