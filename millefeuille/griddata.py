@@ -35,9 +35,20 @@ class GridData(Data):
         return self.grid.shape
     
     @property
+    def array_shape(self):
+        '''
+        shape of a single variable
+        '''
+        return self.shape
+    
+    @property
     def meshgrid(self):
         return self.grid.point_meshgrid
     
+    @property
+    def mgrid(self):
+        return self.grid.point_mgrid
+
     def add_data(self, var, data):
         # TODO do some checks of shape etc
         self.data[var] = data
@@ -55,7 +66,7 @@ class GridData(Data):
             if true return flattened (1d) array
         '''
         if var in self.grid.vars:
-            array = self.meshgrid[self.grid.vars.index(var)]
+            array = self.mgrid[self.grid.vars.index(var)]
         else:
             array = self.data[var]
         if flat:

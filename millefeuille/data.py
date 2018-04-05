@@ -52,7 +52,7 @@ class Data(object):
 
             if method == 'cubic' and dest.grid.ndim > 2:
                 raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-            source_data = source.get_array(source_var)
+            source_data = source.get_array(source_var, flat=True)
 
             # check source layer has grid variables
             for var in dest.grid.vars:
@@ -62,7 +62,7 @@ class Data(object):
             sample = [source.get_array(var) for var in dest.grid.vars]
             sample = np.vstack(sample)
 
-            xi = dest.meshgrid
+            xi = dest.mgrid
             #xi = np.stack(xi)
             #print xi.shape
            
@@ -96,14 +96,14 @@ class Data(object):
             if not hasattr(dest, 'grid'):
                 raise TypeError('destination layer must have a grid defined')
 
-            source_data = source.get_array(source_var)
+            source_data = source.get_array(source_var, flat=True)
             
             # check source has grid variables
             for var in dest.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # prepare arrays
-            sample = [source.get_array(var) for var in dest.grid.vars]
+            sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
 
             if method is not None:
                 bins = dest.grid.edges    
@@ -170,11 +170,11 @@ class Data(object):
 
 
             # prepare arrays
-            sample = [dest.get_array(var) for var in source.grid.vars]
+            sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
             indices = source.grid.compute_indices(sample)
             grid_shape = source.grid.shape
-            output_array = np.ones(len(dest)) * np.nan
+            output_array = np.ones(dest.data_shape) * np.nan
 
             #TODO: make this better
             for i in xrange(len(output_array)):
@@ -186,8 +186,8 @@ class Data(object):
                 if inside:
                     idx = tuple(ind)
                     output_array[i] = source_data[idx]
-
-            return output_array
+            
+            return output_array.reshape(dest.array_shape)
 
         return fun
 

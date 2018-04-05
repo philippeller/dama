@@ -167,8 +167,16 @@ class Grid(object):
         return np.meshgrid(*self.points)
 
     @property
+    def point_mgrid(self):
+        return [d.T for d in self.point_meshgrid]
+
+    @property
     def edge_meshgrid(self):
         return np.meshgrid(*self.edges)
+
+    @property
+    def edge_mgrid(self):
+        return [d.T for d in self.edge_meshgrid]
 
     @property
     def size(self):
