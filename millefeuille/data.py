@@ -54,19 +54,18 @@ class Data(object):
                 raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
             source_data = source.get_array(source_var, flat=True)
 
+            mask = np.isfinite(source_data)
+
             # check source layer has grid variables
             for var in dest.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # prepare arrays
-            sample = [source.get_array(var) for var in dest.grid.vars]
+            sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
             sample = np.vstack(sample)
-
             xi = dest.mgrid
-            #xi = np.stack(xi)
-            #print xi.shape
-           
-            output = griddata(points=sample.T, values=source_data, xi=tuple(xi), method=method)
+
+            output = griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method)
 
             return output
 
