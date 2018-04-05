@@ -11,11 +11,9 @@ class PointData(Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
-    def __init__(self, data={}, name=None):
+    def __init__(self, data={}):
         super(PointData, self).__init__(data=data,
-                                         name=name,
                                          )
-        self.len = None
 
     @property
     def vars(self):
@@ -31,7 +29,6 @@ class PointData(Data):
         else:
             return []
    
-    @property
     def __len__(self):
         if self.type == 'df':
             return len(self.data)
@@ -67,12 +64,6 @@ class PointData(Data):
         if self.type == 'struct_array':
             raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
-    
-    def __getitem__(self, var):
-        return self.get_array(var)
-
-    def __setitem__(self, var, data):
-        self.add_data(var, data)
     
     def translate(self ,source_var=None, source=None, method=None, dest_var=None):
         '''

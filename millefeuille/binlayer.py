@@ -173,39 +173,6 @@ class BinLayer(DataLayer):
 
             self.add_data(dest_var, output_map)
             
-    def lookup(self, var, points, ndef_value=0.):
-        '''
-        lookup the bin content at given points
-        
-        Parameters:
-        -----------
-        
-        var : string
-        ponints : list of k length n arrays or 2-d array with shape (k, n)
-            where k is number of bins
-        ndef_value : float
-            value to assign for points outside the grid
-        '''
-        indices = self.compute_indices(points)
-
-        grid_shape = self.grid.shape
-
-        output_array = np.empty(len(points[0]))
-        # this is stupid
-        for i in xrange(len(output_array)):
-            # check we're inside grid:
-            ind = indices[:,i]
-            inside = True
-            for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
-            if inside:
-                #print ind
-                idx = tuple(ind)
-                output_array[i] = self.data[var][idx]
-            else:
-                output_array[i] = ndef_value
-                
-        return output_array
 
     def compute_indices(self, points):
         '''

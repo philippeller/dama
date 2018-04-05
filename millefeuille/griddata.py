@@ -10,12 +10,11 @@ class GridData(Data):
     '''
     Class to hold grid data
     '''
-    def __init__(self, grid, name=None):
+    def __init__(self, grid):
         '''
         Set the grid
         '''
         super(GridData, self).__init__(data=None,
-                                        name=name,
                                         )
         self.grid = grid
         self.data = {}
@@ -63,21 +62,6 @@ class GridData(Data):
             return array.ravel()
         else:
             return array
-
-    def __getitem__(self, var):
-        return self.get_array(var)
-    
-    def __setitem__(self, var, data):
-
-        if callable(data):
-            new_data = data(self)
-        else:
-            new_data = data
-        return self.add_data(var, new_data)
-    
-            
-    def lookup(self, var, points, ndef_value=0.):
-        pass
 
     def plot_map(self, fig, ax, var, cbar=False, **kwargs):
         '''
