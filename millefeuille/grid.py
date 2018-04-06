@@ -167,8 +167,16 @@ class Grid(object):
         return np.meshgrid(*self.points)
 
     @property
+    def point_mgrid(self):
+        return [d.T for d in self.point_meshgrid]
+
+    @property
     def edge_meshgrid(self):
         return np.meshgrid(*self.edges)
+
+    @property
+    def edge_mgrid(self):
+        return [d.T for d in self.edge_meshgrid]
 
     @property
     def size(self):
@@ -225,6 +233,24 @@ class Grid(object):
             return self[new_names]
         else:
             raise KeyError('Cannot get key from %s'%type(item))
+
+    def compute_indices(self, sample):
+        '''
+        calculate the bin indices for a a given sample
+        '''
+        if isinstance(sample, np.ndarray):
+            assert sample.shape[0] == self.ndim
+        elif isinstance(sample, list):
+            assert len(sample) == self.ndim
+
+        # array to hold indices
+        indices = np.empty((self.ndim, len(sample[0])), dtype=np.int)
+        #calculate bin indices
+        for i in range(self.ndim):
+            indices[i] = np.digitize(sample[i], self.edges[i])
+        indices -= 1
+        return indices
+
 
 def test():
     a = Grid(var='a', edges=np.linspace(0,1,2))

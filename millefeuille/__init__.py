@@ -1,5 +1,3 @@
-from .datastack import *
-from .pointlayer import *
-from .binlayer import *
-from .gridlayer import *
+from .pointdata import *
+from .griddata import *
 from .grid import *

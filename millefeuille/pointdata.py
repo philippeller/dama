@@ -1,20 +1,19 @@
 import numpy as np
 import pandas
+from scipy.interpolate import griddata
 
-from millefeuille.datalayer import DataLayer
+from millefeuille.data import Data
 from millefeuille.stat_plot import *
 
-__all__ = ['PointLayer']
+__all__ = ['PointData']
 
-class PointLayer(DataLayer):
+class PointData(Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
-    def __init__(self, data={}, name=None):
-        super(PointLayer, self).__init__(data=data,
-                                         name=name,
+    def __init__(self, data={}):
+        super(PointData, self).__init__(data=data,
                                          )
-        self.len = None
 
     @property
     def vars(self):
@@ -30,7 +29,6 @@ class PointLayer(DataLayer):
         else:
             return []
    
-    @property
     def __len__(self):
         if self.type == 'df':
             return len(self.data)
@@ -38,6 +36,13 @@ class PointLayer(DataLayer):
             return len(self.data[self.data.keys()[0]])
         elif self.type == 'struct_array':
             return len(self.data.shape[0])
+
+    @property
+    def array_shape(self):
+        '''
+        the shape of a single variable
+        '''
+        return (len(self))
                        
     def set_data(self, data):
         '''
@@ -55,7 +60,7 @@ class PointLayer(DataLayer):
             raise NotImplementedError('data type not supported')
         self.data = data
         
-    def get_array(self, var):
+    def get_array(self, var, flat=False):
         if self.type == 'df':
             return self.data[var].values
         else:
@@ -67,33 +72,6 @@ class PointLayer(DataLayer):
             raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
     
-    def __getitem__(self, var):
-        return self.get_array(var)
-
-    def __setitem__(self, var, data):
-        self.add_data(var, data)
-    
-    def translate(self ,source_var=None, source_layer=None, method=None, dest_var=None):
-        '''
-        translation from function-like data into point-form
-        
-        Parameters:
-        -----------
-        
-        var : string
-            input variable name
-        source_layer : DataLayer
-            source data layer
-        method : string
-            "lookup" = lookup function valiues
-        dest_var : string
-            name for the destinaty variable name
-        '''
-        if method == 'lookup':
-            args = source_layer.function_args
-            points = [self.get_array(arg) for arg in args]
-            new_array = source_layer.lookup(source_var, points)
-            self.add_data(dest_var, new_array)
-
     def plot_2d(self, fig, ax, x, y, c=None, s=None, cbar=False, **kwargs):
         plot_points_2d(fig, ax, self, x, y, c=c, s=s, cbar=cbar, **kwargs)
+
