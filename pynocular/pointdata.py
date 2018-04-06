@@ -2,8 +2,8 @@ import numpy as np
 import pandas
 from scipy.interpolate import griddata
 
-from millefeuille.data import Data
-from millefeuille.stat_plot import *
+from pynocular.data import Data
+from pynocular.stat_plot import *
 
 __all__ = ['PointData']
 

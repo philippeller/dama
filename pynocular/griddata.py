@@ -1,8 +1,8 @@
 import numpy as np
 import pandas
 
-from millefeuille.data import Data
-from millefeuille.stat_plot import *
+from pynocular.data import Data
+from pynocular.stat_plot import *
 
 __all__ = ['GridData']
 
