@@ -48,7 +48,7 @@ class Data(object):
         source = self
         def fun(dest):
             if not hasattr(dest, 'grid'):
-                raise TypeError('destination layer must have a grid defined')
+                raise TypeError('destination must have a grid defined')
 
             if method == 'cubic' and dest.grid.ndim > 2:
                 raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
@@ -56,7 +56,7 @@ class Data(object):
 
             mask = np.isfinite(source_data)
 
-            # check source layer has grid variables
+            # check source has grid variables
             for var in dest.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
@@ -93,7 +93,7 @@ class Data(object):
 
         def fun(dest):
             if not hasattr(dest, 'grid'):
-                raise TypeError('destination layer must have a grid defined')
+                raise TypeError('destination must have a grid defined')
 
             source_data = source.get_array(source_var, flat=True)
             
@@ -153,14 +153,14 @@ class Data(object):
         Parameters:
         -----------
         
-        var : string
+        source_var : string
         '''
         source = self
+        if not hasattr(source, 'grid'):
+            raise TypeError('source must have a grid defined')
+
 
         def fun(dest):
-            if not hasattr(source, 'grid'):
-                raise TypeError('source layer must have a grid defined')
-
             source_data = source.get_array(source_var)
             
             # check dest has grid variables
@@ -173,7 +173,8 @@ class Data(object):
 
             indices = source.grid.compute_indices(sample)
             grid_shape = source.grid.shape
-            output_array = np.ones(dest.data_shape) * np.nan
+            #output_array = np.ones(dest.array_shape) * np.nan
+            output_array = np.ones(np.product(dest.array_shape)) * np.nan
 
             #TODO: make this better
             for i in xrange(len(output_array)):
@@ -190,4 +191,63 @@ class Data(object):
 
         return fun
 
+    def resample(self, source_var, method='simple', **kwargs):
+        '''
+        resample from binned data into other binned data
 
+        Parameters:
+        -----------
+        
+        source_var : string
+        '''
+        source = self
+        if not hasattr(source, 'grid'):
+            raise TypeError('source must have a grid defined')
+
+        def fun(dest):
+            if not hasattr(dest, 'grid'):
+                raise TypeError('destination must have a grid defined')
+
+            assert dest.grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
+
+            if method == 'simple':
+                # first histogram points of source into destination
+                source_data = source.get_array(source_var, flat=True)
+                # prepare arrays
+                sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
+
+                bins = dest.grid.edges    
+                # generate hists
+                hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
+                counts, _ = np.histogramdd(sample=sample, bins=bins)
+                mask = counts > 0
+                hist[mask] /= counts[mask]
+
+                # then lookup destination points in source
+                # prepare arrays
+                sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
+
+                source_data = source.get_array(source_var)
+                indices = source.grid.compute_indices(sample)
+                grid_shape = source.grid.shape
+                lookup_array = np.ones(np.product(dest.array_shape)) * np.nan
+                #TODO: make this better
+                for i in xrange(len(lookup_array)):
+                    # check we're inside grid:
+                    ind = indices[:,i]
+                    inside = True
+                    for j in range(len(ind)):
+                        inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
+                    if inside:
+                        idx = tuple(ind)
+                        lookup_array[i] = source_data[idx]
+
+                lookup_array =  lookup_array.reshape(dest.array_shape)
+
+                # where counts is <=1, replace hist by lookups
+                mask  = counts <= 1
+                hist[mask] = lookup_array[mask]
+                return hist
+            else:
+                raise NotImplementedError('method %s unknown'%method)
+        return fun
