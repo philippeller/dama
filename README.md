@@ -1,8 +1,11 @@
-# MilleFeuille
+# Pynocular
 
-Pythonic data structure to hold inhomogeneous data of various sources. The data lives in `layers`, where in a single `layer` the data is homogeneous and of the same type. Several, different, `layers` live in a `stack`. Translation methods allow to translate data between `layers` of a `stack`. Layers define their available translations methods. A `Binlayer` for instance will offer simple histogramming function, or more sophisticated translation methods to translate from `PointLayers`.
+A consistant and pythonic way to handle different datasaets and translations between them.
+A dataset can be a simple pandas datafrane or other colum/row data, or it can be data on a grid.
 
-Convenience `pyplot` plotting functions are also attached to the layers, in order to produce standard plots without the hassle of figuring out the correct input to the standard matplotlib functions.
+The key feature of pynocular is seamless translations from data represenation into any other. See `notebooks/example.ipynb`
+
+Convenience `pyplot` plotting functions are also defined, in order to produce standard plots without the hassle of figuring out the correct input to the standard matplotlib functions.
 
 ## Installation
 
