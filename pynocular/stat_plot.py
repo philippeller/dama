@@ -1,13 +1,18 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 '''
 Module to provide plotting convenience functions
 to be used by data layer classes
 '''
-def plot_map(fig, ax, layer, var, cbar=False, **kwargs):
+def plot_map(layer, var, cbar=False, fig=None, ax=None, **kwargs):
     '''
     plot a 2d color map
     '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     assert layer.grid.ndim == 2
     X, Y = layer.grid.edge_meshgrid
 
@@ -21,7 +26,11 @@ def plot_map(fig, ax, layer, var, cbar=False, **kwargs):
     ax.set_ylim(layer.grid.edges[1][0], layer.grid.edges[1][-1])
     return pc
 
-def plot_points_2d(fig, ax, layer, x, y, s=None, c=None, cbar=False, **kwargs):
+def plot_points_2d(layer, x, y, s=None, c=None, cbar=False, fig=None, ax=None, **kwargs):
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     if c is not None:
         c_label = c
         c = layer[c]
@@ -37,29 +46,41 @@ def plot_points_2d(fig, ax, layer, x, y, s=None, c=None, cbar=False, **kwargs):
     ax.set_ylabel(y)
     return sc
 
-def plot_contour(fig, ax, layer, var, **kwargs):
+def plot_contour(layer, var, fig=None, ax=None, **kwargs):
     '''
     contours from gird data
     '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     assert layer.grid.ndim == 2
     X, Y = layer.grid.point_meshgrid
 
     cs = ax.contour(X, Y, layer[var].T, **kwargs)
     return cs
 
-def plot_step(fig, ax, layer, var, **kwargs):
+def plot_step(layer, var, fig=None, ax=None, **kwargs):
     '''
     plot a step function, i.e. histogram
     '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     assert layer.grid.ndim == 1
     ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=layer[var], **kwargs)
     ax.set_xlabel(layer.grid[0].var)
     ax.set_ylabel(var)
 
-def plot_band(fig, ax, layer, var1, var2, **kwargs):
+def plot_band(layer, var1, var2, fig=None, ax=None, **kwargs):
     '''
     plot a band between two variables var1 and var2
     '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     assert layer.grid.ndim == 1
     ax.bar(layer.grid[0].points,
            layer[var2] - layer[var1],
@@ -69,10 +90,14 @@ def plot_band(fig, ax, layer, var1, var2, **kwargs):
     ax.set_xlabel(layer.grid[0].var)
     return var1, var2
 
-def plot_errorband(fig, ax, layer, var, errors, **kwargs):
+def plot_errorband(layer, var, errors, fig=None, ax=None, **kwargs):
     '''
     plot a step histogram with errorbars around it as bands
     '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
     if isinstance(errors, (tuple, list)):
         lower_error = layer[errors[0]]
         upper_error = layer[errors[1]]

@@ -79,7 +79,7 @@ class GridData(Data):
         else:
             return array
 
-    def plot_map(self, fig, ax, var, cbar=False, **kwargs):
+    def plot_map(self, var, cbar=False, fig=None, ax=None, **kwargs):
         '''
         plot a variable as a map
 
@@ -87,16 +87,16 @@ class GridData(Data):
         var : str
         '''
         if self.grid.ndim == 2:
-            return plot_map(fig, ax, self, var, cbar=cbar, **kwargs)
+            return plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
-    def plot_contour(self, fig, ax, var, **kwargs):
-        return plot_contour(fig, ax, self, var, **kwargs)
+    def plot_contour(self, var, fig=None, ax=None, **kwargs):
+        return plot_contour(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_step(self, fig, ax, var, **kwargs):
-        return plot_step(fig, ax, self, var, **kwargs)
+    def plot_step(self, fig, ax, var, fig=None, ax=None, **kwargs):
+        return plot_step(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_band(self, fig, ax, var1, var2, **kwargs):
-        return plot_band(fig, ax, self, var1, var2, **kwargs)
+    def plot_band(self, var1, var2, fig=None, ax=None, **kwargs):
+        return plot_band(self, var1, var2, fig=fig, ax=ax, **kwargs)
 
-    def plot_errorband(self, fig, ax, var, errors, **kwargs):
-        return plot_errorband(fig, ax, self, var, errors, **kwargs)
+    def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
+        return plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
