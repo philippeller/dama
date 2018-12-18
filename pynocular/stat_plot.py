@@ -67,6 +67,7 @@ def plot_band(fig, ax, layer, var1, var2, **kwargs):
            width = np.diff(layer.grid[0].edges),
            **kwargs)
     ax.set_xlabel(layer.grid[0].var)
+    return var1, var2
 
 def plot_errorband(fig, ax, layer, var, errors, **kwargs):
     '''

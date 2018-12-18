@@ -18,6 +18,7 @@ class GridData(Data):
                                         )
         self.grid = grid
         self.data = {}
+        self.mask = None
 
     @property
     def function_args(self):
@@ -53,7 +54,7 @@ class GridData(Data):
         # TODO do some checks of shape etc
         self.data[var] = data
         
-    def get_array(self, var, flat=False):
+    def get_array(self, var, flat=False, mask=False):
         '''
         return array of data
         
@@ -65,6 +66,10 @@ class GridData(Data):
         flat : bool
             if true return flattened (1d) array
         '''
+        if mask:
+            if not self.mask is None:
+                raise NotImplementedError('masking for griddata not yet implemented')
+
         if var in self.grid.vars:
             array = self.mgrid[self.grid.vars.index(var)]
         else:

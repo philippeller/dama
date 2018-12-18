@@ -19,7 +19,7 @@ class Data(object):
         pass
 
     def __getitem__(self, var):
-        return self.get_array(var)
+        return self.get_array(var, mask=True)
     
     def __setitem__(self, var, data):
         if callable(data):

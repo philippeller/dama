@@ -14,6 +14,7 @@ class PointData(Data):
     def __init__(self, data={}):
         super(PointData, self).__init__(data=data,
                                          )
+        self.mask = None
 
     @property
     def vars(self):
@@ -60,11 +61,16 @@ class PointData(Data):
             raise NotImplementedError('data type not supported')
         self.data = data
         
-    def get_array(self, var, flat=False):
+    def get_array(self, var, flat=False, mask=True):
         if self.type == 'df':
-            return self.data[var].values
+            arr = self.data[var].values
         else:
-            return self.data[var]
+            arr = self.data[var]
+        if mask and self.mask is not None:
+            return arr[self.mask]
+        else:
+            return arr
+
         
     def add_data(self, var, data):
         # TODO do some checks of shape etc
