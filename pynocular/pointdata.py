@@ -11,7 +11,9 @@ class PointData(Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
-    def __init__(self, data={}):
+    def __init__(self, data=None):
+        if data is None:
+            data = {}
         super(PointData, self).__init__(data=data,
                                          )
         self.mask = None
