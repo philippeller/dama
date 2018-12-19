@@ -59,6 +59,9 @@ class GridData(pn.data.Data):
             raise ValueError('set up the grid dimensions first before adding data')
         if not data.shape == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
+        if var in self.grid.vars:
+            raise ValueError('Variable `%s` is already a grid dimension!'%var)
+
         self.data[var] = data
         
     def get_array(self, var, flat=False, mask=False):

@@ -80,6 +80,9 @@ class PointData(Data):
             raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
     
-    def plot_2d(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
+    def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
         plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
+
+    def plot(self, x, y, *args, **kwargs):
+        plot(self, x, y, *args, **kwargs)
 

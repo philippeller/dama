@@ -26,6 +26,14 @@ def plot_map(layer, var, cbar=False, fig=None, ax=None, **kwargs):
     ax.set_ylim(layer.grid.edges[1][0], layer.grid.edges[1][-1])
     return pc
 
+def plot(layer, x, y, *args, **kwargs):
+    fig = kwargs.pop('fig', plt.gcf())
+    ax = kwargs.pop('fig', plt.gca())
+    p = ax.plot(layer[x], layer[y], *args, **kwargs)
+    ax.set_xlabel(x)
+    ax.set_ylabel(y)
+    return p
+
 def plot_points_2d(layer, x, y, s=None, c=None, cbar=False, fig=None, ax=None, **kwargs):
     if fig is None:
         fig = plt.gcf()
