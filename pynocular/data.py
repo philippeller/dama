@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.interpolate import griddata
+from scipy import interpolate
 
 class Data(object):
     '''
@@ -32,7 +32,7 @@ class Data(object):
         return 0
     
 
-    def interpolate(self, source_var=None, method=None):
+    def interpolate(self, source_var=None, method=None, wrt=None, fill_value=np.nan):
         '''
         interpolation from array data into grids
         
@@ -44,30 +44,70 @@ class Data(object):
             "nearest" = nearest neightbour interpolation
             "linear" = linear interpolation
             "cubic" = cubic interpolation (only for ndim < 3)
+        wrt : tuple
+            specifying the variable with respect to which the interpolation is done
+            None for griddata (will be wrt the r=destination grid)
+        fill_value : optional
+            value for invalid points
         '''
         source = self
+        if isinstance(wrt, basestring):
+            wrt = [wrt]
+
         def fun(dest):
-            if not hasattr(dest, 'grid'):
-                raise TypeError('destination must have a grid defined')
+            if hasattr(dest, 'grid'):
+                if wrt is not None:
+                    raise TypeError('wrt cannot be defined for a grid destination')
 
-            if method == 'cubic' and dest.grid.ndim > 2:
-                raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-            source_data = source.get_array(source_var, flat=True)
+                if method == 'cubic' and dest.grid.ndim > 2:
+                    raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
+                source_data = source.get_array(source_var, flat=True)
 
-            mask = np.isfinite(source_data)
+                mask = np.isfinite(source_data)
 
-            # check source has grid variables
-            for var in dest.grid.vars:
-                assert(var in source.vars), '%s not in %s'%(var, source.vars)
+                # check source has grid variables
+                for var in dest.grid.vars:
+                    assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
-            # prepare arrays
-            sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
-            sample = np.vstack(sample)
-            xi = dest.mgrid
+                # prepare arrays
+                sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
+                sample = np.vstack(sample)
+                xi = dest.mgrid
 
-            output = griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method)
+                output = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
 
-            return output
+                return output
+
+            else:
+                if wrt is None:
+                    raise TypeError('destination must have a grid defined if `wrt` is `None`')
+
+                if not set(wrt) < set(dest.vars):
+                    raise TypeError('one or more variables of %s are not present in the destination'%wrt)
+
+                if len(wrt) == 1:
+                    f = interpolate.interp1d(source[wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = f(dest[wrt[0]])
+
+                elif len(wrt) == 2 and method in ['linear', 'cubic']:
+                    f = interpolate.interp2d(source[wrt[0]], source[wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = np.array([f(x, y)[0] for x, y in zip(dest[wrt[0]], dest[wrt[1]])])
+
+                elif method in ['nearest', 'linear']:
+                    sample = [source.get_array(var, flat=True) for var in wrt]
+                    sample = np.vstack(sample).T
+                    if method == 'nearest':
+                        f = interpolate.NearestNDInterpolator(sample, source[source_var])
+                    else:
+                        f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
+                    out_sample = [dest.get_array(var, flat=True) for var in wrt]
+                    out_sample = np.vstack(out_sample).T
+                    output = f(out_sample)
+
+                else:
+                    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(wrt)))
+
+                return output
 
         return fun
 

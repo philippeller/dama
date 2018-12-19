@@ -92,7 +92,7 @@ class GridData(Data):
     def plot_contour(self, var, fig=None, ax=None, **kwargs):
         return plot_contour(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_step(self, fig, ax, var, fig=None, ax=None, **kwargs):
+    def plot_step(self, var, fig=None, ax=None, **kwargs):
         return plot_step(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_band(self, var1, var2, fig=None, ax=None, **kwargs):
