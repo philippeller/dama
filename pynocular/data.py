@@ -80,32 +80,36 @@ class Data(object):
 
             else:
                 if wrt is None:
-                    raise TypeError('destination must have a grid defined if `wrt` is `None`')
+                    # need to reassign variable because of scope
+                    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+                    print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
+                else:
+                    this_wrt = wrt
 
-                if not set(wrt) < set(dest.vars):
-                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(wrt) - (set(wrt) & set(dest.vars))))
+                if not set(this_wrt) <= set(dest.vars):
+                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
 
-                if len(wrt) == 1:
-                    f = interpolate.interp1d(source[wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = f(dest[wrt[0]])
+                if len(this_wrt) == 1:
+                    f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = f(dest[this_wrt[0]])
 
-                elif len(wrt) == 2 and method in ['linear', 'cubic']:
-                    f = interpolate.interp2d(source[wrt[0]], source[wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = np.array([f(x, y)[0] for x, y in zip(dest[wrt[0]], dest[wrt[1]])])
+                elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
+                    f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
 
                 elif method in ['nearest', 'linear']:
-                    sample = [source.get_array(var, flat=True) for var in wrt]
+                    sample = [source.get_array(var, flat=True) for var in this_wrt]
                     sample = np.vstack(sample).T
                     if method == 'nearest':
                         f = interpolate.NearestNDInterpolator(sample, source[source_var])
                     else:
                         f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
-                    out_sample = [dest.get_array(var, flat=True) for var in wrt]
+                    out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
                     out_sample = np.vstack(out_sample).T
                     output = f(out_sample)
 
                 else:
-                    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(wrt)))
+                    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
 
                 return output
 
