@@ -83,7 +83,7 @@ class Data(object):
                     raise TypeError('destination must have a grid defined if `wrt` is `None`')
 
                 if not set(wrt) < set(dest.vars):
-                    raise TypeError('one or more variables of %s are not present in the destination'%wrt)
+                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(wrt) - (set(wrt) & set(dest.vars))))
 
                 if len(wrt) == 1:
                     f = interpolate.interp1d(source[wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
