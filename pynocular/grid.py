@@ -234,6 +234,9 @@ class Grid(object):
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 
+    def __setitem__(self, item, val):
+        raise AttributeError("to set a grid dimension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
+
     def compute_indices(self, sample):
         '''
         calculate the bin indices for a a given sample

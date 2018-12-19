@@ -69,7 +69,8 @@ def plot_step(layer, var, fig=None, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
     assert layer.grid.ndim == 1
-    ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=layer[var], **kwargs)
+    histtype = kwargs.pop('histtype', 'step')
+    ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=layer[var], histtype=histtype, **kwargs)
     ax.set_xlabel(layer.grid[0].var)
     ax.set_ylabel(var)
 

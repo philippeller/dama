@@ -1,21 +1,21 @@
 import numpy as np
 import pandas
-
-from pynocular.data import Data
-from pynocular.stat_plot import *
+import pynocular as pn
 
 __all__ = ['GridData']
 
-class GridData(Data):
+class GridData(pn.data.Data):
     '''
     Class to hold grid data
     '''
-    def __init__(self, grid):
+    def __init__(self, grid=None):
         '''
         Set the grid
         '''
         super(GridData, self).__init__(data=None,
                                         )
+        if grid is None:
+            grid = pn.grid.Grid()
         self.grid = grid
         self.data = {}
         self.mask = None
@@ -36,6 +36,10 @@ class GridData(Data):
         return self.grid.shape
     
     @property
+    def ndim(self):
+        return self.grid.ndim
+    
+    @property
     def array_shape(self):
         '''
         shape of a single variable
@@ -51,7 +55,10 @@ class GridData(Data):
         return self.grid.point_mgrid
 
     def add_data(self, var, data):
-        # TODO do some checks of shape etc
+        if self.ndim == 0:
+            raise ValueError('set up the grid dimensions first before adding data')
+        if not data.shape == self.shape:
+            raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
         self.data[var] = data
         
     def get_array(self, var, flat=False, mask=False):
@@ -87,16 +94,16 @@ class GridData(Data):
         var : str
         '''
         if self.grid.ndim == 2:
-            return plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
+            return pn.stat_plot.plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
     def plot_contour(self, var, fig=None, ax=None, **kwargs):
-        return plot_contour(self, var, fig=fig, ax=ax, **kwargs)
+        return pn.stat_plot.plot_contour(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_step(self, var, fig=None, ax=None, **kwargs):
-        return plot_step(self, var, fig=fig, ax=ax, **kwargs)
+        return pn.stat_plot.plot_step(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_band(self, var1, var2, fig=None, ax=None, **kwargs):
-        return plot_band(self, var1, var2, fig=fig, ax=ax, **kwargs)
+        return pn.stat_plot.plot_band(self, var1, var2, fig=fig, ax=ax, **kwargs)
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
-        return plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
+        return pn.stat_plot.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
