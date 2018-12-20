@@ -116,7 +116,7 @@ class Data(object):
         return fun
 
 
-    def histogram(self, source_var=None, method=None, function=None, **kwargs):
+    def histogram(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
         '''
         translation from array data into binned form
         
@@ -186,7 +186,8 @@ class Data(object):
                         output_map[out_idx] = result
                     it.iternext()
 
-            return output_map
+                output_map[np.isnan(output_map)] = fill_value
+                return output_map
 
         return fun
 
@@ -294,4 +295,77 @@ class Data(object):
                 return hist
             else:
                 raise NotImplementedError('method %s unknown'%method)
+        return fun
+
+    def window(self, source_var=None, method=None, function=None, window=[(-1,1)], wrt=None, **kwargs):
+        '''
+        sliding window
+        
+        Parameters:
+        -----------
+        source_var : string
+            input variable
+        method : string
+            "mean" = mean
+        function : callable
+            function to use on window
+        window : list of tuples
+            lower und upper extend of window in each dimension
+        wrt : tuple
+            specifying the variable with respect to which the interpolation is done
+            None for griddata (will be wrt the r=destination grid)
+        fill_value : optional
+            value for invalid points
+        kwargs : optional
+            additional keyword argumnts to function
+        '''
+        source = self
+        if isinstance(wrt, basestring):
+            wrt = [wrt]
+
+
+        if function is None:
+            if method is None:
+                raise ValueError('must provide method or function')
+            if method == 'mean':
+                function = np.average
+
+
+        def fun(dest):
+            if hasattr(dest, 'grid'):
+                if wrt is not None:
+                    raise TypeError('wrt cannot be defined for a grid destination')
+
+                this_wrt = dest.grid.vars
+            else:
+                if wrt is None:
+                    # need to reassign variable because of scope
+                    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+                    print('Automatic with respect to %s'%', '.join(this_wrt))
+                else:
+                    this_wrt = wrt
+
+                if not set(this_wrt) <= set(dest.vars):
+                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
+
+            source_data = source.get_array(source_var, flat=True)
+
+            # prepare arrays
+            source_sample = [source.get_array(var, flat=True) for var in this_wrt]
+            source_sample = np.vstack(source_sample)
+            dest_sample = [dest.get_array(var, flat=True) for var in this_wrt]
+            dest_sample = np.vstack(dest_sample)
+
+            output = np.zeros(dest_sample.shape[1])
+            print dest_sample.shape
+
+            for i in xrange(dest_sample.shape[1]):
+                mask = np.ones(source_sample.shape[1]).astype(np.bool)
+                for j in xrange(dest_sample.shape[0]):
+                    mask = np.logical_and(mask, source_sample[j] >= dest_sample[j,i] + window[j][0])
+                    mask = np.logical_and(mask, source_sample[j] <= dest_sample[j,i] + window[j][1])
+                output[i] = function(source_data[mask], **kwargs)
+
+            return output
+
         return fun
