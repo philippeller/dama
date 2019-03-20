@@ -187,7 +187,8 @@ class Data(object):
                     it.iternext()
 
                 output_map[np.isnan(output_map)] = fill_value
-                return output_map
+
+            return output_map
 
         return fun
 
