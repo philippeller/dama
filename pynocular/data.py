@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 from scipy import interpolate
 
@@ -8,7 +9,7 @@ class Data(object):
     def __init__(self, data):
         self.data = None
         self.set_data(data)
-        
+
     def set_data(self, data):
         pass
 
@@ -20,7 +21,7 @@ class Data(object):
 
     def __getitem__(self, var):
         return self.get_array(var, mask=True)
-    
+
     def __setitem__(self, var, data):
         if callable(data):
             new_data = data(self)
@@ -30,12 +31,12 @@ class Data(object):
 
     def __len__(self):
         return 0
-    
+
 
     def interpolate(self, source_var=None, method=None, wrt=None, fill_value=np.nan):
         '''
         interpolation from array data into grids
-        
+
         Parameters:
         -----------
         source_var : string
@@ -119,10 +120,10 @@ class Data(object):
     def histogram(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
         '''
         translation from array data into binned form
-        
+
         Parameters:
         -----------
-        
+
         source_var : string
             input variable
         method : string
@@ -140,7 +141,7 @@ class Data(object):
                 raise TypeError('destination must have a grid defined')
 
             source_data = source.get_array(source_var, flat=True)
-            
+
             # check source has grid variables
             for var in dest.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
@@ -149,7 +150,7 @@ class Data(object):
             sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
 
             if method is not None:
-                bins = dest.grid.edges    
+                bins = dest.grid.edges
                 # generate hists
                 if method in ['sum', 'mean']:
                     weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
@@ -178,7 +179,7 @@ class Data(object):
                 while not it.finished:
                     out_idx = it.multi_index
                     mask = True
-                    for i,idx in enumerate(out_idx):
+                    for i, idx in enumerate(out_idx):
                         mask = np.logical_and(indices[i] == idx, mask)
                     bin_source_data = source_data[mask]
                     if len(bin_source_data) > 0:
@@ -195,10 +196,10 @@ class Data(object):
     def lookup(self, source_var=None, **kwargs):
         '''
         lookup the bin content at given points
-        
+
         Parameters:
         -----------
-        
+
         source_var : string
         '''
         source = self
@@ -208,7 +209,7 @@ class Data(object):
 
         def fun(dest):
             source_data = source.get_array(source_var)
-            
+
             # check dest has grid variables
             for var in source.grid.vars:
                 assert(var in dest.vars), '%s not in %s'%(var, dest.vars)
@@ -225,14 +226,14 @@ class Data(object):
             #TODO: make this better
             for i in range(len(output_array)):
                 # check we're inside grid:
-                ind = indices[:,i]
+                ind = indices[:, i]
                 inside = True
                 for j in range(len(ind)):
                     inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
                 if inside:
                     idx = tuple(ind)
                     output_array[i] = source_data[idx]
-            
+
             return output_array.reshape(dest.array_shape)
 
         return fun
@@ -243,7 +244,7 @@ class Data(object):
 
         Parameters:
         -----------
-        
+
         source_var : string
         '''
         source = self
@@ -262,7 +263,7 @@ class Data(object):
                 # prepare arrays
                 sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
 
-                bins = dest.grid.edges    
+                bins = dest.grid.edges
                 # generate hists
                 hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
                 counts, _ = np.histogramdd(sample=sample, bins=bins)
@@ -280,7 +281,7 @@ class Data(object):
                 #TODO: make this better
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
-                    ind = indices[:,i]
+                    ind = indices[:, i]
                     inside = True
                     for j in range(len(ind)):
                         inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
@@ -298,10 +299,10 @@ class Data(object):
                 raise NotImplementedError('method %s unknown'%method)
         return fun
 
-    def window(self, source_var=None, method=None, function=None, window=[(-1,1)], wrt=None, **kwargs):
+    def window(self, source_var=None, method=None, function=None, window=[(-1, 1)], wrt=None, **kwargs):
         '''
         sliding window
-        
+
         Parameters:
         -----------
         source_var : string
@@ -363,8 +364,8 @@ class Data(object):
             for i in range(dest_sample.shape[1]):
                 mask = np.ones(source_sample.shape[1]).astype(np.bool)
                 for j in range(dest_sample.shape[0]):
-                    mask = np.logical_and(mask, source_sample[j] >= dest_sample[j,i] + window[j][0])
-                    mask = np.logical_and(mask, source_sample[j] <= dest_sample[j,i] + window[j][1])
+                    mask = np.logical_and(mask, source_sample[j] >= dest_sample[j, i] + window[j][0])
+                    mask = np.logical_and(mask, source_sample[j] <= dest_sample[j, i] + window[j][1])
                 output[i] = function(source_data[mask], **kwargs)
 
             return output

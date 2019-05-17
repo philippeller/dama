@@ -1,5 +1,7 @@
+from __future__ import absolute_import
 from numbers import Number
-from collections import Iterable, OrderedDict
+from collections import OrderedDict
+from collections.abc import Iterable
 
 import numpy as np
 
@@ -112,7 +114,7 @@ class Grid(object):
             self.add_dim(dims)
         else:
             raise TypeError('Cannot add type %s'%type(dims))
-        
+
     def add_dim(self, dim):
         '''
         add aditional Dimension
@@ -256,11 +258,11 @@ class Grid(object):
 
 
 def test():
-    a = Grid(var='a', edges=np.linspace(0,1,2))
+    a = Grid(var='a', edges=np.linspace(0, 1, 2))
     print(a)
     print(a.vars)
-    a['x'].edges = np.linspace(0,10,11)
-    a['y'].points = np.logspace(-1,1,20)
+    a['x'].edges = np.linspace(0, 10, 11)
+    a['y'].points = np.logspace(-1, 1, 20)
     print(a['x'].points)
     print(a['x'].edges)
     print(a['x', 'y'])

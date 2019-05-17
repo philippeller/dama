@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 import pandas
 from scipy.interpolate import griddata
@@ -14,8 +15,7 @@ class PointData(Data):
     def __init__(self, data=None):
         if data is None:
             data = {}
-        super(PointData, self).__init__(data=data,
-                                         )
+        super(PointData, self).__init__(data=data)
         self.mask = None
 
     @property
@@ -31,7 +31,7 @@ class PointData(Data):
             return list(self.data.dtype.names)
         else:
             return []
-   
+
     def __len__(self):
         if self.type == 'df':
             return len(self.data)
@@ -46,7 +46,7 @@ class PointData(Data):
         the shape of a single variable
         '''
         return (len(self))
-                       
+
     def set_data(self, data):
         '''
         Set the data
@@ -62,7 +62,7 @@ class PointData(Data):
         else:
             raise NotImplementedError('data type not supported')
         self.data = data
-        
+
     def get_array(self, var, flat=False, mask=True):
         if self.type == 'df':
             arr = self.data[var].values
@@ -73,13 +73,13 @@ class PointData(Data):
         else:
             return arr
 
-        
+
     def add_data(self, var, data):
         # TODO do some checks of shape etc
         if self.type == 'struct_array':
             raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
-    
+
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
         plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
 

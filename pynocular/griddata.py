@@ -1,5 +1,4 @@
-import numpy as np
-import pandas
+from __future__ import absolute_import
 import pynocular as pn
 
 __all__ = ['GridData']
@@ -12,8 +11,7 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        super(GridData, self).__init__(data=None,
-                                        )
+        super(GridData, self).__init__(data=None)
         if grid is None:
             grid = pn.grid.Grid()
         self.grid = grid
@@ -23,33 +21,33 @@ class GridData(pn.data.Data):
     @property
     def function_args(self):
         return self.grid.vars
-    
+
     @property
     def vars(self):
         '''
         Available variables in this layer
         '''
         return self.grid.vars + list(self.data.keys())
-    
+
     @property
     def shape(self):
         return self.grid.shape
-    
+
     @property
     def ndim(self):
         return self.grid.ndim
-    
+
     @property
     def array_shape(self):
         '''
         shape of a single variable
         '''
         return self.shape
-    
+
     @property
     def meshgrid(self):
         return self.grid.point_meshgrid
-    
+
     @property
     def mgrid(self):
         return self.grid.point_mgrid
@@ -63,14 +61,14 @@ class GridData(pn.data.Data):
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
         self.data[var] = data
-        
+
     def get_array(self, var, flat=False, mask=False):
         '''
         return array of data
-        
+
         Parameters:
         -----------
-        
+
         var : string
             variable to return
         flat : bool
@@ -86,8 +84,11 @@ class GridData(pn.data.Data):
             array = self.data[var]
         if flat:
             return array.ravel()
-        else:
-            return array
+
+        return array
+
+    def flat(self, var):
+        return self.get_array(var, flat=True)
 
     def plot_map(self, var, cbar=False, fig=None, ax=None, **kwargs):
         '''
@@ -98,6 +99,8 @@ class GridData(pn.data.Data):
         '''
         if self.grid.ndim == 2:
             return pn.stat_plot.plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
+
+        raise ValueError('Can only plot maps of 2d grids')
 
     def plot_contour(self, var, fig=None, ax=None, **kwargs):
         return pn.stat_plot.plot_contour(self, var, fig=fig, ax=ax, **kwargs)
