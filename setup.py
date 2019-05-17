@@ -17,5 +17,6 @@ setup(
     install_requires=[
         'scipy>=0.17',
         'matplotlib>=2.0',
+        'KDEpy',
     ],
 )

@@ -51,7 +51,7 @@ class Data(object):
             value for invalid points
         '''
         source = self
-        if isinstance(wrt, basestring):
+        if isinstance(wrt, str):
             wrt = [wrt]
 
         def fun(dest):
@@ -223,7 +223,7 @@ class Data(object):
             output_array = np.ones(np.product(dest.array_shape)) * np.nan
 
             #TODO: make this better
-            for i in xrange(len(output_array)):
+            for i in range(len(output_array)):
                 # check we're inside grid:
                 ind = indices[:,i]
                 inside = True
@@ -278,7 +278,7 @@ class Data(object):
                 grid_shape = source.grid.shape
                 lookup_array = np.ones(np.product(dest.array_shape)) * np.nan
                 #TODO: make this better
-                for i in xrange(len(lookup_array)):
+                for i in range(len(lookup_array)):
                     # check we're inside grid:
                     ind = indices[:,i]
                     inside = True
@@ -321,7 +321,7 @@ class Data(object):
             additional keyword argumnts to function
         '''
         source = self
-        if isinstance(wrt, basestring):
+        if isinstance(wrt, str):
             wrt = [wrt]
 
 
@@ -358,11 +358,11 @@ class Data(object):
             dest_sample = np.vstack(dest_sample)
 
             output = np.zeros(dest_sample.shape[1])
-            print dest_sample.shape
+            print(dest_sample.shape)
 
-            for i in xrange(dest_sample.shape[1]):
+            for i in range(dest_sample.shape[1]):
                 mask = np.ones(source_sample.shape[1]).astype(np.bool)
-                for j in xrange(dest_sample.shape[0]):
+                for j in range(dest_sample.shape[0]):
                     mask = np.logical_and(mask, source_sample[j] >= dest_sample[j,i] + window[j][0])
                     mask = np.logical_and(mask, source_sample[j] <= dest_sample[j,i] + window[j][1])
                 output[i] = function(source_data[mask], **kwargs)

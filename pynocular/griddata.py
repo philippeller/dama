@@ -29,7 +29,7 @@ class GridData(pn.data.Data):
         '''
         Available variables in this layer
         '''
-        return self.grid.vars + self.data.keys()
+        return self.grid.vars + list(self.data.keys())
     
     @property
     def shape(self):

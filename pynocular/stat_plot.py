@@ -78,7 +78,10 @@ def plot_step(layer, var, fig=None, ax=None, **kwargs):
         ax = plt.gca()
     assert layer.grid.ndim == 1
     histtype = kwargs.pop('histtype', 'step')
-    ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=layer[var], histtype=histtype, **kwargs)
+
+    # let's only histogram finite values
+    mask = np.isfinite(layer[var])
+    ax.hist(layer.grid[0].points[mask], bins=layer.grid[0].edges, weights=layer[var][mask], histtype=histtype, **kwargs)
     ax.set_xlabel(layer.grid[0].var)
     ax.set_ylabel(var)
 

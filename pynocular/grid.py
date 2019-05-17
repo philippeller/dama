@@ -128,7 +128,7 @@ class Grid(object):
         elif isinstance(dim, dict):
             dim = Dimension(**dim)
             self.add_dim(dim)
-        elif isinstance(dim, basestring):
+        elif isinstance(dim, str):
             new_dim = Dimension(var=dim)
             self.add_dim(new_dim)
         else:
@@ -146,7 +146,7 @@ class Grid(object):
         '''
         grid dimension variables
         '''
-        return self.dims.keys()
+        return list(self.dims.keys())
 
     @property
     def edges(self):
@@ -218,8 +218,8 @@ class Grid(object):
         item : int, str, slice, ierable
         '''
         if isinstance(item, Number):
-            return self.dims.values()[int(item)]
-        elif isinstance(item, basestring):
+            return list(self.dims.values())[int(item)]
+        elif isinstance(item, str):
             if not item in self.vars:
                 self.add_dim(item)
             return self.dims[item]
@@ -257,13 +257,13 @@ class Grid(object):
 
 def test():
     a = Grid(var='a', edges=np.linspace(0,1,2))
-    print a
-    print a.vars
+    print(a)
+    print(a.vars)
     a['x'].edges = np.linspace(0,10,11)
     a['y'].points = np.logspace(-1,1,20)
-    print a['x'].points
-    print a['x'].edges
-    print a['x', 'y']
+    print(a['x'].points)
+    print(a['x'].edges)
+    print(a['x', 'y'])
 
 if __name__ == '__main__':
     test()
