@@ -7,16 +7,16 @@ class GridData(pn.data.Data):
     '''
     Class to hold grid data
     '''
-    def __init__(self, grid=None):
+    def __init__(self, *args):
         '''
         Set the grid
         '''
         super(GridData, self).__init__(data=None)
-        if grid is None:
-            grid = pn.grid.Grid()
-        self.grid = grid
+        if len(args) == 1 and isinstance(args[0], pn.grid.Grid):
+            self.grid = grid
+        else:
+            self.grid = pn.grid.Grid(*args)
         self.data = {}
-        self.mask = None
 
     @property
     def function_args(self):
@@ -62,7 +62,7 @@ class GridData(pn.data.Data):
 
         self.data[var] = data
 
-    def get_array(self, var, flat=False, mask=False):
+    def get_array(self, var, flat=False):
         '''
         return array of data
 
@@ -74,10 +74,6 @@ class GridData(pn.data.Data):
         flat : bool
             if true return flattened (1d) array
         '''
-        if mask:
-            if not self.mask is None:
-                raise NotImplementedError('masking for griddata not yet implemented')
-
         if var in self.grid.vars:
             array = self.mgrid[self.grid.vars.index(var)]
         else:

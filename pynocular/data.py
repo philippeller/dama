@@ -20,7 +20,7 @@ class Data(object):
         pass
 
     def __getitem__(self, var):
-        return self.get_array(var, mask=True)
+        return self.get_array(var)
 
     def __setitem__(self, var, data):
         if callable(data):
@@ -145,6 +145,11 @@ class Data(object):
             # check source has grid variables
             for var in dest.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
+
+            # check dest grid is set up, otherwise do so
+            for var in dest.grid.vars:
+                if dest.grid[var].edges is None:
+                    dest.grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), dest.grid[var].nbins)
 
             # prepare arrays
             sample = [source.get_array(var, flat=True) for var in dest.grid.vars]

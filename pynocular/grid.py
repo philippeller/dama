@@ -10,15 +10,16 @@ class Dimension(object):
     Class to hold a single dimension of a Grid
     which can have points and/or edges
     '''
-    def __init__(self, var=None, mode=None, edges=None, points=None, min=None, max=None, n_points=None, n_edges=None):
+    def __init__(self, var=None, edges=None, points=None, nbins=10):
         self.var = var
-        self._mode = mode
-        self._min = min
-        self._max = max
-        self._n_points = n_points
-        self._n_edges = n_edges
+        #self._mode = mode
+        #self._min = min
+        #self._max = max
+        #self._n_points = n_points
+        #self._n_edges = n_edges
         self._edges = edges
         self._points = points
+        self._nbins = nbins
 
     def __len__(self):
         if self._points is not None:
@@ -39,13 +40,14 @@ class Dimension(object):
         True if either edges or points are not None
         '''
         return (self._edges is not None) or (self._points is not None)
-
+    
     @property
     def edges(self):
         if self._edges is not None:
             return self._edges
-        else:
+        elif self._points is not None:
             return self.edges_from_points()
+        return None
 
     @property
     def bin_edges(self):
@@ -65,8 +67,9 @@ class Dimension(object):
     def points(self):
         if self._points is not None:
             return self._points
-        else:
+        elif self._edges is not None:
             return self.points_from_edges()
+        return None
 
     @points.setter
     def points(self, points):
@@ -74,6 +77,20 @@ class Dimension(object):
             if not len(points) == len(self):
                 raise IndexError('incompatible length of points')
         self._points = points
+
+    @property
+    def nbins(self):
+        if self._points is None and self._edges is None:
+            return self._nbins
+        else:
+            return len(self.points)
+
+    @nbins.setter
+    def nbins(self, nbins):
+        if self._points is None and self._edges is None:
+            self._nbins = nbins
+        else:
+            raise ValueError('Cannot set n since bins are already defined')
 
     def edges_from_points(self):
         '''
@@ -94,7 +111,7 @@ class Grid(object):
     '''
     Class to hold grid-like points, such as bin edges
     '''
-    def __init__(self, dims=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         '''
         Paramters:
         ----------
@@ -104,16 +121,19 @@ class Grid(object):
         '''
         self.dims = OrderedDict()
 
-        if dims is None:
-            if len(kwargs) > 0:
-                self.add_dim(kwargs)
-        elif isinstance(dims, (list, self.__class__, Grid)):
-            for d in dims:
-                self.add_dim(d)
-        elif isinstance(dims, (dict, Dimension)):
-            self.add_dim(dims)
+        if len(args) == 0 and len(kwargs) > 0:
+            self.add_dim(kwargs)
+
         else:
-            raise TypeError('Cannot add type %s'%type(dims))
+            for d in args:
+                self.add_dim(d)
+        #elif isinstance(dims, (list, self.__class__, Grid)):
+        #    for d in dims:
+        #        self.add_dim(d)
+        #elif isinstance(dims, (dict, Dimension)):
+        #    self.add_dim(dims)
+        #else:
+        #    raise TypeError('Cannot add type %s'%type(dims))
 
     def add_dim(self, dim):
         '''

@@ -16,7 +16,6 @@ class PointData(Data):
         if data is None:
             data = {}
         super(PointData, self).__init__(data=data)
-        self.mask = None
 
     @property
     def vars(self):
@@ -27,8 +26,6 @@ class PointData(Data):
             return list(self.data.columns)
         elif self.type == 'dict':
             return self.data.keys()
-        elif self.type == 'struct_array':
-            return list(self.data.dtype.names)
         else:
             return []
 
@@ -37,8 +34,6 @@ class PointData(Data):
             return len(self.data)
         elif self.type == 'dict':
             return len(self.data[self.data.keys()[0]])
-        elif self.type == 'struct_array':
-            return len(self.data.shape[0])
 
     @property
     def array_shape(self):
@@ -58,21 +53,28 @@ class PointData(Data):
             self.type = 'dict'
         elif isinstance(data, np.ndarray):
             assert data.dtype.names is not None, 'unsctructured arrays not supported'
-            self.type = 'struct_array'
-        else:
-            raise NotImplementedError('data type not supported')
         self.data = data
 
-    def get_array(self, var, flat=False, mask=True):
+    def get_array(self, var, flat=False):
         if self.type == 'df':
             arr = self.data[var].values
         else:
             arr = self.data[var]
-        if mask and self.mask is not None:
-            return arr[self.mask]
-        else:
-            return arr
+        return arr
 
+    def __getitem__(self, var):
+        if isinstance(var, str):
+            if var in self.vars:
+                return self.get_array(var)
+        else:
+            # create new instance with mask or slice applied
+            if self.type == 'df':
+                return PointData(self.data[var])
+            else:
+                new_data = {}
+                for key, val in self.data.items():
+                    new_data[key] = val[var]
+                return PointData(new_data)
 
     def add_data(self, var, data):
         # TODO do some checks of shape etc
