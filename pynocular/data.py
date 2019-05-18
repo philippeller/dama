@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 from scipy import interpolate
 from KDEpy import FFTKDE
+import pynocular as pn
 
 class Data(object):
     '''
@@ -26,6 +27,15 @@ class Data(object):
     def __setitem__(self, var, data):
         if callable(data):
             new_data = data(self)
+            if isinstance(new_data, tuple):
+                if len(new_data) == 2:
+                    # we have a (data, grid) as return
+                    assert hasattr(self, 'grid')
+                    if self.grid.initialized:
+                        assert self.grid == new_data[1]
+                    else:
+                        self.grid = new_data[1]
+                    new_data = new_data[0]
         else:
             new_data = data
         return self.add_data(var, new_data)
@@ -66,6 +76,8 @@ class Data(object):
                 if wrt is not None:
                     raise TypeError('wrt cannot be defined for a grid destination')
 
+                grid = dest.grid
+
                 if method == 'cubic' and dest.grid.ndim > 2:
                     raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
                 source_data = source.get_array(source_var, flat=True)
@@ -83,7 +95,7 @@ class Data(object):
 
                 output = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
 
-                return output
+                return output, grid
 
             else:
                 if wrt is None:
@@ -236,26 +248,48 @@ class Data(object):
         '''
         source = self
 
-        def fun(dest):
-            if not hasattr(dest, 'grid'):
-                raise TypeError('destination must have a grid defined')
+        if method is None and function is None and source_var is None:
+            method = "count"
 
-            source_data = source.get_array(source_var, flat=True)
+        if source_var is None:
+            assert method == 'count'
+
+        if method is None and function is None:
+            method = "sum"
+
+        def fun(*args, **kwargs):
+            if len(args) == 1 and len(kwargs) == 0:
+                dest = args[0]
+                if isinstance(dest, pn.GridData):
+                    grid = dest.grid
+                elif isinstance(dest, pn.grid.Grid):
+                    grid = dest
+                #else:
+                #    raise TypeError('destination must have a grid defined')
+                else:
+                    grid = pn.grid.Grid(*args)
+            else:
+                grid = pn.grid.Grid(*args, **kwargs)
+
+            if source_var is None:
+                source_data = None
+            else:
+                source_data = source.get_array(source_var, flat=True)
 
             # check source has grid variables
-            for var in dest.grid.vars:
+            for var in grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # check dest grid is set up, otherwise do so
-            for var in dest.grid.vars:
-                if dest.grid[var].edges is None:
-                    dest.grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), dest.grid[var].nbins)
+            for var in grid.vars:
+                if grid[var].edges is None:
+                    grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
 
             # prepare arrays
-            sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
+            sample = [source.get_array(var, flat=True) for var in grid.vars]
 
             if method is not None:
-                bins = dest.grid.edges
+                bins = grid.edges
                 # generate hists
                 if method in ['sum', 'mean']:
                     weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
@@ -274,10 +308,10 @@ class Data(object):
                     output_map = weighted_hist
 
             elif function is not None:
-                indices = dest.grid.compute_indices(sample)
-                output_map = np.zeros(dest.grid.shape) * np.nan
+                indices = grid.compute_indices(sample)
+                output_map = np.zeros(grid.shape) * np.nan
 
-                grid_shape = dest.grid.shape
+                grid_shape = grid.shape
 
                 it = np.nditer(output_map, flags=['multi_index'])
 
@@ -288,13 +322,13 @@ class Data(object):
                         mask = np.logical_and(indices[i] == idx, mask)
                     bin_source_data = source_data[mask]
                     if len(bin_source_data) > 0:
-                        result = function(bin_source_data, **kwargs)
+                        result = function(bin_source_data) #, **kwargs)
                         output_map[out_idx] = result
                     it.iternext()
 
                 output_map[np.isnan(output_map)] = fill_value
 
-            return output_map
+            return output_map, grid
 
         return fun
 
@@ -311,6 +345,7 @@ class Data(object):
         if not hasattr(source, 'grid'):
             raise TypeError('source must have a grid defined')
 
+        grid = dest, grid
 
         def fun(dest):
             source_data = source.get_array(source_var)
@@ -356,6 +391,8 @@ class Data(object):
         if not hasattr(source, 'grid'):
             raise TypeError('source must have a grid defined')
 
+        grid = dest.grid
+
         def fun(dest):
             if not hasattr(dest, 'grid'):
                 raise TypeError('destination must have a grid defined')
@@ -399,7 +436,7 @@ class Data(object):
                 # where counts is <=1, replace hist by lookups
                 mask  = counts <= 1
                 hist[mask] = lookup_array[mask]
-                return hist
+                return hist, grid
             else:
                 raise NotImplementedError('method %s unknown'%method)
         return fun
@@ -443,8 +480,11 @@ class Data(object):
                 if wrt is not None:
                     raise TypeError('wrt cannot be defined for a grid destination')
 
+                grid = dest.grid
                 this_wrt = dest.grid.vars
             else:
+
+                grid = None
                 if wrt is None:
                     # need to reassign variable because of scope
                     this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
@@ -472,7 +512,10 @@ class Data(object):
                     mask = np.logical_and(mask, source_sample[j] >= dest_sample[j, i] + window[j][0])
                     mask = np.logical_and(mask, source_sample[j] <= dest_sample[j, i] + window[j][1])
                 output[i] = function(source_data[mask], **kwargs)
+    
+            if grid is None:
+                return output
+            return output, grid
 
-            return output
 
         return fun

@@ -128,20 +128,14 @@ class Grid(object):
         '''
         self.dims = OrderedDict()
 
-        if len(args) == 0 and len(kwargs) > 0:
-            self.add_dim(kwargs)
+        for d in args:
+            self.add_dim(d)
 
-        else:
-            for d in args:
-                self.add_dim(d)
-        #elif isinstance(dims, (list, self.__class__, Grid)):
-        #    for d in dims:
-        #        self.add_dim(d)
-        #elif isinstance(dims, (dict, Dimension)):
-        #    self.add_dim(dims)
-        #else:
-        #    raise TypeError('Cannot add type %s'%type(dims))
-
+        for d,x in kwargs.items():
+            if isinstance(x, int):
+                self.add_dim(Dimension(var=d[0], nbins=x))
+            else:
+                self.add_dim(Dimension(var=d[0], edges=x))
 
     def add_dim(self, dim):
         '''
@@ -163,6 +157,13 @@ class Grid(object):
             self.add_dim(new_dim)
         else:
             raise TypeError('Cannot add type %s'%type(dim))
+
+    @property
+    def initialized(self):
+        '''
+        wether the gri is set or not
+        '''
+        return all([edge is not None for edge in self.edges])
 
     @property
     def ndim(self):
