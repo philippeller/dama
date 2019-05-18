@@ -11,6 +11,11 @@ class Dimension(object):
     which can have points and/or edges
     '''
     def __init__(self, var=None, edges=None, points=None, nbins=10):
+
+        if isinstance(edges, list): edges = np.array(edges)
+        if edges is not None:
+            assert len(edges) > 1, 'Edges must be at least length 2'
+        if isinstance(points, list): points = np.array(points)
         self.var = var
         #self._mode = mode
         #self._min = min
@@ -32,6 +37,7 @@ class Dimension(object):
         strs = []
         strs.append('(points) %s'%(self._points))
         strs.append('(edges)  %s'%(self._edges))
+        strs.append('(nbins)  %s'%(self.nbins))
         return '\n'.join(strs)
 
     def __repr__(self):
@@ -39,6 +45,7 @@ class Dimension(object):
         strs.append('Dimension("%s",'%self.var)
         strs.append('points = %s,'%(self._points.__repr__()))
         strs.append('edges = %s)'%(self._edges.__repr__()))
+        strs.append('nbins = %s)'%(self.nbins))
         return '\n'.join(strs)
 
     @property
@@ -110,7 +117,10 @@ class Dimension(object):
         '''
         create points from centers between edges
         '''
-        return 0.5 * (self.edges[1:] + self.edges[:-1])
+        points = 0.5 * (self.edges[1:] + self.edges[:-1])
+        if isinstance(points, Number):
+            return np.array(points)
+        return points
 
 
 
@@ -163,7 +173,7 @@ class Grid(object):
         '''
         wether the gri is set or not
         '''
-        return all([edge is not None for edge in self.edges])
+        return self.ndim > 0 and all([edge is not None for edge in self.edges])
 
     @property
     def ndim(self):

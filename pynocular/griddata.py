@@ -7,15 +7,15 @@ class GridData(pn.data.Data):
     '''
     Class to hold grid data
     '''
-    def __init__(self, *args):
+    def __init__(self, *args, **kwargs):
         '''
         Set the grid
         '''
         super(GridData, self).__init__(data=None)
-        if len(args) == 1 and isinstance(args[0], pn.grid.Grid):
-            self.grid = grid
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
+            self.grid = args[0]
         else:
-            self.grid = pn.grid.Grid(*args)
+            self.grid = pn.grid.Grid(*args, **kwargs)
         self.data = {}
 
     @property
@@ -28,6 +28,22 @@ class GridData(pn.data.Data):
         Available variables in this layer
         '''
         return self.grid.vars + list(self.data.keys())
+
+    @property
+    def data_vars(self):
+        '''
+        only data variables (no grid vars)
+        '''
+        return list(self.data.keys())
+
+    def rename(self, old, new):
+        self.data[new] = self.data.pop(old)
+
+    def update(self, new_data):
+        if not self.grid.initialized:
+            self.grid = new_data.grid
+        assert self.grid == new_data.grid
+        self.data.update(new_data.data)
 
     @property
     def shape(self):
@@ -85,6 +101,14 @@ class GridData(pn.data.Data):
 
     def flat(self, var):
         return self.get_array(var, flat=True)
+
+    def plot(self, var=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
+        if self.ndim == 1:
+            return self.plot_step(var, **kwargs)
+        elif self.ndim == 2:
+            return self.plot_map(var, **kwargs)
 
     def plot_map(self, var, cbar=False, fig=None, ax=None, **kwargs):
         '''

@@ -4,6 +4,32 @@ from scipy import interpolate
 from KDEpy import FFTKDE
 import pynocular as pn
 
+
+def get_grid(source, *args, **kwargs):
+    '''
+    Return correctly set up grid, depending on the supplied input
+    '''
+    if len(args) == 1 and len(kwargs) == 0:
+        dest = args[0]
+        if isinstance(dest, pn.GridData):
+            return dest.grid
+        if isinstance(dest, pn.grid.Grid):
+            return dest
+
+    # check if source has a grid and if any args are in there
+    if isinstance(source, pn.GridData):
+        dims = []
+        for arg in args:
+            # in thsio case the source may have a grid, get those edges
+            if isinstance(arg, str):
+                if arg in source.grid.vars:
+                    dims.append(source.grid[arg])
+                else:
+                    dims.append[arg]
+        args = dims
+
+    return pn.grid.Grid(*args, **kwargs)
+
 class Data(object):
     '''
     Data base class to hold any form of data representation
@@ -27,18 +53,23 @@ class Data(object):
     def __setitem__(self, var, data):
         if callable(data):
             new_data = data(self)
-            if isinstance(new_data, tuple):
-                if len(new_data) == 2:
-                    # we have a (data, grid) as return
-                    assert hasattr(self, 'grid')
-                    if self.grid.initialized:
-                        assert self.grid == new_data[1]
-                    else:
-                        self.grid = new_data[1]
-                    new_data = new_data[0]
         else:
             new_data = data
-        return self.add_data(var, new_data)
+        if isinstance(new_data, type(self)):
+            # rename to desired var name
+            new_data.rename(new_data.data_vars[0], var)
+            self.update(new_data)
+            return
+
+            #if len(new_data) == 2:
+            #    # we have a (data, grid) as return
+            #    assert hasattr(self, 'grid')
+            #    if self.grid.initialized:
+            #        assert self.grid == new_data[1]
+            #    else:
+            #        self.grid = new_data[1]
+            #    new_data = new_data[0]
+        self.add_data(var, new_data)
 
     def __len__(self):
         return 0
@@ -135,100 +166,6 @@ class Data(object):
         return fun
 
 
-    def kde(self, source_var=None, method='silverman', wrt=None):
-        '''
-        interpolation from array data into grids
-
-        Parameters:
-        -----------
-        source_var : string
-            input variable
-        method : string
-        wrt : tuple
-            specifying the variable with respect to which the interpolation is done
-            None for griddata (will be wrt the r=destination grid)
-        fill_value : optional
-            value for invalid points
-        '''
-        source = self
-        if isinstance(wrt, str):
-            wrt = [wrt]
-
-        def fun(dest):
-            if hasattr(dest, 'grid'):
-                if wrt is not None:
-                    raise TypeError('wrt cannot be defined for a grid destination')
-
-                if dest.grid.ndim > 1:
-                    raise NotImplementedError('currently not implemented > 1d')
-                source_data = source.get_array(source_var, flat=True)
-
-                mask = np.isfinite(source_data)
-
-                # check source has grid variables
-                for var in dest.grid.vars:
-                    assert(var in source.vars), '%s not in %s'%(var, source.vars)
-
-                # prepare arrays
-
-                # 1d atm
-                sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
-                sample = sample[0]
-                #sample = np.vstack(sample)
-                #xi = dest.mgrid
-                #estimator = FFTKDE(kernel='biweight', bw=method)
-                print(sample)
-                print(source_data[mask])
-                print(dest.grid[0].points)
-                
-                output = FFTKDE(bw=method).fit(sample, source_data[mask]).evaluate(dest.grid[0].points)
-
-                #output = estimator.fit(sample, weights=source_data[mask]).evaluate(xi)
-                #output = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
-
-                return output
-
-            else:
-                raise NotImplementedError()
-                #if wrt is None:
-                #    # need to reassign variable because of scope
-                #    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
-                #    print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
-                #else:
-                #    this_wrt = wrt
-
-                #if not set(this_wrt) <= set(dest.vars):
-                #    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
-
-                #if len(this_wrt) == 1:
-                #    f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                #    output = f(dest[this_wrt[0]])
-
-                #elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
-                #    f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                #    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
-
-                #elif method in ['nearest', 'linear']:
-                #    sample = [source.get_array(var, flat=True) for var in this_wrt]
-                #    sample = np.vstack(sample).T
-                #    if method == 'nearest':
-                #        f = interpolate.NearestNDInterpolator(sample, source[source_var])
-                #    else:
-                #        f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
-                #    out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
-                #    out_sample = np.vstack(out_sample).T
-                #    output = f(out_sample)
-
-                #else:
-                #    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
-
-                #return output
-
-        return fun
-
-
-
-
     def histogram(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
         '''
         translation from array data into binned form
@@ -258,18 +195,8 @@ class Data(object):
             method = "sum"
 
         def fun(*args, **kwargs):
-            if len(args) == 1 and len(kwargs) == 0:
-                dest = args[0]
-                if isinstance(dest, pn.GridData):
-                    grid = dest.grid
-                elif isinstance(dest, pn.grid.Grid):
-                    grid = dest
-                #else:
-                #    raise TypeError('destination must have a grid defined')
-                else:
-                    grid = pn.grid.Grid(*args)
-            else:
-                grid = pn.grid.Grid(*args, **kwargs)
+            grid = get_grid(source, *args, **kwargs)
+            output = pn.GridData(grid)
 
             if source_var is None:
                 source_data = None
@@ -327,8 +254,16 @@ class Data(object):
                     it.iternext()
 
                 output_map[np.isnan(output_map)] = fill_value
+        
+        
+            if source_var is None:
+                out_name = 'counts'
+            else:
+                out_name = source_var
 
-            return output_map, grid
+            output[out_name] = output_map
+
+            return output
 
         return fun
 
@@ -345,9 +280,9 @@ class Data(object):
         if not hasattr(source, 'grid'):
             raise TypeError('source must have a grid defined')
 
-        grid = dest, grid
+        def fun(*args, **kwargs):
+            grid = get_grid(source, *args, **kwargs)
 
-        def fun(dest):
             source_data = source.get_array(source_var)
 
             # check dest has grid variables
@@ -391,21 +326,18 @@ class Data(object):
         if not hasattr(source, 'grid'):
             raise TypeError('source must have a grid defined')
 
-        grid = dest.grid
+        def fun(*args, **kwargs):
+            grid = get_grid(source, *args, **kwargs)
 
-        def fun(dest):
-            if not hasattr(dest, 'grid'):
-                raise TypeError('destination must have a grid defined')
-
-            assert dest.grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
+            assert grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
 
             if method == 'simple':
                 # first histogram points of source into destination
                 source_data = source.get_array(source_var, flat=True)
                 # prepare arrays
-                sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
+                sample = [source.get_array(var, flat=True) for var in grid.vars]
 
-                bins = dest.grid.edges
+                bins = grid.edges
                 # generate hists
                 hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
                 counts, _ = np.histogramdd(sample=sample, bins=bins)
@@ -414,6 +346,9 @@ class Data(object):
 
                 # then lookup destination points in source
                 # prepare arrays
+
+                # fixme
+
                 sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
                 source_data = source.get_array(source_var)

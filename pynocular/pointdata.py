@@ -25,9 +25,22 @@ class PointData(Data):
         if self.type == 'df':
             return list(self.data.columns)
         elif self.type == 'dict':
-            return self.data.keys()
+            return list(self.data.keys())
         else:
             return []
+
+    @property
+    def data_vars(self):
+        return self.vars
+
+    def rename(self, old, new):
+        if self.type == 'df':
+            self.data.rename(columns={old:new}, inplace=True)
+        elif self.type == 'dict':
+            self.data[new] = self.data.pop(old)
+
+    def update(self, new_data):
+        self.data.update(new_data.data)
 
     def __len__(self):
         if self.type == 'df':
