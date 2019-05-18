@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import numpy as np
 from scipy import interpolate
+from KDEpy import FFTKDE
 
 class Data(object):
     '''
@@ -32,6 +33,11 @@ class Data(object):
     def __len__(self):
         return 0
 
+    def __repr__(self):
+        return 'Data(%s)'%self.data.__repr__()
+
+    def __str__(self):
+        return self.data.__str__()
 
     def interpolate(self, source_var=None, method=None, wrt=None, fill_value=np.nan):
         '''
@@ -115,6 +121,100 @@ class Data(object):
                 return output
 
         return fun
+
+
+    def kde(self, source_var=None, method='silverman', wrt=None):
+        '''
+        interpolation from array data into grids
+
+        Parameters:
+        -----------
+        source_var : string
+            input variable
+        method : string
+        wrt : tuple
+            specifying the variable with respect to which the interpolation is done
+            None for griddata (will be wrt the r=destination grid)
+        fill_value : optional
+            value for invalid points
+        '''
+        source = self
+        if isinstance(wrt, str):
+            wrt = [wrt]
+
+        def fun(dest):
+            if hasattr(dest, 'grid'):
+                if wrt is not None:
+                    raise TypeError('wrt cannot be defined for a grid destination')
+
+                if dest.grid.ndim > 1:
+                    raise NotImplementedError('currently not implemented > 1d')
+                source_data = source.get_array(source_var, flat=True)
+
+                mask = np.isfinite(source_data)
+
+                # check source has grid variables
+                for var in dest.grid.vars:
+                    assert(var in source.vars), '%s not in %s'%(var, source.vars)
+
+                # prepare arrays
+
+                # 1d atm
+                sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
+                sample = sample[0]
+                #sample = np.vstack(sample)
+                #xi = dest.mgrid
+                #estimator = FFTKDE(kernel='biweight', bw=method)
+                print(sample)
+                print(source_data[mask])
+                print(dest.grid[0].points)
+                
+                output = FFTKDE(bw=method).fit(sample, source_data[mask]).evaluate(dest.grid[0].points)
+
+                #output = estimator.fit(sample, weights=source_data[mask]).evaluate(xi)
+                #output = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
+
+                return output
+
+            else:
+                raise NotImplementedError()
+                #if wrt is None:
+                #    # need to reassign variable because of scope
+                #    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+                #    print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
+                #else:
+                #    this_wrt = wrt
+
+                #if not set(this_wrt) <= set(dest.vars):
+                #    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
+
+                #if len(this_wrt) == 1:
+                #    f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                #    output = f(dest[this_wrt[0]])
+
+                #elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
+                #    f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                #    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
+
+                #elif method in ['nearest', 'linear']:
+                #    sample = [source.get_array(var, flat=True) for var in this_wrt]
+                #    sample = np.vstack(sample).T
+                #    if method == 'nearest':
+                #        f = interpolate.NearestNDInterpolator(sample, source[source_var])
+                #    else:
+                #        f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
+                #    out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
+                #    out_sample = np.vstack(out_sample).T
+                #    output = f(out_sample)
+
+                #else:
+                #    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
+
+                #return output
+
+        return fun
+
+
 
 
     def histogram(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):

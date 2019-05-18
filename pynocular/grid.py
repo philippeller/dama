@@ -34,6 +34,13 @@ class Dimension(object):
         strs.append('(edges)  %s'%(self._edges))
         return '\n'.join(strs)
 
+    def __repr__(self):
+        strs = []
+        strs.append('Dimension("%s",'%self.var)
+        strs.append('points = %s,'%(self._points.__repr__()))
+        strs.append('edges = %s)'%(self._edges.__repr__()))
+        return '\n'.join(strs)
+
     @property
     def has_data(self):
         '''
@@ -135,6 +142,7 @@ class Grid(object):
         #else:
         #    raise TypeError('Cannot add type %s'%type(dims))
 
+
     def add_dim(self, dim):
         '''
         add aditional Dimension
@@ -214,10 +222,18 @@ class Grid(object):
         '''
         string representation
         '''
-        str = []
+        strs = []
         for dim in self.dims.items():
-            str.append('%s : %s'%dim)
-        return '\n'.join(str)
+            strs.append('%s'%dim)
+        return '\n'.join(strs)
+
+    def __repr__(self):
+        strs = []
+        strs.append('Grid(')
+        for dim in self.dims.items():
+            strs.append('%s,'%dim[1].__repr__())
+        strs[-1] += ')'
+        return '\n'.join(strs)
 
     def __iter__(self):
         '''
