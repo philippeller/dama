@@ -46,7 +46,7 @@ class PointData(Data):
         if self.type == 'df':
             return len(self.data)
         elif self.type == 'dict':
-            return len(self.data[self.data.keys()[0]])
+            return len(self.data[list(self.data.keys())[0]])
 
     @property
     def array_shape(self):

@@ -294,7 +294,9 @@ class Data(object):
             raise TypeError('source must have a grid defined')
 
         def fun(*args, **kwargs):
-            grid = get_grid(source, *args, **kwargs)
+            #grid = get_grid(source, *args, **kwargs)
+
+            dest = args[0]
 
             source_data = source.get_array(source_var)
 
@@ -341,34 +343,23 @@ class Data(object):
 
         def fun(*args, **kwargs):
             grid = get_grid(source, *args, **kwargs)
+            output = pn.GridData(grid)
 
             assert grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
 
             if method == 'simple':
-                # first histogram points of source into destination
-                source_data = source.get_array(source_var, flat=True)
-                # prepare arrays
-                sample = [source.get_array(var, flat=True) for var in grid.vars]
 
-                bins = grid.edges
-                # generate hists
-                hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
-                counts, _ = np.histogramdd(sample=sample, bins=bins)
-                mask = counts > 0
-                hist[mask] /= counts[mask]
-
-                # then lookup destination points in source
-                # prepare arrays
-
-                # fixme
-
-                sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
-
+                # we need a super sample of points, i.e. meshgrids of all combinations of source and dest
+                # so first create for every dest.grid.var a vector of both, src and dest points
+                lookup_sample = [np.concatenate([output.grid[var].points, source.grid[var].points]) for var in grid.vars]
+                mesh = np.meshgrid(*lookup_sample)
+                lookup_sample = [m.flatten() for m in mesh]
+                
+                # lookup values
                 source_data = source.get_array(source_var)
-                indices = source.grid.compute_indices(sample)
+                indices = source.grid.compute_indices(lookup_sample)
                 grid_shape = source.grid.shape
-                lookup_array = np.ones(np.product(dest.array_shape)) * np.nan
-                #TODO: make this better
+                lookup_array = np.ones(lookup_sample[0].shape[0]) * np.nan
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
                     ind = indices[:, i]
@@ -379,12 +370,15 @@ class Data(object):
                         idx = tuple(ind)
                         lookup_array[i] = source_data[idx]
 
-                lookup_array =  lookup_array.reshape(dest.array_shape)
+                # now bin both these points into destination
+                bins = grid.edges
+                lu_hist, _ = np.histogramdd(sample=lookup_sample, bins=bins, weights=lookup_array)
+                lu_counts, _ = np.histogramdd(sample=lookup_sample, bins=bins)
+                lu_hist /= lu_counts
 
-                # where counts is <=1, replace hist by lookups
-                mask  = counts <= 1
-                hist[mask] = lookup_array[mask]
-                return hist, grid
+                output[source_var] = lu_hist
+
+                return output
             else:
                 raise NotImplementedError('method %s unknown'%method)
         return fun
