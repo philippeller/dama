@@ -235,7 +235,7 @@ class Grid(object):
         '''
         strs = []
         for dim in self.dims.items():
-            strs.append('%s'%dim)
+            strs.append('%s : %s'%dim)
         return '\n'.join(strs)
 
     def __repr__(self):

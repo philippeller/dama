@@ -24,11 +24,24 @@ def get_grid(source, *args, **kwargs):
             if isinstance(arg, str):
                 if arg in source.grid.vars:
                     dims.append(source.grid[arg])
-                else:
-                    dims.append[arg]
+                    continue
+            dims.append[arg]
         args = dims
 
-    return pn.grid.Grid(*args, **kwargs)
+    # instantiate
+    grid = pn.grid.Grid(*args, **kwargs)
+
+    # check dest grid is set up, otherwise do so
+    for var in grid.vars:
+        if grid[var].edges is None:
+            # check if it might be from a grid
+            if isinstance(source, pn.GridData):
+                if var in source.grid.vars:
+                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], grid[var].nbins+1)
+                    continue
+            grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
+
+    return grid
 
 class Data(object):
     '''
@@ -102,66 +115,71 @@ class Data(object):
         if isinstance(wrt, str):
             wrt = [wrt]
 
-        def fun(dest):
-            if hasattr(dest, 'grid'):
-                if wrt is not None:
-                    raise TypeError('wrt cannot be defined for a grid destination')
-
-                grid = dest.grid
-
-                if method == 'cubic' and dest.grid.ndim > 2:
-                    raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-                source_data = source.get_array(source_var, flat=True)
-
-                mask = np.isfinite(source_data)
-
-                # check source has grid variables
-                for var in dest.grid.vars:
-                    assert(var in source.vars), '%s not in %s'%(var, source.vars)
-
-                # prepare arrays
-                sample = [source.get_array(var, flat=True)[mask] for var in dest.grid.vars]
-                sample = np.vstack(sample)
-                xi = dest.mgrid
-
-                output = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
-
-                return output, grid
-
-            else:
-                if wrt is None:
-                    # need to reassign variable because of scope
-                    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
-                    print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
-                else:
-                    this_wrt = wrt
-
-                if not set(this_wrt) <= set(dest.vars):
-                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
-
-                if len(this_wrt) == 1:
-                    f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = f(dest[this_wrt[0]])
-
-                elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
-                    f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
-
-                elif method in ['nearest', 'linear']:
-                    sample = [source.get_array(var, flat=True) for var in this_wrt]
-                    sample = np.vstack(sample).T
-                    if method == 'nearest':
-                        f = interpolate.NearestNDInterpolator(sample, source[source_var])
+        def fun(*args, **kwargs):
+            if len(args) == 1 and len(kwargs) == 0:
+                if isinstance(args[0], pn.PointData):
+                    dest = args[0]
+                    if wrt is None:
+                        # need to reassign variable because of scope
+                        this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+                        print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
                     else:
-                        f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
-                    out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
-                    out_sample = np.vstack(out_sample).T
-                    output = f(out_sample)
+                        this_wrt = wrt
 
-                else:
-                    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
+                    if not set(this_wrt) <= set(dest.vars):
+                        raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
 
-                return output
+                    if len(this_wrt) == 1:
+                        f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                        output = f(dest[this_wrt[0]])
+
+                    elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
+                        f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                        output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
+
+                    elif method in ['nearest', 'linear']:
+                        sample = [source.get_array(var, flat=True) for var in this_wrt]
+                        sample = np.vstack(sample).T
+                        if method == 'nearest':
+                            f = interpolate.NearestNDInterpolator(sample, source[source_var])
+                        else:
+                            f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
+                        out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
+                        out_sample = np.vstack(out_sample).T
+                        output = f(out_sample)
+
+                    else:
+                        raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
+
+                    return output
+
+            grid = get_grid(source, *args, **kwargs)
+            output = pn.GridData(grid)
+
+            if wrt is not None:
+                raise TypeError('wrt cannot be defined for a grid destination')
+
+            if method == 'cubic' and grid.ndim > 2:
+                raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
+            source_data = source.get_array(source_var, flat=True)
+
+            mask = np.isfinite(source_data)
+
+            # check source has grid variables
+            for var in grid.vars:
+                assert(var in source.vars), '%s not in %s'%(var, source.vars)
+
+            # prepare arrays
+            sample = [source.get_array(var, flat=True)[mask] for var in grid.vars]
+            sample = np.vstack(sample)
+            
+            xi = grid.point_mgrid
+
+            output_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
+
+            output[source_var] = output_map
+
+            return output
 
         return fun
 
@@ -206,11 +224,6 @@ class Data(object):
             # check source has grid variables
             for var in grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
-
-            # check dest grid is set up, otherwise do so
-            for var in grid.vars:
-                if grid[var].edges is None:
-                    grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
 
             # prepare arrays
             sample = [source.get_array(var, flat=True) for var in grid.vars]
