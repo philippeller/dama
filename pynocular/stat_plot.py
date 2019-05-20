@@ -45,7 +45,7 @@ def plot_points_2d(layer, x, y, s=None, c=None, cbar=False, fig=None, ax=None, *
     else:
         assert not cbar
     if s is not None:
-        if isinstance(s, basestring):
+        if isinstance(s, str):
             s = layer[s]
     sc = ax.scatter(layer[x], layer[y], s=s, c=c, **kwargs)
     if cbar:
@@ -113,7 +113,7 @@ def plot_errorband(layer, var, errors, fig=None, ax=None, **kwargs):
     if isinstance(errors, (tuple, list)):
         lower_error = layer[errors[0]]
         upper_error = layer[errors[1]]
-    elif isinstance(errors, basestring):
+    elif isinstance(errors, str):
         lower_error = layer[errors]
         upper_error = lower_error
     else:
