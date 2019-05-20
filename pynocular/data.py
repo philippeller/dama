@@ -5,15 +5,17 @@ from KDEpy import FFTKDE
 import pynocular as pn
 
 
-def get_grid(source, *args, **kwargs):
+def generate_destination(source, *args, **kwargs):
     '''
     Return correctly set up grid, depending on the supplied input
     '''
     if len(args) == 1 and len(kwargs) == 0:
         dest = args[0]
         if isinstance(dest, pn.GridData):
-            return dest.grid
+            return dest
         if isinstance(dest, pn.grid.Grid):
+            return pn.GridData(dest)
+        if isinstance(dest, pn.PointData):
             return dest
 
     # check if source has a grid and if any args are in there
@@ -41,7 +43,7 @@ def get_grid(source, *args, **kwargs):
                     continue
             grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
 
-    return grid
+    return pn.GridData(grid)
 
 class Data(object):
     '''
@@ -116,64 +118,62 @@ class Data(object):
             wrt = [wrt]
 
         def fun(*args, **kwargs):
-            if len(args) == 1 and len(kwargs) == 0:
-                if isinstance(args[0], pn.PointData):
-                    dest = args[0]
-                    if wrt is None:
-                        # need to reassign variable because of scope
-                        this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
-                        print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
+            output = generate_destination(source, *args, **kwargs)
+
+            if isinstance(output, pn.PointData):
+                dest = args[0]
+                if wrt is None:
+                    # need to reassign variable because of scope
+                    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+                    print('Automatic interpolation with respect to %s'%', '.join(this_wrt))
+                else:
+                    this_wrt = wrt
+
+                if not set(this_wrt) <= set(dest.vars):
+                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
+
+                if len(this_wrt) == 1:
+                    f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = f(dest[this_wrt[0]])
+
+                elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
+                    f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
+                    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
+
+                elif method in ['nearest', 'linear']:
+                    sample = [source.get_array(var, flat=True) for var in this_wrt]
+                    sample = np.vstack(sample).T
+                    if method == 'nearest':
+                        f = interpolate.NearestNDInterpolator(sample, source[source_var])
                     else:
-                        this_wrt = wrt
+                        f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
+                    out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
+                    out_sample = np.vstack(out_sample).T
+                    output = f(out_sample)
 
-                    if not set(this_wrt) <= set(dest.vars):
-                        raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
+                else:
+                    raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
 
-                    if len(this_wrt) == 1:
-                        f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                        output = f(dest[this_wrt[0]])
-
-                    elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
-                        f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                        output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
-
-                    elif method in ['nearest', 'linear']:
-                        sample = [source.get_array(var, flat=True) for var in this_wrt]
-                        sample = np.vstack(sample).T
-                        if method == 'nearest':
-                            f = interpolate.NearestNDInterpolator(sample, source[source_var])
-                        else:
-                            f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
-                        out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
-                        out_sample = np.vstack(out_sample).T
-                        output = f(out_sample)
-
-                    else:
-                        raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
-
-                    return output
-
-            grid = get_grid(source, *args, **kwargs)
-            output = pn.GridData(grid)
+                return output
 
             if wrt is not None:
                 raise TypeError('wrt cannot be defined for a grid destination')
 
-            if method == 'cubic' and grid.ndim > 2:
+            if method == 'cubic' and output.grid.ndim > 2:
                 raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
             source_data = source.get_array(source_var, flat=True)
 
             mask = np.isfinite(source_data)
 
             # check source has grid variables
-            for var in grid.vars:
+            for var in output.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # prepare arrays
-            sample = [source.get_array(var, flat=True)[mask] for var in grid.vars]
+            sample = [source.get_array(var, flat=True)[mask] for var in output.grid.vars]
             sample = np.vstack(sample)
             
-            xi = grid.point_mgrid
+            xi = output.grid.point_mgrid
 
             output_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
 
@@ -198,8 +198,6 @@ class Data(object):
             "mean" = weighted histogram / histogram
             "count" = histogram
         function : callable
-        kwargs : additional keyword arguments
-            will be passed to `function`
         '''
         source = self
 
@@ -213,8 +211,7 @@ class Data(object):
             method = "sum"
 
         def fun(*args, **kwargs):
-            grid = get_grid(source, *args, **kwargs)
-            output = pn.GridData(grid)
+            output = generate_destination(source, *args, **kwargs)
 
             if source_var is None:
                 source_data = None
@@ -222,14 +219,14 @@ class Data(object):
                 source_data = source.get_array(source_var, flat=True)
 
             # check source has grid variables
-            for var in grid.vars:
+            for var in output.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # prepare arrays
-            sample = [source.get_array(var, flat=True) for var in grid.vars]
+            sample = [source.get_array(var, flat=True) for var in output.grid.vars]
 
             if method is not None:
-                bins = grid.edges
+                bins = output.grid.edges
                 # generate hists
                 if method in ['sum', 'mean']:
                     weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
@@ -248,10 +245,8 @@ class Data(object):
                     output_map = weighted_hist
 
             elif function is not None:
-                indices = grid.compute_indices(sample)
-                output_map = np.zeros(grid.shape) * np.nan
-
-                grid_shape = grid.shape
+                indices = output.grid.compute_indices(sample)
+                output_map = np.zeros(output.grid.shape) * np.nan
 
                 it = np.nditer(output_map, flags=['multi_index'])
 
@@ -262,7 +257,7 @@ class Data(object):
                         mask = np.logical_and(indices[i] == idx, mask)
                     bin_source_data = source_data[mask]
                     if len(bin_source_data) > 0:
-                        result = function(bin_source_data) #, **kwargs)
+                        result = function(bin_source_data) 
                         output_map[out_idx] = result
                     it.iternext()
 
@@ -294,9 +289,7 @@ class Data(object):
             raise TypeError('source must have a grid defined')
 
         def fun(*args, **kwargs):
-            #grid = get_grid(source, *args, **kwargs)
-
-            dest = args[0]
+            dest = generate_destination(source, *args, **kwargs)
 
             source_data = source.get_array(source_var)
 
@@ -309,8 +302,6 @@ class Data(object):
             sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
             indices = source.grid.compute_indices(sample)
-            grid_shape = source.grid.shape
-            #output_array = np.ones(dest.array_shape) * np.nan
             output_array = np.ones(np.product(dest.array_shape)) * np.nan
 
             #TODO: make this better
@@ -319,12 +310,13 @@ class Data(object):
                 ind = indices[:, i]
                 inside = True
                 for j in range(len(ind)):
-                    inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
+                    inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
                 if inside:
                     idx = tuple(ind)
                     output_array[i] = source_data[idx]
 
-            return output_array.reshape(dest.array_shape)
+            dest[source_var] = output_array
+            return dest
 
         return fun
 
@@ -342,36 +334,34 @@ class Data(object):
             raise TypeError('source must have a grid defined')
 
         def fun(*args, **kwargs):
-            grid = get_grid(source, *args, **kwargs)
-            output = pn.GridData(grid)
+            output = generate_destination(source, *args, **kwargs)
 
-            assert grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
+            assert output.grid.vars == source.grid.vars, 'grid variables of source and destination must be identical'
 
             if method == 'simple':
 
                 # we need a super sample of points, i.e. meshgrids of all combinations of source and dest
                 # so first create for every dest.grid.var a vector of both, src and dest points
-                lookup_sample = [np.concatenate([output.grid[var].points, source.grid[var].points]) for var in grid.vars]
+                lookup_sample = [np.concatenate([output.grid[var].points, source.grid[var].points]) for var in output.grid.vars]
                 mesh = np.meshgrid(*lookup_sample)
                 lookup_sample = [m.flatten() for m in mesh]
                 
                 # lookup values
                 source_data = source.get_array(source_var)
                 indices = source.grid.compute_indices(lookup_sample)
-                grid_shape = source.grid.shape
                 lookup_array = np.ones(lookup_sample[0].shape[0]) * np.nan
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
                     ind = indices[:, i]
                     inside = True
                     for j in range(len(ind)):
-                        inside = inside and not ind[j] < 0 and not ind[j] >= grid_shape[j]
+                        inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
                     if inside:
                         idx = tuple(ind)
                         lookup_array[i] = source_data[idx]
 
                 # now bin both these points into destination
-                bins = grid.edges
+                bins = output.grid.edges
                 lu_hist, _ = np.histogramdd(sample=lookup_sample, bins=bins, weights=lookup_array)
                 lu_counts, _ = np.histogramdd(sample=lookup_sample, bins=bins)
                 lu_hist /= lu_counts
