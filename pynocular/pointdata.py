@@ -13,9 +13,15 @@ class PointData(Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
-    def __init__(self, data=None):
-        if data is None:
+    def __init__(self, *args, **kwargs):
+        if len(args) == 0 and len(kwargs) == 0:
             data = OrderedDict()
+        elif len(args) == 1 and len(kwargs) == 0:
+            data = OrderedDict(args[0])
+        elif len(args) == 0 and len(kwargs) > 0:
+            data = OrderedDict(kwargs)
+        else:
+            raise ValueError("Did not understand input arguments")
         super(PointData, self).__init__(data=data)
 
     @property
@@ -29,6 +35,10 @@ class PointData(Data):
             return list(self.data.keys())
         else:
             return []
+
+    @property
+    def ndims(self):
+        return len(self.vars)
 
     @property
     def type(self):
@@ -68,8 +78,8 @@ class PointData(Data):
         Set the data
         '''
         # TODO: run some compatibility cheks
-        if isinstance(data, np.ndarray):
-            assert data.dtype.names is not None, 'unsctructured arrays not supported'
+        #if isinstance(data, np.ndarray):
+        #    assert data.dtype.names is not None, 'unsctructured arrays not supported'
         self.data = data
 
     def get_array(self, var, flat=False):
@@ -95,13 +105,19 @@ class PointData(Data):
 
     def add_data(self, var, data):
         # TODO do some checks of shape etc
-        if self.type == 'struct_array':
-            raise TypeError('cannot append rows to structured np array')
+        #if self.type == 'struct_array':
+        #    raise TypeError('cannot append rows to structured np array')
         self.data[var] = data
 
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
         plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
-    def plot(self, x, y, *args, **kwargs):
-        plot(self, x, y, *args, **kwargs)
+    def plot(self, *args, **kwargs):
+        if len(args) > 1:
+            plot(self, args[0], args[1], *args[2:], **kwargs)
+        elif self.ndims == 2:
+            plot(self, *self.vars, *args, **kwargs)
+        else:
+            raise ValueError('Need to specify variables to plot')
+
 

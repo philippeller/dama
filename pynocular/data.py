@@ -9,9 +9,6 @@ def initialize_grid(grid, source):
     if grid is not fully set up, derive grid from source
     '''
     # check dest grid is set up, otherwise do so
-    print(grid)
-    print(source.vars)
-
     for var in grid.vars:
         if grid[var].edges is None:
             # check if it might be from a grid
@@ -36,7 +33,7 @@ def generate_destination(source, *args, **kwargs):
             return pn.GridData(grid)
         if isinstance(dest, pn.PointData):
             # ToDo: only wrt variables
-            return dest
+            return pn.PointData(dest.data)
 
     # check if source has a grid and if any args are in there
     if isinstance(source, pn.GridData):
@@ -89,14 +86,6 @@ class Data(object):
             self.update(new_data)
             return
 
-            #if len(new_data) == 2:
-            #    # we have a (data, grid) as return
-            #    assert hasattr(self, 'grid')
-            #    if self.grid.initialized:
-            #        assert self.grid == new_data[1]
-            #    else:
-            #        self.grid = new_data[1]
-            #    new_data = new_data[0]
         self.add_data(var, new_data)
 
     def __len__(self):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from collections import OrderedDict
 import pynocular as pn
 
 __all__ = ['GridData']
@@ -16,7 +17,7 @@ class GridData(pn.data.Data):
             self.grid = args[0]
         else:
             self.grid = pn.grid.Grid(*args, **kwargs)
-        self.data = {}
+        self.data = OrderedDict()
 
     @property
     def function_args(self):
