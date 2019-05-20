@@ -142,7 +142,7 @@ class Grid(object):
             self.add_dim(d)
 
         for d,x in kwargs.items():
-            if isinstance(x, int):
+            if isinstance(x, Number):
                 self.add_dim(Dimension(var=d[0], nbins=x))
             else:
                 self.add_dim(Dimension(var=d[0], edges=x))

@@ -14,8 +14,14 @@ def initialize_grid(grid, source):
             # check if it might be from a grid
             if isinstance(source, pn.GridData):
                 if var in source.grid.vars:
-                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], grid[var].nbins+1)
+                    if isinstance(grid[var].nbins, float):
+                        # this measn we want to multiply the old nbins
+                        new_nbins = int(source.grid[var].nbins * grid[var].nbins)
+                    else:
+                        new_nbins = grid[var].nbins
+                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], new_nbins+1)
                     continue
+            # in this case it's pointdata
             grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
     return grid
 
