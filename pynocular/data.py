@@ -4,6 +4,23 @@ from scipy import interpolate
 from KDEpy import FFTKDE
 import pynocular as pn
 
+def initialize_grid(grid, source):
+    '''
+    if grid is not fully set up, derive grid from source
+    '''
+    # check dest grid is set up, otherwise do so
+    print(grid)
+    print(source.vars)
+
+    for var in grid.vars:
+        if grid[var].edges is None:
+            # check if it might be from a grid
+            if isinstance(source, pn.GridData):
+                if var in source.grid.vars:
+                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], grid[var].nbins+1)
+                    continue
+            grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
+    return grid
 
 def generate_destination(source, *args, **kwargs):
     '''
@@ -12,10 +29,13 @@ def generate_destination(source, *args, **kwargs):
     if len(args) == 1 and len(kwargs) == 0:
         dest = args[0]
         if isinstance(dest, pn.GridData):
-            return dest
+            grid = initialize_grid(dest.grid, source)
+            return pn.GridData(grid)
         if isinstance(dest, pn.grid.Grid):
-            return pn.GridData(dest)
+            grid = initialize_grid(dest, source)
+            return pn.GridData(grid)
         if isinstance(dest, pn.PointData):
+            # ToDo: only wrt variables
             return dest
 
     # check if source has a grid and if any args are in there
@@ -27,21 +47,13 @@ def generate_destination(source, *args, **kwargs):
                 if arg in source.grid.vars:
                     dims.append(source.grid[arg])
                     continue
-            dims.append[arg]
+            dims.append(arg)
         args = dims
 
     # instantiate
     grid = pn.grid.Grid(*args, **kwargs)
+    grid = initialize_grid(grid, source)
 
-    # check dest grid is set up, otherwise do so
-    for var in grid.vars:
-        if grid[var].edges is None:
-            # check if it might be from a grid
-            if isinstance(source, pn.GridData):
-                if var in source.grid.vars:
-                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], grid[var].nbins+1)
-                    continue
-            grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
 
     return pn.GridData(grid)
 
@@ -72,7 +84,8 @@ class Data(object):
             new_data = data
         if isinstance(new_data, type(self)):
             # rename to desired var name
-            new_data.rename(new_data.data_vars[0], var)
+            # last variable added is the new one
+            new_data.rename(new_data.data_vars[-1], var)
             self.update(new_data)
             return
 
@@ -134,11 +147,11 @@ class Data(object):
 
                 if len(this_wrt) == 1:
                     f = interpolate.interp1d(source[this_wrt[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = f(dest[this_wrt[0]])
+                    output_array = f(dest[this_wrt[0]])
 
                 elif len(this_wrt) == 2 and method in ['linear', 'cubic']:
                     f = interpolate.interp2d(source[this_wrt[0]], source[this_wrt[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                    output = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
+                    output_array = np.array([f(x, y)[0] for x, y in zip(dest[this_wrt[0]], dest[this_wrt[1]])])
 
                 elif method in ['nearest', 'linear']:
                     sample = [source.get_array(var, flat=True) for var in this_wrt]
@@ -149,10 +162,12 @@ class Data(object):
                         f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
                     out_sample = [dest.get_array(var, flat=True) for var in this_wrt]
                     out_sample = np.vstack(out_sample).T
-                    output = f(out_sample)
+                    output_array = f(out_sample)
 
                 else:
                     raise NotImplementedError('method %s not available for %i dimensional interpolation'%(method, len(this_wrt)))
+
+                output[source_var] = output_array
 
                 return output
 
@@ -373,81 +388,81 @@ class Data(object):
                 raise NotImplementedError('method %s unknown'%method)
         return fun
 
-    def window(self, source_var=None, method=None, function=None, window=[(-1, 1)], wrt=None, **kwargs):
-        '''
-        sliding window
+    #def window(self, source_var=None, method=None, function=None, window=[(-1, 1)], wrt=None, **kwargs):
+    #    '''
+    #    sliding window
 
-        Parameters:
-        -----------
-        source_var : string
-            input variable
-        method : string
-            "mean" = mean
-        function : callable
-            function to use on window
-        window : list of tuples
-            lower und upper extend of window in each dimension
-        wrt : tuple
-            specifying the variable with respect to which the interpolation is done
-            None for griddata (will be wrt the r=destination grid)
-        fill_value : optional
-            value for invalid points
-        kwargs : optional
-            additional keyword argumnts to function
-        '''
-        source = self
-        if isinstance(wrt, str):
-            wrt = [wrt]
-
-
-        if function is None:
-            if method is None:
-                raise ValueError('must provide method or function')
-            if method == 'mean':
-                function = np.average
+    #    Parameters:
+    #    -----------
+    #    source_var : string
+    #        input variable
+    #    method : string
+    #        "mean" = mean
+    #    function : callable
+    #        function to use on window
+    #    window : list of tuples
+    #        lower und upper extend of window in each dimension
+    #    wrt : tuple
+    #        specifying the variable with respect to which the interpolation is done
+    #        None for griddata (will be wrt the r=destination grid)
+    #    fill_value : optional
+    #        value for invalid points
+    #    kwargs : optional
+    #        additional keyword argumnts to function
+    #    '''
+    #    source = self
+    #    if isinstance(wrt, str):
+    #        wrt = [wrt]
 
 
-        def fun(dest):
-            if hasattr(dest, 'grid'):
-                if wrt is not None:
-                    raise TypeError('wrt cannot be defined for a grid destination')
-
-                grid = dest.grid
-                this_wrt = dest.grid.vars
-            else:
-
-                grid = None
-                if wrt is None:
-                    # need to reassign variable because of scope
-                    this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
-                    print('Automatic with respect to %s'%', '.join(this_wrt))
-                else:
-                    this_wrt = wrt
-
-                if not set(this_wrt) <= set(dest.vars):
-                    raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
-
-            source_data = source.get_array(source_var, flat=True)
-
-            # prepare arrays
-            source_sample = [source.get_array(var, flat=True) for var in this_wrt]
-            source_sample = np.vstack(source_sample)
-            dest_sample = [dest.get_array(var, flat=True) for var in this_wrt]
-            dest_sample = np.vstack(dest_sample)
-
-            output = np.zeros(dest_sample.shape[1])
-            print(dest_sample.shape)
-
-            for i in range(dest_sample.shape[1]):
-                mask = np.ones(source_sample.shape[1]).astype(np.bool)
-                for j in range(dest_sample.shape[0]):
-                    mask = np.logical_and(mask, source_sample[j] >= dest_sample[j, i] + window[j][0])
-                    mask = np.logical_and(mask, source_sample[j] <= dest_sample[j, i] + window[j][1])
-                output[i] = function(source_data[mask], **kwargs)
-    
-            if grid is None:
-                return output
-            return output, grid
+    #    if function is None:
+    #        if method is None:
+    #            raise ValueError('must provide method or function')
+    #        if method == 'mean':
+    #            function = np.average
 
 
-        return fun
+    #    def fun(dest):
+    #        if hasattr(dest, 'grid'):
+    #            if wrt is not None:
+    #                raise TypeError('wrt cannot be defined for a grid destination')
+
+    #            grid = dest.grid
+    #            this_wrt = dest.grid.vars
+    #        else:
+
+    #            grid = None
+    #            if wrt is None:
+    #                # need to reassign variable because of scope
+    #                this_wrt = list(set(source.vars) & set(dest.vars) - set(source_var))
+    #                print('Automatic with respect to %s'%', '.join(this_wrt))
+    #            else:
+    #                this_wrt = wrt
+
+    #            if not set(this_wrt) <= set(dest.vars):
+    #                raise TypeError('the following variable are not present in the destination: %s'%', '.join(set(this_wrt) - (set(this_wrt) & set(dest.vars))))
+
+    #        source_data = source.get_array(source_var, flat=True)
+
+    #        # prepare arrays
+    #        source_sample = [source.get_array(var, flat=True) for var in this_wrt]
+    #        source_sample = np.vstack(source_sample)
+    #        dest_sample = [dest.get_array(var, flat=True) for var in this_wrt]
+    #        dest_sample = np.vstack(dest_sample)
+
+    #        output = np.zeros(dest_sample.shape[1])
+    #        print(dest_sample.shape)
+
+    #        for i in range(dest_sample.shape[1]):
+    #            mask = np.ones(source_sample.shape[1]).astype(np.bool)
+    #            for j in range(dest_sample.shape[0]):
+    #                mask = np.logical_and(mask, source_sample[j] >= dest_sample[j, i] + window[j][0])
+    #                mask = np.logical_and(mask, source_sample[j] <= dest_sample[j, i] + window[j][1])
+    #            output[i] = function(source_data[mask], **kwargs)
+    #
+    #        if grid is None:
+    #            return output
+    #        return output, grid
+
+
+    #    return fun

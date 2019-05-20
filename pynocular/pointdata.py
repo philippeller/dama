@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import numpy as np
 import pandas
+from collections import OrderedDict
 from scipy.interpolate import griddata
 
 from pynocular.data import Data
@@ -14,7 +15,7 @@ class PointData(Data):
     '''
     def __init__(self, data=None):
         if data is None:
-            data = {}
+            data = OrderedDict()
         super(PointData, self).__init__(data=data)
 
     @property
@@ -28,6 +29,13 @@ class PointData(Data):
             return list(self.data.keys())
         else:
             return []
+
+    @property
+    def type(self):
+        if isinstance(self.data, pandas.core.frame.DataFrame):
+            return 'df'
+        elif isinstance(self.data, OrderedDict):
+            return 'dict'
 
     @property
     def data_vars(self):
@@ -60,11 +68,7 @@ class PointData(Data):
         Set the data
         '''
         # TODO: run some compatibility cheks
-        if isinstance(data, pandas.core.frame.DataFrame):
-            self.type = 'df'
-        elif isinstance(data, dict):
-            self.type = 'dict'
-        elif isinstance(data, np.ndarray):
+        if isinstance(data, np.ndarray):
             assert data.dtype.names is not None, 'unsctructured arrays not supported'
         self.data = data
 
@@ -84,7 +88,7 @@ class PointData(Data):
             if self.type == 'df':
                 return PointData(self.data[var])
             else:
-                new_data = {}
+                new_data = OrderedDict()
                 for key, val in self.data.items():
                     new_data[key] = val[var]
                 return PointData(new_data)
