@@ -309,14 +309,9 @@ class Grid(object):
         elif isinstance(sample, list):
             assert len(sample) == self.ndim
 
-        # array to hold indices
-        indices = np.empty((self.ndim, len(sample[0])), dtype=np.int)
-        #calculate bin indices
-        for i in range(self.ndim):
-            indices[i] = np.digitize(sample[i], self.edges[i])
-        indices -= 1
-        return indices
-
+        # array holding raveld indices
+        multi_index = [np.digitize(sample[i], self.edges[i]) - 1 for i in range(self.ndim)]
+        return np.ravel_multi_index(multi_index, self.shape)
 
 def test():
     a = Grid(var='a', edges=np.linspace(0, 1, 2))

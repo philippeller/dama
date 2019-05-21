@@ -290,18 +290,18 @@ class Data(object):
                     if return_len > 1:
                         output_map = np.full(shape=(*output.grid.shape, *source_data.shape[1:], return_len), fill_value=np.nan)
                         for idx in np.ndindex(*source_data.shape[1:]):
-                            fill_single_map(output_map[(Ellipsis,) + idx + (slice(None),)], indices, source_data[(Ellipsis,) + idx], function, return_len)
+                            fill_single_map(output_map[(Ellipsis,) + idx + (slice(None),)], output.grid, indices, source_data[(Ellipsis,) + idx], function, return_len)
                     else:
                         output_map = np.full(shape=(*output.grid.shape, *source_data.shape[1:]), fill_value=np.nan)
                         for idx in np.ndindex(*source_data.shape[1:]):
-                            fill_single_map(output_map[(Ellipsis,) + idx], indices, source_data[(Ellipsis,) + idx], function, return_len)
+                            fill_single_map(output_map[(Ellipsis,) + idx], output.grid, indices, source_data[(Ellipsis,) + idx], function, return_len)
 
                 else:
                     if return_len > 1:
                         output_map = np.full(output.grid.shape + (return_len,), fill_value=np.nan)
                     else:
                         output_map = np.full(output.grid.shape, fill_value=np.nan)
-                    fill_single_map(output_map, indices, source_data, function, return_len)
+                    fill_single_map(output_map, output.grid, indices, source_data, function, return_len)
     
                 output_map[np.isnan(output_map)] = fill_value
 
@@ -523,24 +523,13 @@ def get_single_hist(sample, grid, weights, method):
     return weighted_hist
 
 
-def fill_single_map(output_map, indices, source_data, function, return_len):
+def fill_single_map(output_map, grid, indices, source_data, function, return_len):
     '''
     fill a single map with a function applied to values according to indices
     '''
-
-    if return_len > 1:
-        iterator = np.nditer(output_map[...,0], flags=['multi_index'])
-    else:
-        iterator = np.nditer(output_map, flags=['multi_index'])
-
-    while not iterator.finished:
-        out_idx = iterator.multi_index
-        mask = True
-        for i, idx in enumerate(out_idx):
-            mask = np.logical_and(indices[i] == idx, mask)
-        bin_source_data = source_data[mask]
+    for i in range(grid.size):
+        bin_source_data = source_data[indices == i]
         if len(bin_source_data) > 0:
             result = function(bin_source_data) 
+            out_idx = np.unravel_index(i, grid.shape)
             output_map[out_idx] = result
-        iterator.iternext()
-
