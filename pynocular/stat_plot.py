@@ -85,22 +85,49 @@ def plot_step(layer, var, fig=None, ax=None, **kwargs):
     ax.set_xlabel(layer.grid[0].var)
     ax.set_ylabel(var)
 
-def plot_band(layer, var1, var2, fig=None, ax=None, **kwargs):
+def plot_bands(layer, var, fig=None, ax=None, **kwargs):
     '''
-    plot a band between two variables var1 and var2
+    plot band between the variables values (expect each bin to have a 1d array)
     '''
     if fig is None:
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
     assert layer.grid.ndim == 1
-    ax.bar(layer.grid[0].points,
-           layer[var2] - layer[var1],
-           bottom=layer[var1],
-           width = np.diff(layer.grid[0].edges),
-           **kwargs)
+    
+    cmap = kwargs.pop('cmap', 'Blues')
+    cmap = plt.get_cmap(cmap)
+
+    data = layer[var]
+    n_points = data.shape[1]
+    
+    n_bands = (n_points+1)//2
+
+    colors = cmap(np.linspace(0, 1, n_bands+1))[1:]
+    
+    colors = kwargs.pop('colors', colors)
+
+    for i in range(n_bands):
+        upper_idx = n_points - i - 1
+
+        if not upper_idx == i:
+            ax.bar(layer.grid[0].points,
+                   data[:, upper_idx] - data[:,i],
+                   bottom=data[:,i],
+                   width = np.diff(layer.grid[0].edges),
+                   color=colors[i],
+                   **kwargs)
+        else:
+            ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=data[:,i], histtype='step', color=colors[i], **kwargs)
+            #ax.bar(layer.grid[0].points,
+            #       data[:, upper_idx] - data[:,i],
+            #       bottom=data[:,i],
+            #       width = np.diff(layer.grid[0].edges),
+            #       edgecolor=colors[i+1],
+            #       **kwargs)
+
     ax.set_xlabel(layer.grid[0].var)
-    return var1, var2
+    ax.set_ylabel(var)
 
 def plot_errorband(layer, var, errors, fig=None, ax=None, **kwargs):
     '''

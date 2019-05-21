@@ -158,8 +158,8 @@ class GridData(pn.data.Data):
     def plot_step(self, var, fig=None, ax=None, **kwargs):
         return pn.stat_plot.plot_step(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_band(self, var1, var2, fig=None, ax=None, **kwargs):
-        return pn.stat_plot.plot_band(self, var1, var2, fig=fig, ax=ax, **kwargs)
+    def plot_bands(self, var, fig=None, ax=None, **kwargs):
+        return pn.stat_plot.plot_bands(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
         return pn.stat_plot.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
