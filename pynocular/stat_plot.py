@@ -1,24 +1,46 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-'''
-Module to provide plotting convenience functions
+'''Module to provide plotting convenience functions
 to be used by data layer classes
 '''
+
+__license__ = '''Copyright 2019 Philipp Eller
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.'''
+
 def plot_map(layer, var, cbar=False, fig=None, ax=None, **kwargs):
     '''
     plot a 2d color map
     '''
+    
     if fig is None:
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
     assert layer.grid.ndim == 2
-    X, Y = layer.grid.edge_meshgrid
 
-    pc = ax.pcolormesh(X, Y, layer[var].T, linewidth=0, rasterized=True, **kwargs)
-    if cbar:
-        fig.colorbar(pc, ax=ax, label=var)
+    data = layer[var]
+
+    if data.ndim == layer.grid.ndim + 1 and data.shape[-1] == 3:
+        # plot as image
+        pc = ax.imshow(data.swapaxes(0,1)[::-1,:,:], extent=(layer.grid.edges[0][0], layer.grid.edges[0][-1], layer.grid.edges[1][0], layer.grid.edges[1][-1]))
+
+    else:
+        X, Y = layer.grid.edge_meshgrid
+        pc = ax.pcolormesh(X, Y, data.T, linewidth=0, rasterized=True, **kwargs)
+        if cbar:
+            fig.colorbar(pc, ax=ax, label=var)
 
     ax.set_xlabel(layer.grid.vars[0])
     ax.set_ylabel(layer.grid.vars[1])
