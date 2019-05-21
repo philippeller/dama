@@ -140,26 +140,36 @@ class GridData(pn.data.Data):
         elif self.ndim == 2:
             return self.plot_map(var, **kwargs)
 
-    def plot_map(self, var, cbar=False, fig=None, ax=None, **kwargs):
+    def plot_map(self, var=None, cbar=False, fig=None, ax=None, **kwargs):
         '''
         plot a variable as a map
 
         ax : pyplot axes object
         var : str
         '''
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
         if self.grid.ndim == 2:
             return pn.stat_plot.plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
         raise ValueError('Can only plot maps of 2d grids')
 
-    def plot_contour(self, var, fig=None, ax=None, **kwargs):
+    def plot_contour(self, var=None, fig=None, ax=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
         return pn.stat_plot.plot_contour(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_step(self, var, fig=None, ax=None, **kwargs):
+    def plot_step(self, var=None, fig=None, ax=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
         return pn.stat_plot.plot_step(self, var, fig=fig, ax=ax, **kwargs)
 
-    def plot_bands(self, var, fig=None, ax=None, **kwargs):
+    def plot_bands(self, var=None, fig=None, ax=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
         return pn.stat_plot.plot_bands(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
         return pn.stat_plot.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)

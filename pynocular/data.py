@@ -199,7 +199,15 @@ class Data(object):
         return fun
 
 
-    def histogram(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
+    def histogram(self, source_var=None):
+        if source_var is None:
+            method = "count"
+        else:
+            method= "sum"
+
+        return self.binned(source_var=source_var, method=method)
+
+    def binned(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
         '''
         translation from array data into binned form
 
