@@ -103,6 +103,10 @@ class Data(object):
     def __str__(self):
         return self.data.__str__()
 
+
+
+    # ToDo: make this wrapping of functions into a decorator
+
     def interpolate(self, source_var=None, method=None, wrt=None, fill_value=np.nan):
         '''
         interpolation from array data into grids
@@ -273,6 +277,8 @@ class Data(object):
 
                 output_map[np.isnan(output_map)] = fill_value
         
+            else:
+                raise ValueError('need at least a method or a function specified')
         
             if source_var is None:
                 out_name = 'counts'
@@ -334,12 +340,18 @@ class Data(object):
         '''
         resample from binned data into other binned data
 
+        ToDo: this is super inefficient for grid->grid
+
         Parameters:
         -----------
 
         source_var : string
+
+        method : str
+            only method "simple" right now
         '''
         source = self
+
         if not hasattr(source, 'grid'):
             raise TypeError('source must have a grid defined')
 

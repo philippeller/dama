@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+import six
 import numpy as np
 import pandas
 from collections import OrderedDict
@@ -22,7 +23,10 @@ class PointData(Data):
             data = OrderedDict(kwargs)
         else:
             raise ValueError("Did not understand input arguments")
-        super(PointData, self).__init__(data=data)
+        if six.PY2:
+            super(PointData, self).__init__(data=data)
+        else:
+            super().__init__(data=data)
 
     @property
     def vars(self):
@@ -80,6 +84,8 @@ class PointData(Data):
         # TODO: run some compatibility cheks
         #if isinstance(data, np.ndarray):
         #    assert data.dtype.names is not None, 'unsctructured arrays not supported'
+        if self.ndims > 0:
+            assert len(data) == len(self), 'Incompatible dimensions'
         self.data = data
 
     def get_array(self, var, flat=False):

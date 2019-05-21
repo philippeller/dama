@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from collections import OrderedDict
+import six
+import numpy as np
 import pynocular as pn
 
 __all__ = ['GridData']
@@ -12,12 +14,27 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        super(GridData, self).__init__(data=None)
+        if six.PY2:
+            super(GridData, self).__init__(data=None)
+        else:
+            super().__init__(data=None)
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
             self.grid = args[0]
         else:
             self.grid = pn.grid.Grid(*args, **kwargs)
         self.data = OrderedDict()
+
+    def __repr__(self):
+        strs = []
+        strs.append('GridData(%s'%self.grid.__repr__())
+        strs.append(self.data.__repr__() + ')')
+        return '\n'.join(strs)
+
+    def __str__(self):
+        strs = []
+        strs.append(self.grid.__str__())
+        strs.append(self.data.__str__())
+        return '\n'.join(strs)
 
     @property
     def function_args(self):
@@ -71,8 +88,18 @@ class GridData(pn.data.Data):
 
     def add_data(self, var, data):
         if self.ndim == 0:
-            raise ValueError('set up the grid dimensions first before adding data')
-        if not data.shape == self.shape:
+            print('adding default grid')
+            # make a default grid:
+            if data.ndim <= 3 and var not in ['x', 'y', 'z']:
+                dim_names = ['x', 'y', 'z']
+            else:
+                dim_names = ['x%i' for i in range(data.ndim+1)]
+                dim_names.delete(var)
+            dims = OrderedDict()
+            for d,n in zip(dim_names, data.shape):
+                dims[d] = np.arange(n+1)
+            self.grid = pn.Grid(**dims)
+        if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
@@ -96,7 +123,9 @@ class GridData(pn.data.Data):
         else:
             array = self.data[var]
         if flat:
-            return array.ravel()
+            if array.ndim == self.grid.ndim:
+                return array.ravel()
+            return array.reshape(self.grid.size, -1)
 
         return array
 

@@ -224,7 +224,7 @@ class Grid(object):
         '''
         size = total number of bins / points
         '''
-        return np.product([len(x) for x in self.dims.items()])
+        return np.product([len(x[1]) for x in self.dims.items()])
 
     def __len__(self):
         return self.ndim
