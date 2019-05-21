@@ -89,6 +89,9 @@ class PointData(Data):
         self.data = data
 
     def get_array(self, var, flat=False):
+        '''
+        flat is ignored here, all stired arrays are already "flat"
+        '''
         if self.type == 'df':
             arr = self.data[var].values
         else:

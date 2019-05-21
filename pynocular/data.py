@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from numbers import Number
 import numpy as np
 from scipy import interpolate
 from KDEpy import FFTKDE
@@ -240,43 +241,47 @@ class Data(object):
             sample = [source.get_array(var, flat=True) for var in output.grid.vars]
 
             if method is not None:
-                bins = output.grid.edges
-                # generate hists
-                if method in ['sum', 'mean']:
-                    weighted_hist, _ = np.histogramdd(sample=sample, bins=bins, weights=source_data)
 
-                if method in ['count', 'mean']:
-                    hist, _ = np.histogramdd(sample=sample, bins=bins)
+                if source_data is not None and source_data.ndim > 1:
+                    output_map = np.empty(shape=(*output.grid.shape, *source_data.shape[1:]))
 
-                # make outputs
-                if method == 'count':
-                    output_map = hist
-                elif method == 'sum':
-                    output_map = weighted_hist
-                elif method == 'mean':
-                    mask = (hist > 0.)
-                    weighted_hist[mask] /= hist[mask]
-                    output_map = weighted_hist
+                    for idx in np.ndindex(*source_data.shape[1:]):
+                        output_map[(Ellipsis,) + idx] = get_single_hist(sample=sample, grid=output.grid, weights=source_data[(Ellipsis,) + idx], method=method)
+                else:
+                    output_map = get_single_hist(sample=sample, grid=output.grid, weights=source_data, method=method)
 
             elif function is not None:
                 indices = output.grid.compute_indices(sample)
-                output_map = np.zeros(output.grid.shape) * np.nan
 
-                it = np.nditer(output_map, flags=['multi_index'])
+                # find out what does the function return:
+                if source_data.ndim > 1:
+                    test_value = function(source_data[:3, [0]*(source_data.ndim-1)])
+                else:
+                    test_value = function(source_data[:3])
+                if isinstance(test_value, Number):
+                    return_len = 1
+                else:
+                    return_len = len(test_value)
 
-                while not it.finished:
-                    out_idx = it.multi_index
-                    mask = True
-                    for i, idx in enumerate(out_idx):
-                        mask = np.logical_and(indices[i] == idx, mask)
-                    bin_source_data = source_data[mask]
-                    if len(bin_source_data) > 0:
-                        result = function(bin_source_data) 
-                        output_map[out_idx] = result
-                    it.iternext()
+                if source_data.ndim > 1:
+                    if return_len > 1:
+                        output_map = np.full(shape=(*output.grid.shape, *source_data.shape[1:], return_len), fill_value=np.nan)
+                        for idx in np.ndindex(*source_data.shape[1:]):
+                            fill_single_map(output_map[(Ellipsis,) + idx + (slice(None),)], indices, source_data[(Ellipsis,) + idx], function, return_len)
+                    else:
+                        output_map = np.full(shape=(*output.grid.shape, *source_data.shape[1:]), fill_value=np.nan)
+                        for idx in np.ndindex(*source_data.shape[1:]):
+                            fill_single_map(output_map[(Ellipsis,) + idx], indices, source_data[(Ellipsis,) + idx], function, return_len)
 
+                else:
+                    if return_len > 1:
+                        output_map = np.full(output.grid.shape + (return_len,), fill_value=np.nan)
+                    else:
+                        output_map = np.full(output.grid.shape, fill_value=np.nan)
+                    fill_single_map(output_map, indices, source_data, function, return_len)
+    
                 output_map[np.isnan(output_map)] = fill_value
-        
+
             else:
                 raise ValueError('need at least a method or a function specified')
         
@@ -318,7 +323,7 @@ class Data(object):
             sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
             indices = source.grid.compute_indices(sample)
-            output_array = np.ones(np.product(dest.array_shape)) * np.nan
+            output_array = np.full(np.product(dest.array_shape), np.nan)
 
             #TODO: make this better
             for i in range(len(output_array)):
@@ -371,7 +376,7 @@ class Data(object):
                 # lookup values
                 source_data = source.get_array(source_var)
                 indices = source.grid.compute_indices(lookup_sample)
-                lookup_array = np.ones(lookup_sample[0].shape[0]) * np.nan
+                lookup_array = np.full(lookup_sample[0].shape[0], np.nan)
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
                     ind = indices[:, i]
@@ -473,3 +478,46 @@ class Data(object):
 
 
     #    return fun
+
+
+def get_single_hist(sample, grid, weights, method):
+    '''Generate a single histogram
+    '''
+
+    # generate hists
+    if method in ['sum', 'mean']:
+        weighted_hist, _ = np.histogramdd(sample=sample, bins=grid.edges, weights=weights)
+
+    if method in ['count', 'mean']:
+        hist, _ = np.histogramdd(sample=sample, bins=grid.edges)
+
+    # make outputs
+    if method == 'count':
+        return hist
+    if method == 'mean':
+        mask = (hist > 0.)
+        weighted_hist[mask] /= hist[mask]
+    return weighted_hist
+
+
+def fill_single_map(output_map, indices, source_data, function, return_len):
+    '''
+    fill a single map with a function applied to values according to indices
+    '''
+
+    if return_len > 1:
+        iterator = np.nditer(output_map[...,0], flags=['multi_index'])
+    else:
+        iterator = np.nditer(output_map, flags=['multi_index'])
+
+    while not iterator.finished:
+        out_idx = iterator.multi_index
+        mask = True
+        for i, idx in enumerate(out_idx):
+            mask = np.logical_and(indices[i] == idx, mask)
+        bin_source_data = source_data[mask]
+        if len(bin_source_data) > 0:
+            result = function(bin_source_data) 
+            output_map[out_idx] = result
+        iterator.iternext()
+
