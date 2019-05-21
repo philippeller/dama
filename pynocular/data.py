@@ -351,7 +351,7 @@ class Data(object):
             #TODO: make this better
             for i in range(len(output_array)):
                 # check we're inside grid:
-                ind = indices[:, i]
+                ind = np.unravel_index(indices[i], source.grid.shape)
                 inside = True
                 for j in range(len(ind)):
                     inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
@@ -402,7 +402,7 @@ class Data(object):
                 lookup_array = np.full(lookup_sample[0].shape[0], np.nan)
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
-                    ind = indices[:, i]
+                    ind = np.unravel_index(indices[i], source.grid.shape)
                     inside = True
                     for j in range(len(ind)):
                         inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
