@@ -3,6 +3,8 @@ from numbers import Number
 from collections import OrderedDict
 from collections.abc import Iterable
 
+import pynocular as pn
+
 import numpy as np
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -151,6 +153,14 @@ class Grid(object):
         a dimesnion can also be given by kwargs
         '''
         self.dims = OrderedDict()
+
+        #if len(args) == 1 and len(kwargs) == 0:
+        #    print(type(args[0]))
+        #    print(type(self))
+        #    if isinstance(args[0], type(self)):
+        #        print('henlo!')
+        #    if type(args[0]) == type(self):
+        #        print('test')
 
         for d in args:
             self.add_dim(d)
@@ -310,8 +320,14 @@ class Grid(object):
             assert len(sample) == self.ndim
 
         # array holding raveld indices
-        multi_index = [np.digitize(sample[i], self.edges[i]) - 1 for i in range(self.ndim)]
-        return np.ravel_multi_index(multi_index, self.shape)
+        multi_index = [digitize_inclusive(sample[i], self.edges[i]) for i in range(self.ndim)]
+        return np.ravel_multi_index(multi_index, [d+2 for d in self.shape])
+
+def digitize_inclusive(x, bins):
+    idx = np.digitize(x, bins)
+    idx[x == bins[-1]] -= 1
+    return idx
+
 
 def test():
     a = Grid(var='a', edges=np.linspace(0, 1, 2))

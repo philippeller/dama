@@ -194,18 +194,24 @@ class Data(object):
             source_data = source.get_array(source_var, flat=True)
 
             mask = np.isfinite(source_data)
+            dim_mask = np.all(mask, axis=1)
 
             # check source has grid variables
             for var in output.grid.vars:
                 assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
             # prepare arrays
-            sample = [source.get_array(var, flat=True)[mask] for var in output.grid.vars]
+            sample = [source.get_array(var, flat=True)[dim_mask] for var in output.grid.vars]
             sample = np.vstack(sample)
             
             xi = output.grid.point_mgrid
 
-            output_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
+            if source_data.ndim > 1:
+                output_map = np.full(shape=(*output.grid.shape, *source_data.shape[1:]), fill_value=np.nan)
+                for idx in np.ndindex(*source_data.shape[1:]):
+                    output_map[(Ellipsis,) + idx] = interpolate.griddata(points=sample.T, values=source_data[(Ellipsis,) + idx][dim_mask], xi=tuple(xi), method=method, fill_value=fill_value)
+            else:
+                output_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
 
             output[source_var] = output_map
 
@@ -337,6 +343,12 @@ class Data(object):
 
             source_data = source.get_array(source_var)
 
+            if source_data.ndim > source.grid.ndim:
+                output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
+            else:
+                output_array = np.full(np.product(dest.array_shape), np.nan)
+
+
             # check dest has grid variables
             for var in source.grid.vars:
                 assert(var in dest.vars), '%s not in %s'%(var, dest.vars)
@@ -346,12 +358,12 @@ class Data(object):
             sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
             indices = source.grid.compute_indices(sample)
-            output_array = np.full(np.product(dest.array_shape), np.nan)
 
             #TODO: make this better
             for i in range(len(output_array)):
                 # check we're inside grid:
-                ind = np.unravel_index(indices[i], source.grid.shape)
+                ind = np.unravel_index(indices[i], [d+2 for d in source.grid.shape])
+                ind = tuple([idx - 1 for idx in ind])
                 inside = True
                 for j in range(len(ind)):
                     inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
@@ -402,7 +414,8 @@ class Data(object):
                 lookup_array = np.full(lookup_sample[0].shape[0], np.nan)
                 for i in range(len(lookup_array)):
                     # check we're inside grid:
-                    ind = np.unravel_index(indices[i], source.grid.shape)
+                    ind = np.unravel_index(indices[i], [d+2 for d in source.grid.shape])
+                    ind = tuple([idx - 1 for idx in ind])
                     inside = True
                     for j in range(len(ind)):
                         inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
@@ -527,9 +540,10 @@ def fill_single_map(output_map, grid, indices, source_data, function, return_len
     '''
     fill a single map with a function applied to values according to indices
     '''
-    for i in range(grid.size):
+    for i in range(np.prod([d+2 for d in grid.shape])):
         bin_source_data = source_data[indices == i]
         if len(bin_source_data) > 0:
             result = function(bin_source_data) 
-            out_idx = np.unravel_index(i, grid.shape)
+            out_idx = np.unravel_index(i, [d+2 for d in grid.shape])
+            out_idx = tuple([idx - 1 for idx in out_idx])
             output_map[out_idx] = result
