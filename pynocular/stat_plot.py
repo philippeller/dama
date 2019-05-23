@@ -30,7 +30,7 @@ def plot_map(layer, var, cbar=False, fig=None, ax=None, **kwargs):
         ax = plt.gca()
     assert layer.grid.ndim == 2
 
-    data = layer[var]
+    data = layer.get_array(var)
 
     if data.ndim == layer.grid.ndim + 1 and data.shape[-1] == 3:
         # plot as image
@@ -102,8 +102,10 @@ def plot_step(layer, var, fig=None, ax=None, **kwargs):
     histtype = kwargs.pop('histtype', 'step')
 
     # let's only plot finite values, otherwise it freakes out
+    #print(layer[var])
+    #print(type(layer[var]))
     mask = np.isfinite(layer[var])
-    ax.hist(layer.grid[0].points[mask], bins=layer.grid[0].edges, weights=layer[var][mask], histtype=histtype, **kwargs)
+    ax.hist(layer.grid[0].points[mask], bins=layer.grid[0].edges, weights=layer.get_array(var)[mask], histtype=histtype, **kwargs)
     ax.set_xlabel(layer.grid[0].var)
     ax.set_ylabel(var)
 

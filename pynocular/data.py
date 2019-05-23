@@ -73,53 +73,12 @@ def generate_destination(source, *args, **kwargs):
     grid = pn.grid.Grid(*args, **kwargs)
     grid = initialize_grid(grid, source)
 
-
     return pn.GridData(grid)
 
 class Data(object):
     '''
     Data base class to hold any form of data representation
     '''
-    def __init__(self, data):
-        self.data = None
-        self.set_data(data)
-
-    def set_data(self, data):
-        pass
-
-    def add_data(self, var, data):
-        pass
-
-    def get_array(self, var):
-        pass
-
-    #def __getitem__(self, var):
-    #    return self.get_array(var)
-
-    #def __setitem__(self, var, new_data):
-    #    #if callable(data):
-    #    #    new_data = data(self)
-    #    #else:
-    #    #    new_data = data
-    #    if isinstance(new_data, type(self)):
-    #        # rename to desired var name
-    #        # last variable added is the new one
-    #        new_data.rename(new_data.data_vars[-1], var)
-    #        self.update(new_data)
-    #        return
-
-    #    self.add_data(var, new_data)
-
-    def __len__(self):
-        return 0
-
-    def __repr__(self):
-        return 'Data(%s)'%self.data.__repr__()
-
-    def __str__(self):
-        return self.data.__str__()
-
-
 
     # ToDo: make this wrapping of functions into a decorator
 
@@ -224,14 +183,23 @@ class Data(object):
 
 
     def histogram(self, source_var=None):
+        '''Convenience method for histograms, if not variable is given, will make 
+        unweighted hists
+
+        Parameters:
+        -----------
+
+        source_var : string
+            The weights for the histogram
+        '''
         if source_var is None:
             method = "count"
         else:
             method= "sum"
 
-        return self.binned(source_var=source_var, method=method)
+        return self.binwise(source_var=source_var, method=method)
 
-    def binned(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
+    def binwise(self, source_var=None, method=None, function=None, fill_value=np.nan, **kwargs):
         '''
         translation from array data into binned form
 

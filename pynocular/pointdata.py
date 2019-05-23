@@ -6,10 +6,11 @@ from collections import OrderedDict
 from collections.abc import Iterable
 from scipy.interpolate import griddata
 
+import pynocular as pn
 from pynocular.data import Data
 from pynocular.stat_plot import *
 
-__all__ = ['PointData']
+#__all__ = ['PointData']
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -60,24 +61,30 @@ class PointDataDim(object):
 
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
-
     def __len__(self):
         return len(self.data)
-
     def __add__(self, other):
         return np.add(self, other)
-
     def __sub__(self, other):
         return np.subtract(self, other)
-
     def __mul__(self, other):
         return np.multiply(self, other)
-
     def __truediv__(self, other):
         return np.divide(self, other)
-
     def __pow__(self, other):
         return np.power(self, other)
+    def __lt__(self, other):
+        return np.less(self, other)	
+    def __le__(self, other):
+        return np.less_equal(self, other)	
+    def __eq__(self, other):
+        return np.equal(self, other)	
+    def __ne__(self, other):
+        return np.not_equal(self, other)	
+    def __gt__(self, other):
+        return np.greater(self, other)	
+    def __ge__(self, other): 
+        return np.greater_equal(self, other)	
 
     def __array__(self):
         return self.values
@@ -110,25 +117,27 @@ class PointData(Data):
     '''
     def __init__(self, *args, **kwargs):
         if len(args) == 0 and len(kwargs) == 0:
-            data = OrderedDict()
+            self.data = OrderedDict()
         elif len(args) == 1 and len(kwargs) == 0:
             if isinstance(args[0], pandas.core.series.Series):
-                data = pandas.DataFrame(args[0])
+                self.data = pandas.DataFrame(args[0])
             elif isinstance(args[0], pandas.core.frame.DataFrame):
-                data = args[0]
+                self.data = args[0]
             elif isinstance(args[0], OrderedDict):
-                data = args[0]
+                self.data = args[0]
             else:
-                data = OrderedDict(args[0])
+                self.data = OrderedDict(args[0])
         elif len(args) == 0 and len(kwargs) > 0:
-            data = OrderedDict(kwargs)
+            self.data = OrderedDict(kwargs)
         else:
             raise ValueError("Did not understand input arguments")
 
-        if six.PY2:
-            super(PointData, self).__init__(data=data)
-        else:
-            super().__init__(data=data)
+    def __repr__(self):
+        return 'PointData(%s)'%self.data.__repr__()
+
+    def __str__(self):
+        return self.data.__str__()
+
 
     @property
     def vars(self):
@@ -179,19 +188,16 @@ class PointData(Data):
         '''
         return (len(self),)
 
-    def set_data(self, data):
-        '''
-        Set the data
-        '''
-        # TODO: run some compatibility cheks
-        #if isinstance(data, np.ndarray):
-        #    assert data.dtype.names is not None, 'unsctructured arrays not supported'
-        if self.ndim > 0:
-            assert len(data) == len(self), 'Incompatible dimensions'
-        self.data = data
-
     def __setitem__(self, var, val):
-        self.add_data(var, val)
+        if self.ndim > 0:
+            assert len(val) == len(self), 'Incompatible dimensions'
+        if isinstance(val, pn.PointDataDim):
+            self.data[var] = val.data
+        elif isinstance(val, pn.PointData):
+            # is this fair enough?
+            self.data[var] = val.data[val.vars[-1]]
+        else:
+            self.data[var] = val
 
     def __getitem__(self, var):
         if self.type == 'df':
@@ -218,13 +224,9 @@ class PointData(Data):
             for key, val in self.data.items():
                 new_data[key] = val[var]
         return PointData(new_data)
-
-
-    def add_data(self, var, data):
-        # TODO do some checks of shape etc
-        #if self.type == 'struct_array':
-        #    raise TypeError('cannot append rows to structured np array')
-        self.data[var] = data
+	
+    def get_array(self, var, flat=False):
+        return np.asarray(self[var])
 
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
         plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)

@@ -5,7 +5,7 @@ import six
 import numpy as np
 import pynocular as pn
 
-__all__ = ['GridData']
+#__all__ = ['GridData']
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -40,18 +40,27 @@ class GridDataDim(object):
 
     def __add__(self, other):
         return np.add(self, other)
-
     def __sub__(self, other):
         return np.subtract(self, other)
-
     def __mul__(self, other):
         return np.multiply(self, other)
-
     def __truediv__(self, other):
         return np.divide(self, other)
-
     def __pow__(self, other):
         return np.power(self, other)
+    def __lt__(self, other):
+        return np.less(self, other)	
+    def __le__(self, other):
+        return np.less_equal(self, other)	
+    def __eq__(self, other):
+        return np.equal(self, other)	
+    def __ne__(self, other):
+        return np.not_equal(self, other)	
+    def __gt__(self, other):
+        return np.greater(self, other)	
+    def __ge__(self, other): 
+        return np.greater_equal(self, other)	
+
 
     def __array__(self):
         return self.values
@@ -60,6 +69,20 @@ class GridDataDim(object):
         assert name not in self.grid.vars, "Cannot add data with name same as grid variable"
         self._data = data
         self.name = name
+
+    @property
+    def ndim(self):
+        return self.data.ndim
+
+    #def __getitem__(self, m):
+    #    reshape = self.data[m]
+    #    new_obj = GridDataDim(self.grid)
+    #    if self.name in self.grid.vars:
+    #        new_name = 'f(%s)'%self.name
+    #    else:
+    #        new_name = self.name
+    #    new_obj.add_data(new_name, result)
+    #    return new_obj
 
     @property
     def values(self):
@@ -87,7 +110,7 @@ class GridDataDim(object):
                 if self.name in self.grid.vars:
                     new_name = 'f(%s)'%self.name
                 else:
-                    new_name - self.name
+                    new_name = self.name
                 new_obj.add_data(new_name, result)
                 return new_obj
             if result.ndim == 0:
@@ -103,10 +126,6 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        if six.PY2:
-            super(GridData, self).__init__(data=None)
-        else:
-            super().__init__(data=None)
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
             self.grid = args[0]
         else:
@@ -193,12 +212,20 @@ class GridData(pn.data.Data):
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
-        if isinstance(data, GridDataDim):
+        if isinstance(data, pn.GridDataDim):
             if self.grid.ndim == 0:
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
             data = data.data
+
+        elif isinstance(data, pn.GridData):
+            assert len(data.data_vars) == 1
+            if self.grid.ndim == 0:
+                self.grid == data.grid
+            else:
+                assert self.grid == data.grid
+            data = data.get_array(data.data_vars[0])
 
         elif self.ndim == 0:
             print('adding default grid')
