@@ -50,7 +50,7 @@ def plot_map(layer, var, cbar=False, fig=None, ax=None, **kwargs):
 
 def plot(layer, x, y, *args, **kwargs):
     fig = kwargs.pop('fig', plt.gcf())
-    ax = kwargs.pop('fig', plt.gca())
+    ax = kwargs.pop('ax', plt.gca())
     p = ax.plot(layer[x], layer[y], *args, **kwargs)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
@@ -101,7 +101,7 @@ def plot_step(layer, var, fig=None, ax=None, **kwargs):
     assert layer.grid.ndim == 1
     histtype = kwargs.pop('histtype', 'step')
 
-    # let's only histogram finite values
+    # let's only plot finite values, otherwise it freakes out
     mask = np.isfinite(layer[var])
     ax.hist(layer.grid[0].points[mask], bins=layer.grid[0].edges, weights=layer[var][mask], histtype=histtype, **kwargs)
     ax.set_xlabel(layer.grid[0].var)
@@ -140,7 +140,8 @@ def plot_bands(layer, var, fig=None, ax=None, **kwargs):
                    color=colors[i],
                    **kwargs)
         else:
-            ax.hist(layer.grid[0].points, bins=layer.grid[0].edges, weights=data[:,i], histtype='step', color=colors[i], **kwargs)
+            mask = np.isfinite(data[:,i])
+            ax.hist(layer.grid[0].points[mask], bins=layer.grid[0].edges, weights=data[:,i][mask], histtype='step', color=colors[i], **kwargs)
             #ax.bar(layer.grid[0].points,
             #       data[:, upper_idx] - data[:,i],
             #       bottom=data[:,i],

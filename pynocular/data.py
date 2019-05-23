@@ -96,11 +96,11 @@ class Data(object):
     def __getitem__(self, var):
         return self.get_array(var)
 
-    def __setitem__(self, var, data):
-        if callable(data):
-            new_data = data(self)
-        else:
-            new_data = data
+    def __setitem__(self, var, new_data):
+        #if callable(data):
+        #    new_data = data(self)
+        #else:
+        #    new_data = data
         if isinstance(new_data, type(self)):
             # rename to desired var name
             # last variable added is the new one
@@ -194,7 +194,10 @@ class Data(object):
             source_data = source.get_array(source_var, flat=True)
 
             mask = np.isfinite(source_data)
-            dim_mask = np.all(mask, axis=1)
+            if mask.ndim > 1:
+                dim_mask = np.all(mask, axis=1)
+            else:
+                dim_mask = mask
 
             # check source has grid variables
             for var in output.grid.vars:

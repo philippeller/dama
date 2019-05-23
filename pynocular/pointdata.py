@@ -3,6 +3,7 @@ import six
 import numpy as np
 import pandas
 from collections import OrderedDict
+from collections.abc import Iterable
 from scipy.interpolate import griddata
 
 from pynocular.data import Data
@@ -32,7 +33,12 @@ class PointData(Data):
         if len(args) == 0 and len(kwargs) == 0:
             data = OrderedDict()
         elif len(args) == 1 and len(kwargs) == 0:
-            data = OrderedDict(args[0])
+            if isinstance(args[0], pandas.core.series.Series):
+                data = pandas.DataFrame(args[0])
+            elif isinstance(args[0], pandas.core.frame.DataFrame):
+                data = args[0]
+            else:
+                data = OrderedDict(args[0])
         elif len(args) == 0 and len(kwargs) > 0:
             data = OrderedDict(kwargs)
         else:
@@ -55,7 +61,7 @@ class PointData(Data):
             return []
 
     @property
-    def ndims(self):
+    def ndim(self):
         return len(self.vars)
 
     @property
@@ -98,7 +104,7 @@ class PointData(Data):
         # TODO: run some compatibility cheks
         #if isinstance(data, np.ndarray):
         #    assert data.dtype.names is not None, 'unsctructured arrays not supported'
-        if self.ndims > 0:
+        if self.ndim > 0:
             assert len(data) == len(self), 'Incompatible dimensions'
         self.data = data
 
@@ -113,18 +119,59 @@ class PointData(Data):
         return arr
 
     def __getitem__(self, var):
+        if self.type == 'df':
+            return PointData(self.data[var])
+
         if isinstance(var, str):
             if var in self.vars:
-                return self.get_array(var)
-        else:
-            # create new instance with mask or slice applied
-            if self.type == 'df':
-                return PointData(self.data[var])
-            else:
                 new_data = OrderedDict()
-                for key, val in self.data.items():
-                    new_data[key] = val[var]
+                new_data[var] = self.data[var]
                 return PointData(new_data)
+
+        # create new instance with mask or slice applied
+        new_data = OrderedDict()
+
+        if isinstance(var, Iterable):
+            for v in var:
+                new_data[v] = self.data[v]
+        else:
+            for key, val in self.data.items():
+                new_data[key] = val[var]
+        return PointData(new_data)
+
+    def __add__(self, other):
+        return np.add(self, other)
+
+    def __sub__(self, other):
+        return np.subtract(self, other)
+
+    def __mul__(self, other):
+        return np.multiply(self, other)
+
+    def __truediv__(self, other):
+        return np.divide(self, other)
+
+    def __pow__(self, other):
+        return np.power(self, other)
+
+    def __array__(self):
+        if self.ndim == 1:
+            return self.get_array(self.vars[0])
+        else:
+            raise ValueError('Can only convert data with a single variable to arrays')
+
+    def __array_wrap__(self, result, context=None):
+        if isinstance(result, np.ndarray):
+            if result.ndim > 0 and result.shape[0] == len(self):
+                if self.type == 'df':
+                    new_obj = PointData(pandas.DataFrame())
+                else:
+                    new_obj = PointData()
+                new_obj[self.vars[0]] = result
+                return new_obj
+            if result.ndim == 0:
+                return np.asscalar(result)
+        return result
 
     def add_data(self, var, data):
         # TODO do some checks of shape etc
@@ -138,7 +185,7 @@ class PointData(Data):
     def plot(self, *args, **kwargs):
         if len(args) > 1:
             plot(self, args[0], args[1], *args[2:], **kwargs)
-        elif self.ndims == 2:
+        elif self.ndim == 2:
             plot(self, *self.vars, *args, **kwargs)
         else:
             raise ValueError('Need to specify variables to plot')
