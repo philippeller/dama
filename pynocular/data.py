@@ -93,22 +93,22 @@ class Data(object):
     def get_array(self, var):
         pass
 
-    def __getitem__(self, var):
-        return self.get_array(var)
+    #def __getitem__(self, var):
+    #    return self.get_array(var)
 
-    def __setitem__(self, var, new_data):
-        #if callable(data):
-        #    new_data = data(self)
-        #else:
-        #    new_data = data
-        if isinstance(new_data, type(self)):
-            # rename to desired var name
-            # last variable added is the new one
-            new_data.rename(new_data.data_vars[-1], var)
-            self.update(new_data)
-            return
+    #def __setitem__(self, var, new_data):
+    #    #if callable(data):
+    #    #    new_data = data(self)
+    #    #else:
+    #    #    new_data = data
+    #    if isinstance(new_data, type(self)):
+    #        # rename to desired var name
+    #        # last variable added is the new one
+    #        new_data.rename(new_data.data_vars[-1], var)
+    #        self.update(new_data)
+    #        return
 
-        self.add_data(var, new_data)
+    #    self.add_data(var, new_data)
 
     def __len__(self):
         return 0

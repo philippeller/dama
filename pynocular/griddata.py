@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from collections import OrderedDict
+from collections.abc import Iterable
 import six
 import numpy as np
 import pynocular as pn
@@ -19,6 +20,80 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
+
+class GridDataDim(object):
+    '''Structure to hold a single GridData item
+    '''
+    def __init__(self, grid):
+        self.grid = grid
+        self._data = None
+        self.name = None
+
+    def __repr__(self):
+        return 'GridDataDim(%s : %s)'%(self.name, self.data)
+
+    def __str__(self):
+        return '%s : %s'%(self.name, self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __add__(self, other):
+        return np.add(self, other)
+
+    def __sub__(self, other):
+        return np.subtract(self, other)
+
+    def __mul__(self, other):
+        return np.multiply(self, other)
+
+    def __truediv__(self, other):
+        return np.divide(self, other)
+
+    def __pow__(self, other):
+        return np.power(self, other)
+
+    def __array__(self):
+        return self.values
+
+    def add_data(self, name, data):
+        assert name not in self.grid.vars, "Cannot add data with name same as grid variable"
+        self._data = data
+        self.name = name
+
+    @property
+    def values(self):
+        return self.get_array()
+
+    @property
+    def data(self):
+        if self.name in self.grid.vars:
+            return self.grid.point_mgrid[self.grid.vars.index(self.name)]
+        else:
+            return self._data
+
+    def get_array(self, flat=False):
+        array = self.data
+        if flat:
+            if array.ndim == self.grid.ndim:
+                return array.ravel()
+            return array.reshape(self.grid.size, -1)
+        return array
+
+    def __array_wrap__(self, result, context=None):
+        if isinstance(result, np.ndarray):
+            if result.ndim > 0 and result.shape[0] == len(self):
+                new_obj = GridDataDim(self.grid)
+                if self.name in self.grid.vars:
+                    new_name = 'f(%s)'%self.name
+                else:
+                    new_name - self.name
+                new_obj.add_data(new_name, result)
+                return new_obj
+            if result.ndim == 0:
+                return np.asscalar(result)
+        return result
+
 
 class GridData(pn.data.Data):
     '''
@@ -49,6 +124,28 @@ class GridData(pn.data.Data):
         strs.append(self.grid.__str__())
         strs.append(self.data.__str__())
         return '\n'.join(strs)
+
+    def __setitem__(self, var, val):
+        self.add_data(var, val)
+
+    def __getitem__(self, var):
+        if isinstance(var, str):
+            if var in self.vars:
+                new_data = GridDataDim(self.grid)
+                if var in self.data_vars:
+                    new_data.add_data(var, self.data[var])
+                else:
+                    new_data.name = var
+                return new_data
+
+        # create new instance with mask or slice applied
+        new_data = GridData(self.grid)
+        if isinstance(var, Iterable):
+            for v in var:
+                if v in self.data_vars:
+                    new_data[v] = self.data[v]
+            return new_data
+        raise NotImplementedError('slicing not yet implemented for Grids')
 
     @property
     def function_args(self):
@@ -92,16 +189,18 @@ class GridData(pn.data.Data):
         '''
         return self.shape
 
-    @property
-    def meshgrid(self):
-        return self.grid.point_meshgrid
-
-    @property
-    def mgrid(self):
-        return self.grid.point_mgrid
-
     def add_data(self, var, data):
-        if self.ndim == 0:
+        if var in self.grid.vars:
+            raise ValueError('Variable `%s` is already a grid dimension!'%var)
+
+        if isinstance(data, GridDataDim):
+            if self.grid.ndim == 0:
+                self.grid == data.grid
+            else:
+                assert self.grid == data.grid
+            data = data.data
+
+        elif self.ndim == 0:
             print('adding default grid')
             # make a default grid:
             if data.ndim <= 3 and var not in ['x', 'y', 'z']:
@@ -113,10 +212,9 @@ class GridData(pn.data.Data):
             for d,n in zip(dim_names, data.shape):
                 dims[d] = np.arange(n+1)
             self.grid = pn.Grid(**dims)
+
         if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
-        if var in self.grid.vars:
-            raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
         self.data[var] = data
 
@@ -133,7 +231,7 @@ class GridData(pn.data.Data):
             if true return flattened (1d) array
         '''
         if var in self.grid.vars:
-            array = self.mgrid[self.grid.vars.index(var)]
+            array = self.grid.point_mgrid[self.grid.vars.index(var)]
         else:
             array = self.data[var]
         if flat:
