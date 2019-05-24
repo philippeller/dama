@@ -122,7 +122,7 @@ def plot_bands(layer, var, fig=None, ax=None, **kwargs):
     cmap = kwargs.pop('cmap', 'Blues')
     cmap = plt.get_cmap(cmap)
 
-    data = layer[var]
+    data = np.array(layer[var])
     n_points = data.shape[1]
     
     n_bands = (n_points+1)//2

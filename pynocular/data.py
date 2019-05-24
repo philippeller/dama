@@ -50,7 +50,6 @@ def generate_destination(source, *args, **kwargs):
             grid = initialize_grid(dest, source)
             return pn.GridData(grid)
         if isinstance(dest, pn.PointData):
-            # ToDo: only wrt variables
             return pn.PointData(dest.data)
 
     # check if source has a grid and if any args are in there
@@ -302,7 +301,7 @@ def lookup(source, *args, **kwargs):
     indices = source.grid.compute_indices(sample)
 
     for source_var in source.vars:
-        if source_var in dest.grid.vars:
+        if source_var in dest.vars:
             continue
 
         source_data = source.get_array(source_var)
@@ -420,7 +419,7 @@ class Data(object):
         '''
         return binwise(self, *args, **kwargs)
 
-    def lookup(self, source_var=None, **kwargs):
+    def lookup(self, *args, **kwargs):
         '''lookup the bin content at given points
 
         Parameters:
@@ -428,7 +427,7 @@ class Data(object):
 
         source_var : string
         '''
-        return lookup(self, source_var=None, **kwargs)
+        return lookup(self, *args, **kwargs)
 
     def resample(self, *args, **kwargs):
         '''resample from binned data into other binned data
