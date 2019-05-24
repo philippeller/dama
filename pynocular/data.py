@@ -389,6 +389,17 @@ class Data(object):
     # ToDo: make this wrapping of functions into a decorator
 
     def interp(self, *args, **kwargs):
+        '''interpolation from array data into grids
+
+        Parameters:
+        -----------
+        method : string
+            "nearest" = nearest neightbour interpolation
+            "linear" = linear interpolation
+            "cubic" = cubic interpolation (only for ndim < 3)
+        fill_value : optional
+            value for invalid points
+        '''
         return interp(self, *args, **kwargs)
 
     def histogram(self, *args, **kwargs):
@@ -396,12 +407,33 @@ class Data(object):
         return binwise(self, *args, method='sum', **kwargs)
 
     def binwise(self, *args, **kwargs):
+        '''translation from array data into binned form
+
+        Parameters:
+        -----------
+        method : string
+            "sum" = weighted historgam
+            "mean" = weighted histogram / histogram
+        function : callable
+        fill_value : optional
+            value for invalid points
+        '''
         return binwise(self, *args, **kwargs)
 
     def lookup(self, source_var=None, **kwargs):
+        '''lookup the bin content at given points
+
+        Parameters:
+        -----------
+
+        source_var : string
+        '''
         return lookup(self, source_var=None, **kwargs)
 
     def resample(self, *args, **kwargs):
+        '''resample from binned data into other binned data
+        ToDo: this is super inefficient
+        '''
         return resample(self, *args, **kwargs)
 
 
