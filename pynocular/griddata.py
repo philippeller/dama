@@ -27,9 +27,9 @@ import copy
 
 def table_labels(grid, dim):
     if grid[grid.vars[dim]]._edges is not None:
-        return ['[%s, %s]'%(grid[grid.vars[dim]].edges[i], grid[grid.vars[dim]].edges[i+1]) for i in range(grid.shape[dim])]
+        return ['[%.2f, %.2f]'%(grid[grid.vars[dim]].edges[i], grid[grid.vars[dim]].edges[i+1]) for i in range(grid.shape[dim])]
     else:
-        return ['%s, %s'%(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
+        return ['%.2f, %.2f'%(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
 
 
 class GridArray(object):
@@ -64,14 +64,14 @@ class GridArray(object):
                 
             for i in range(self.shape[0]):
                 for j in range(self.shape[1]):
-                    table[j+1][i+1] = self.data[i,j]
+                    table[j+1][i+1] = '%.2f'%self.data[i,j]
                     
             return tabulate.tabulate(table, tablefmt='html')
         
         elif self.ndim == 1:
             table_x = [0] * (self.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(2)]
-            table[0][0] = '%s'%(self.grid.vars[0])
+            table[0][0] = self.grid.vars[0]
             table[1][0] = self.name
             
             x_labels = table_labels(self.grid, 0)
@@ -79,7 +79,7 @@ class GridArray(object):
             
             for i in range(self.shape[0]):
                 table[0][i+1] = x_labels[i]
-                table[1][i+1] = self.data[i]
+                table[1][i+1] = '%.2f'%self.data[i]
 
             return tabulate.tabulate(table, tablefmt='html')
         
