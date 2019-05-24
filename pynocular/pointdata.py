@@ -101,9 +101,9 @@ class PointDataDim(object):
                 if self.type == 'df':
                     new_data = pandas.core.series.Series(result)
                     new_data.name = self.name
-                    new_obj = PointDataDim(new_data)
+                    new_obj = pn.PointDataDim(new_data)
                 else:
-                    new_obj = PointDataDim()
+                    new_obj = pn.PointDataDim()
                     new_obj.data = result
                     new_obj.name = self.name
                 return new_obj

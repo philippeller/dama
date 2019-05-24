@@ -69,7 +69,7 @@ def plot_points_2d(layer, x, y, s=None, c=None, cbar=False, fig=None, ax=None, *
     if s is not None:
         if isinstance(s, str):
             s = layer[s]
-    sc = ax.scatter(layer[x], layer[y], s=s, c=c, **kwargs)
+    sc = ax.scatter(np.array(layer[x]), np.array(layer[y]), s=np.array(s), c=np.array(c), **kwargs)
     if cbar:
         fig.colorbar(sc, ax=ax, label=c_label)
     ax.set_xlabel(x)

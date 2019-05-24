@@ -4,6 +4,7 @@ from collections.abc import Iterable
 import six
 import numpy as np
 import pynocular as pn
+import tabulate
 
 #__all__ = ['GridData']
 
@@ -21,17 +22,71 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-class GridDataDim(object):
+
+import copy
+
+def table_labels(grid, dim):
+    if grid[grid.vars[dim]]._edges is not None:
+        return ['[%s, %s]'%(grid[grid.vars[dim]].edges[i], grid[grid.vars[dim]].edges[i+1]) for i in range(grid.shape[dim])]
+    else:
+        return ['%s, %s'%(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
+
+
+class GridArray(object):
     '''Structure to hold a single GridData item
     '''
-    def __init__(self, grid):
+    def __init__(self, grid, name, input_array=None):
         self.grid = grid
-        self._data = None
-        self.name = None
+        self.name = name
+        
+        if name in self.grid.vars:
+            assert input_array is None, "Cannot add data with name same as grid variable"
+        self._data = input_array
 
+        
     def __repr__(self):
-        return 'GridDataDim(%s : %s)'%(self.name, self.data)
+        return 'GridArray(%s : %s)'%(self.name, self.data)
 
+    def _repr_html_(self):
+        if self.ndim == 2:
+            table_x = [0] * (self.shape[0] + 1)
+            table = [copy.copy(table_x) for _ in range(self.shape[1] + 1)]
+            
+            table[0][0] = '%s \ %s'%(self.grid.vars[1], self.grid.vars[0])
+            
+            x_labels = table_labels(self.grid, 0)
+            y_labels = table_labels(self.grid, 1)
+                        
+            for i in range(self.shape[0]):
+                table[0][i+1] = x_labels[i]                    
+            for i in range(self.shape[1]):
+                table[i+1][0] = y_labels[i]
+                
+            for i in range(self.shape[0]):
+                for j in range(self.shape[1]):
+                    table[j+1][i+1] = self.data[i,j]
+                    
+            return tabulate.tabulate(table, tablefmt='html')
+        
+        elif self.ndim == 1:
+            table_x = [0] * (self.shape[0] + 1)
+            table = [copy.copy(table_x) for _ in range(2)]
+            table[0][0] = '%s'%(self.grid.vars[0])
+            table[1][0] = self.name
+            
+            x_labels = table_labels(self.grid, 0)
+
+            
+            for i in range(self.shape[0]):
+                table[0][i+1] = x_labels[i]
+                table[1][i+1] = self.data[i]
+
+            return tabulate.tabulate(table, tablefmt='html')
+        
+        else:
+            return self.__repr__()
+            
+    
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
 
@@ -49,41 +104,38 @@ class GridDataDim(object):
     def __pow__(self, other):
         return np.power(self, other)
     def __lt__(self, other):
-        return np.less(self, other)	
+        return np.less(self, other)
     def __le__(self, other):
-        return np.less_equal(self, other)	
+        return np.less_equal(self, other)
     def __eq__(self, other):
-        return np.equal(self, other)	
+        return np.equal(self, other)
     def __ne__(self, other):
-        return np.not_equal(self, other)	
+        return np.not_equal(self, other)
     def __gt__(self, other):
-        return np.greater(self, other)	
+        return np.greater(self, other)
     def __ge__(self, other): 
-        return np.greater_equal(self, other)	
+        return np.greater_equal(self, other)
 
-
-    def __array__(self):
-        return self.values
-
-    def add_data(self, name, data):
-        assert name not in self.grid.vars, "Cannot add data with name same as grid variable"
-        self._data = data
-        self.name = name
 
     @property
     def ndim(self):
         return self.data.ndim
 
-    #def __getitem__(self, m):
-    #    reshape = self.data[m]
-    #    new_obj = GridDataDim(self.grid)
-    #    if self.name in self.grid.vars:
-    #        new_name = 'f(%s)'%self.name
-    #    else:
-    #        new_name = self.name
-    #    new_obj.add_data(new_name, result)
-    #    return new_obj
+    def __getitem__(self, m):
+        print('get item %s'%m)
+        raise NotImplementedError()
 
+    @property
+    def T(self):
+        '''transpose'''
+        if self.ndim > 1:
+            return pn.GridArray(self.grid.T, self.name, self.data.T)
+        return self
+    
+    @property
+    def shape(self):
+        return self.data.shape
+            
     @property
     def values(self):
         return self.get_array()
@@ -93,7 +145,7 @@ class GridDataDim(object):
         if self.name in self.grid.vars:
             return self.grid.point_mgrid[self.grid.vars.index(self.name)]
         else:
-            return self._data
+            return np.array(self._data)
 
     def get_array(self, flat=False):
         array = self.data
@@ -103,19 +155,60 @@ class GridDataDim(object):
             return array.reshape(self.grid.size, -1)
         return array
 
-    def __array_wrap__(self, result, context=None):
+    def __array__(self):
+        #print('array')
+        return self.values
+    
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        #print('ufunc')
+        array_inputs = [np.array(i) for i in inputs]
+        #print(ufunc.nout)
+        #print(kwargs)
+        axis = kwargs.get('axis', None)
+        #print(array_inputs)
+        
+        if isinstance(axis, str):
+            kwargs['axis'] = self.grid.vars.index(axis)
+        
+        result = np.array(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
+        
         if isinstance(result, np.ndarray):
-            if result.ndim > 0 and result.shape[0] == len(self):
-                new_obj = GridDataDim(self.grid)
+            if result.ndim > 0 and result.shape[0] == len(self):  
                 if self.name in self.grid.vars:
                     new_name = 'f(%s)'%self.name
                 else:
                     new_name = self.name
-                new_obj.add_data(new_name, result)
+                    
+                # new grid
+                if axis is not None:
+                    new_grid = copy.deepcopy(self.grid)
+                    if not isinstance(axis, str):
+                        axis = list(grid.dims.keys())[axis]
+                    new_grid.dims.pop(axis)
+                else:
+                    new_grid = self.grid
+                
+                new_obj = pn.GridArray(new_grid, new_name, result)
                 return new_obj
             if result.ndim == 0:
                 return np.asscalar(result)
         return result
+
+    #def __array_prepare__(self, result, context=None):
+    #    print('prepare')
+    #    return result
+
+    #def __array_finalize__(self, obj):
+    #    print('finalize')
+
+    #def __array_wrap__(self, out_arr, context=None):
+    #    print('In __array_wrap__:')
+    #    print('   self is %s' % repr(self))
+    #    print('   arr is %s' % repr(out_arr))
+    #    # then just call the parent
+    #    return np.array(self).__array_wrap__(self, out_arr, context)          
+
+
 
 
 class GridData(pn.data.Data):
@@ -150,11 +243,11 @@ class GridData(pn.data.Data):
     def __getitem__(self, var):
         if isinstance(var, str):
             if var in self.vars:
-                new_data = GridDataDim(self.grid)
                 if var in self.data_vars:
-                    new_data.add_data(var, self.data[var])
+                    data = self.data[var]
                 else:
-                    new_data.name = var
+                    data = None
+                new_data = pn.GridArray(self.grid, var, data)
                 return new_data
 
         # create new instance with mask or slice applied
@@ -212,7 +305,7 @@ class GridData(pn.data.Data):
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
-        if isinstance(data, pn.GridDataDim):
+        if isinstance(data, pn.GridArray):
             if self.grid.ndim == 0:
                 self.grid == data.grid
             else:
