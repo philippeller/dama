@@ -9,6 +9,8 @@ from scipy.interpolate import griddata
 import pynocular as pn
 from pynocular.data import Data
 from pynocular.stat_plot import *
+import tabulate
+
 
 #__all__ = ['PointData']
 
@@ -58,6 +60,13 @@ class PointDataDim(object):
 
     def __repr__(self):
         return 'PointDataDim(%s : %s)'%(self.name, self.data)
+
+    def _repr_html_(self):
+        if self.type == 'df':
+            return self.data._repr_html_()
+        else:
+            table = [[self.name] + ['%.2f'%v for v in np.array(self)]]
+            return tabulate.tabulate(table, tablefmt='html')
 
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
@@ -137,6 +146,13 @@ class PointData(Data):
 
     def __str__(self):
         return self.data.__str__()
+
+    def _repr_html_(self):
+        if self.type == 'df':
+            return self.data._repr_html_()
+        else:
+            table = [[var] + ['%.2f'%v for v in np.array(self[var])] for var in self.vars]
+            return tabulate.tabulate(table, tablefmt='html')
 
 
     @property

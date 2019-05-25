@@ -25,11 +25,15 @@ limitations under the License.'''
 
 import copy
 
+def as_str(a):
+    return np.array2string(np.array(a), precision=2)
+
+
 def table_labels(grid, dim):
     if grid[grid.vars[dim]]._edges is not None:
-        return ['[%.2f, %.2f]'%(grid[grid.vars[dim]].edges[i], grid[grid.vars[dim]].edges[i+1]) for i in range(grid.shape[dim])]
+        return ['[%s, %s]'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
     else:
-        return ['%.2f, %.2f'%(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
+        return [as_str(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
 
 
 class GridArray(object):
@@ -64,7 +68,7 @@ class GridArray(object):
                 
             for i in range(self.shape[0]):
                 for j in range(self.shape[1]):
-                    table[j+1][i+1] = '%.2f'%self.data[i,j]
+                    table[j+1][i+1] = as_str(self.data[i,j])
                     
             return tabulate.tabulate(table, tablefmt='html')
         
@@ -79,7 +83,7 @@ class GridArray(object):
             
             for i in range(self.shape[0]):
                 table[0][i+1] = x_labels[i]
-                table[1][i+1] = '%.2f'%self.data[i]
+                table[1][i+1] = as_str(self.data[i])
 
             return tabulate.tabulate(table, tablefmt='html')
         
@@ -236,6 +240,49 @@ class GridData(pn.data.Data):
         strs.append(self.grid.__str__())
         strs.append(self.data.__str__())
         return '\n'.join(strs)
+
+    def _repr_html_(self):
+        if self.grid.ndim == 2:
+            table_x = [0] * (self.grid.shape[0] + 1)
+            table = [copy.copy(table_x) for _ in range(self.grid.shape[1] + 1)]
+            
+            table[0][0] = '%s \ %s'%(self.grid.vars[1], self.grid.vars[0])
+            
+            x_labels = table_labels(self.grid, 0)
+            y_labels = table_labels(self.grid, 1)
+                        
+            for i in range(self.shape[0]):
+                table[0][i+1] = x_labels[i]                    
+            for i in range(self.shape[1]):
+                table[i+1][0] = y_labels[i]
+                
+            for i in range(self.shape[0]):
+                for j in range(self.shape[1]):
+                    all_data = []
+                    for var in self.data_vars:
+                        all_data.append('%s: %s'%(var, as_str(self.data[var][i,j])))
+                    table[j+1][i+1] = '\n'.join(all_data)
+                    
+            return tabulate.tabulate(table, tablefmt='html')
+        
+        elif self.ndim == 1:
+            table_x = [0] * (self.grid.shape[0] + 1)
+            table = [copy.copy(table_x) for _ in range(len(self.data_vars)+1)]
+            table[0][0] = self.grid.vars[0]
+            for i, var in enumerate(self.data_vars):
+                table[i+1][0] = var
+            
+            x_labels = table_labels(self.grid, 0)
+            
+            for i in range(self.shape[0]):
+                table[0][i+1] = x_labels[i]
+                for j, var in enumerate(self.data_vars):
+                    table[j+1][i+1] = as_str(self.data[var][i])
+
+            return tabulate.tabulate(table, tablefmt='html')
+        
+        else:
+            return self.__repr__()
 
     def __setitem__(self, var, val):
         self.add_data(var, val)

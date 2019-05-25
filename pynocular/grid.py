@@ -167,9 +167,9 @@ class Grid(object):
 
         for d,x in kwargs.items():
             if isinstance(x, Number):
-                self.add_dim(Dimension(var=d[0], nbins=x))
+                self.add_dim(pn.Dimension(var=d[0], nbins=x))
             else:
-                self.add_dim(Dimension(var=d[0], edges=x))
+                self.add_dim(pn.Dimension(var=d[0], edges=x))
 
     def add_dim(self, dim):
         '''
@@ -181,16 +181,21 @@ class Grid(object):
 
         in case of a basestring, a new empty dimension gets added
         '''
-        if isinstance(dim, Dimension):
+        if isinstance(dim, pn.Dimension):
             self.dims[dim.var] = dim
         elif isinstance(dim, dict):
-            dim = Dimension(**dim)
+            dim = pn.Dimension(**dim)
             self.add_dim(dim)
         elif isinstance(dim, str):
-            new_dim = Dimension(var=dim)
+            new_dim = pn.Dimension(var=dim)
             self.add_dim(new_dim)
         else:
             raise TypeError('Cannot add type %s'%type(dim))
+
+    @property
+    def T(self):
+        '''transpose'''
+        return pn.Grid(*list(self)[::-1])
 
     @property
     def initialized(self):
@@ -300,10 +305,10 @@ class Grid(object):
             new_dims = []
             for it in item:
                 new_dims.append(self[it])
-            return self.__class__(new_dims)
+            return pn.Grid(*new_dims)
         elif isinstance(item, slice):
-            new_names = self.dims.keys()[item]
-            return self[new_names]
+            new_names = list(self.dims.keys())[item]
+            return pn.Grid(*new_names)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 
