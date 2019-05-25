@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 from collections.abc import Iterable
+import copy
 import six
 import numpy as np
 import pynocular as pn
+from pynocular.utils.formatter import as_str, table_labels
 import tabulate
 
 #__all__ = ['GridData']
@@ -23,17 +25,16 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-import copy
-
-def as_str(a):
-    return np.array2string(np.array(a), precision=2)
-
-
-def table_labels(grid, dim):
-    if grid[grid.vars[dim]]._edges is not None:
-        return ['[%s, %s]'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
-    else:
-        return [as_str(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
+#
+#def as_str(a):
+#    return np.array2string(np.array(a), precision=2)
+#
+#
+#def table_labels(grid, dim):
+#    if grid[grid.vars[dim]]._edges is not None:
+#        return ['[%s, %s]'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
+#    else:
+#        return [as_str(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
 
 
 class GridArray(object):
@@ -263,7 +264,7 @@ class GridData(pn.data.Data):
                         all_data.append('%s: %s'%(var, as_str(self.data[var][i,j])))
                     table[j+1][i+1] = '\n'.join(all_data)
                     
-            return tabulate.tabulate(table, tablefmt='html')
+            return tabulate.tabulate(table, tablefmt='html')#, headers="firstrow")
         
         elif self.ndim == 1:
             table_x = [0] * (self.grid.shape[0] + 1)
@@ -279,7 +280,7 @@ class GridData(pn.data.Data):
                 for j, var in enumerate(self.data_vars):
                     table[j+1][i+1] = as_str(self.data[var][i])
 
-            return tabulate.tabulate(table, tablefmt='html')
+            return tabulate.tabulate(table, tablefmt='html', headers="firstrow")
         
         else:
             return self.__repr__()
