@@ -9,4 +9,6 @@ Convenience `pyplot` plotting functions are also defined, in order to produce st
 
 ## Installation
 
-`pip install --editable .`
+* `git clone git@github.com:philippeller/pynocular.git`
+* `cd pynocular`
+* `pip install .`

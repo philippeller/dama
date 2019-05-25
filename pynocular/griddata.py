@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from collections import OrderedDict
 from collections.abc import Iterable
 import copy
-import six
 import numpy as np
 import pynocular as pn
 from pynocular.utils.formatter import as_str, table_labels
