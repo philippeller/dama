@@ -163,6 +163,35 @@ class GridArray(object):
     def __array__(self):
         #print('array')
         return self.values
+
+    def mean(self, **kwargs):
+        axis = kwargs.get('axis', None)
+        if isinstance(axis, str):
+            kwargs['axis'] = self.grid.vars.index(axis)
+        
+        result = np.mean(np.array(self), **kwargs)
+        
+        if isinstance(result, np.ndarray):
+            if result.ndim > 0 and result.shape[0] == len(self):  
+                if self.name in self.grid.vars:
+                    new_name = 'f(%s)'%self.name
+                else:
+                    new_name = self.name
+                    
+                # new grid
+                if axis is not None:
+                    new_grid = copy.deepcopy(self.grid)
+                    if not isinstance(axis, str):
+                        axis = list(self.grid.dims.keys())[axis]
+                    new_grid.dims.pop(axis)
+                else:
+                    new_grid = self.grid
+                
+                new_obj = pn.GridArray(new_grid, new_name, result)
+                return new_obj
+            if result.ndim == 0:
+                return np.asscalar(result)
+        return result
     
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         #print('ufunc')
@@ -188,7 +217,7 @@ class GridArray(object):
                 if axis is not None:
                     new_grid = copy.deepcopy(self.grid)
                     if not isinstance(axis, str):
-                        axis = list(grid.dims.keys())[axis]
+                        axis = list(self.grid.dims.keys())[axis]
                     new_grid.dims.pop(axis)
                 else:
                     new_grid = self.grid
