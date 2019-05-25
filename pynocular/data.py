@@ -21,7 +21,18 @@ limitations under the License.'''
 
 
 def initialize_grid(grid, source):
-    '''if grid is not fully set up, derive grid from source'''
+    '''Method to initialize a grid if grid is not fully set up
+    it derive information from source
+    
+    Parameters
+    ----------
+    grid : pn.Grid
+    source : pn.GridData, pn.PointData
+
+    Returns
+    -------
+    grid : pn.Grid
+    '''
     # check dest grid is set up, otherwise do so
     for var in grid.vars:
         if grid[var].edges is None:
@@ -40,7 +51,18 @@ def initialize_grid(grid, source):
     return grid
 
 def generate_destination(source, *args, **kwargs):
-    '''Return correctly set up grid, depending on the supplied input'''
+    '''Correctly set up a destination data format
+    depending on the supplied input
+    
+    Parameters
+    ----------
+    source : pn.GridData, pn.PointData
+    args, kwargs
+
+    Returns
+    -------
+    destination : pn.GridData, pn.PointData
+    '''
     if len(args) == 1 and len(kwargs) == 0:
         dest = args[0]
         if isinstance(dest, pn.GridData):
