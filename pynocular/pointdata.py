@@ -8,7 +8,6 @@ from scipy.interpolate import griddata
 
 import pynocular as pn
 from pynocular.data import Data
-from pynocular.stat_plot import *
 from pynocular.utils.formatter import as_str, table_labels
 import tabulate
 
@@ -264,13 +263,13 @@ class PointData(Data):
     # --- Plotting functions ---
 
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
-        plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
+        pn.plotting.plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
     def plot(self, *args, **kwargs):
         if len(args) > 1:
-            plot(self, args[0], args[1], *args[2:], **kwargs)
+            pn.plotting.plot(self, args[0], args[1], *args[2:], **kwargs)
         elif self.ndim == 2:
-            plot(self, *self.vars, *args, **kwargs)
+            pn.plotting.plot(self, *self.vars, *args, **kwargs)
         else:
             raise ValueError('Need to specify variables to plot')
 
