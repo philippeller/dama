@@ -81,7 +81,7 @@ def interp(source, *args, **kwargs):
         "nearest" = nearest neightbour interpolation
         "linear" = linear interpolation
         "cubic" = cubic interpolation (only for ndim < 3)
-    fill_value : optional
+    fill_value : Number (optional)
         value for invalid points
     '''
     method = kwargs.pop('method', None)
@@ -459,8 +459,7 @@ def get_single_hist(sample, grid, weights, method):
 
 
 def fill_single_map(output_map, grid, indices, source_data, function, return_len):
-    '''
-    fill a single map with a function applied to values according to indices
+    '''fill a single map with a function applied to values according to indices
     '''
     for i in range(np.prod([d+2 for d in grid.shape])):
         bin_source_data = source_data[indices == i]

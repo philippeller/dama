@@ -25,18 +25,6 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-#
-#def as_str(a):
-#    return np.array2string(np.array(a), precision=2)
-#
-#
-#def table_labels(grid, dim):
-#    if grid[grid.vars[dim]]._edges is not None:
-#        return ['[%s, %s]'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
-#    else:
-#        return [as_str(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
-
-
 class GridArray(object):
     '''Structure to hold a single GridData item
     '''
@@ -46,13 +34,14 @@ class GridArray(object):
         
         if name in self.grid.vars:
             assert input_array is None, "Cannot add data with name same as grid variable"
-        self._data = input_array
+        self._data = np.asanyarray(input_array)
 
         
     def __repr__(self):
         return 'GridArray(%s : %s)'%(self.name, self.data)
 
     def _repr_html_(self):
+        '''for juopyter'''
         if self.ndim == 2:
             table_x = [0] * (self.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.shape[1] + 1)]
@@ -127,8 +116,13 @@ class GridArray(object):
         return self.data.ndim
 
     def __getitem__(self, m):
-        print('get item %s'%m)
-        raise NotImplementedError()
+        if isinstance(m, pn.GridArray):
+            if m.data.dtype == np.bool:
+                # if it is a mask
+                # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
+                new_data  = np.ma.MaskedArray(self.data, ~m.data)
+                return pn.GridArray(self.grid, self.name, new_data)
+        raise NotImplementedError('get item %s'%m)
 
     @property
     def T(self):
@@ -150,9 +144,20 @@ class GridArray(object):
         if self.name in self.grid.vars:
             return self.grid.point_mgrid[self.grid.vars.index(self.name)]
         else:
-            return np.array(self._data)
+            return np.asanyarray(self._data)
 
     def get_array(self, flat=False):
+        '''return array values
+
+        Parameters
+        ----------
+        flat : bool
+            flat-out the grid dimensions
+
+        Retursn
+        -------
+        array
+        '''
         array = self.data
         if flat:
             if array.ndim == self.grid.ndim:
@@ -161,18 +166,19 @@ class GridArray(object):
         return array
 
     def __array__(self):
-        #print('array')
         return self.values
 
-    def mean(self, **kwargs):
+    def _get_axis(self, kwargs):
+        '''translate axis to index'''
         axis = kwargs.get('axis', None)
         if isinstance(axis, str):
             kwargs['axis'] = self.grid.vars.index(axis)
-        
-        result = np.mean(np.array(self), **kwargs)
-        
+        return axis, kwargs
+
+    def _pack_result(self, result, axis):
+        '''repack result into correct type'''
         if isinstance(result, np.ndarray):
-            if result.ndim > 0 and result.shape[0] == len(self):  
+            if result.ndim > 0: 
                 if self.name in self.grid.vars:
                     new_name = 'f(%s)'%self.name
                 else:
@@ -192,41 +198,42 @@ class GridArray(object):
             if result.ndim == 0:
                 return np.asscalar(result)
         return result
+
+
+    def mean(self, **kwargs):
+        '''necessary as it is not calling __array_ufunc__''' 
+        axis, kwargs = self._get_axis(kwargs)
+        result = np.mean(np.asanyarray(self), **kwargs)
+        return self._pack_result(result, axis)
+        
+    def std(self, **kwargs):
+        '''necessary as it is not calling __array_ufunc__''' 
+        axis, kwargs = self._get_axis(kwargs)
+        result = np.std(np.asanyarray(self), **kwargs)
+        return self._pack_result(result, axis)
+        
+    def average(self, **kwargs):
+        '''necessary as it is not calling __array_ufunc__''' 
+        axis, kwargs = self._get_axis(kwargs)
+        result = np.average(np.asanyarray(self), **kwargs)
+        return self._pack_result(result, axis)
+    
+    def median(self, **kwargs):
+        '''necessary as it is not calling __array_ufunc__''' 
+        axis, kwargs = self._get_axis(kwargs)
+        result = np.median(np.asanyarray(self), **kwargs)
+        return self._pack_result(result, axis)
     
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        #print('ufunc')
-        array_inputs = [np.array(i) for i in inputs]
-        #print(ufunc.nout)
-        #print(kwargs)
-        axis = kwargs.get('axis', None)
-        #print(array_inputs)
+        '''callable for numoy ufuncs'''
+        array_inputs = [np.asanyarray(i) for i in inputs]
+
+        axis, kwargs = self._get_axis(kwargs)
         
-        if isinstance(axis, str):
-            kwargs['axis'] = self.grid.vars.index(axis)
+        result = np.asanyarray(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
+
+        return self._pack_result(result, axis)
         
-        result = np.array(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
-        
-        if isinstance(result, np.ndarray):
-            if result.ndim > 0 and result.shape[0] == len(self):  
-                if self.name in self.grid.vars:
-                    new_name = 'f(%s)'%self.name
-                else:
-                    new_name = self.name
-                    
-                # new grid
-                if axis is not None:
-                    new_grid = copy.deepcopy(self.grid)
-                    if not isinstance(axis, str):
-                        axis = list(self.grid.dims.keys())[axis]
-                    new_grid.dims.pop(axis)
-                else:
-                    new_grid = self.grid
-                
-                new_obj = pn.GridArray(new_grid, new_name, result)
-                return new_obj
-            if result.ndim == 0:
-                return np.asscalar(result)
-        return result
 
     #def __array_prepare__(self, result, context=None):
     #    print('prepare')
@@ -272,6 +279,7 @@ class GridData(pn.data.Data):
         return '\n'.join(strs)
 
     def _repr_html_(self):
+        '''for jupyter'''
         if self.grid.ndim == 2:
             table_x = [0] * (self.grid.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.grid.shape[1] + 1)]
@@ -291,7 +299,7 @@ class GridData(pn.data.Data):
                     all_data = []
                     for var in self.data_vars:
                         all_data.append('%s = %s'%(var, as_str(self.data[var][i,j])))
-                    table[j+1][i+1] = '\n'.join(all_data)
+                    table[j+1][i+1] = '<br>'.join(all_data)
                     
             return tabulate.tabulate(table, tablefmt='html')
         
@@ -336,14 +344,14 @@ class GridData(pn.data.Data):
             return new_data
         raise NotImplementedError('slicing not yet implemented for Grids')
 
-    @property
-    def function_args(self):
-        return self.grid.vars
+    #@property
+    #def function_args(self):
+    #    return self.grid.vars
 
     @property
     def vars(self):
         '''
-        Available variables in this layer
+        Available variables
         '''
         return self.grid.vars + list(self.data.keys())
 
@@ -355,9 +363,22 @@ class GridData(pn.data.Data):
         return list(self.data.keys())
 
     def rename(self, old, new):
+        '''rename one array
+
+        Parameters
+        ----------
+        old : str
+        new : str
+        '''
         self.data[new] = self.data.pop(old)
 
     def update(self, new_data):
+        '''update
+
+        Parameters
+        ----------
+        new_data : GridData
+        '''
         if not self.grid.initialized:
             self.grid = new_data.grid
         assert self.grid == new_data.grid
@@ -379,6 +400,14 @@ class GridData(pn.data.Data):
         return self.shape
 
     def add_data(self, var, data):
+        '''Add data
+
+        Parameters
+        ----------
+        var : str
+            name of data
+        data : GridArray, GridData, Array
+        '''
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
@@ -424,7 +453,7 @@ class GridData(pn.data.Data):
 
         var : string
             variable to return
-        flat : bool
+        flat : bool (optional)
             if true return flattened (1d) array
         '''
         if var in self.grid.vars:
@@ -439,7 +468,11 @@ class GridData(pn.data.Data):
         return array
 
     def flat(self, var):
+        '''return flatened-out array'''
         return self.get_array(var, flat=True)
+
+
+    # --- Plotting methods ---
 
     def plot(self, var=None, **kwargs):
         if var is None and len(self.data_vars) == 1:

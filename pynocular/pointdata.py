@@ -34,6 +34,7 @@ class PointDataDim(object):
     '''Structure to hold a single PointData item
     '''
     def __init__(self, *args, **kwargs):
+        '''Instantiate a data dimension'''
         if len(args) == 0 and len(kwargs) == 0:
             self.data = None
             self.name = None
@@ -63,6 +64,7 @@ class PointDataDim(object):
         return 'PointDataDim(%s : %s)'%(self.name, self.data)
 
     def _repr_html_(self):
+        '''for jupyter'''
         if self.type == 'df':
             return self.data._repr_html_()
         else:
@@ -149,6 +151,7 @@ class PointData(Data):
         return self.data.__str__()
 
     def _repr_html_(self):
+        '''for jupyter'''
         if self.type == 'df':
             return self.data._repr_html_()
         else:
@@ -159,7 +162,7 @@ class PointData(Data):
     @property
     def vars(self):
         '''
-        Available variables in this layer
+        Available variables
         '''
         if self.type == 'df':
             return list(self.data.columns)
@@ -174,6 +177,14 @@ class PointData(Data):
 
     @property
     def type(self):
+        '''type of stored data
+
+        Returns
+        -------
+        type : str
+            if data is a pandas.DataFrame: "df"
+            else: "dict"
+        '''
         if isinstance(self.data, pandas.core.frame.DataFrame):
             return 'df'
         elif isinstance(self.data, OrderedDict):
@@ -181,9 +192,11 @@ class PointData(Data):
 
     @property
     def data_vars(self):
+        '''Available variables'''
         return self.vars
 
     def rename(self, old, new):
+        '''Rename a single variable'''
         if self.type == 'df':
             self.data.rename(columns={old:new}, inplace=True)
         elif self.type == 'dict':
@@ -200,8 +213,11 @@ class PointData(Data):
 
     @property
     def array_shape(self):
-        '''
-        the shape of a single variable
+        '''the shape of a single variable
+
+        Returns
+        -------
+        shape : tuple
         '''
         return (len(self),)
 
@@ -244,6 +260,8 @@ class PointData(Data):
 	
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
+
+    # --- Plotting functions ---
 
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
         plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
