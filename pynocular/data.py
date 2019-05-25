@@ -47,6 +47,7 @@ def initialize_grid(grid, source):
                     grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], new_nbins+1)
                     continue
             # in this case it's pointdata
+            print(var)
             grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
     return grid
 

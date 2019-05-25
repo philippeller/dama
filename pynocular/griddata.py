@@ -5,6 +5,7 @@ import copy
 import numpy as np
 import pynocular as pn
 from pynocular.utils.formatter import as_str, table_labels
+import pynocular.plotting
 import tabulate
 
 #__all__ = ['GridData']
@@ -224,7 +225,8 @@ class GridArray(object):
         return self._pack_result(result, axis)
     
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        '''callable for numoy ufuncs'''
+        '''callable for numpy ufuncs'''
+        #print(ufunc, method, inputs, kwargs)
         array_inputs = [np.asanyarray(i) for i in inputs]
 
         axis, kwargs = self._get_axis(kwargs)
@@ -259,11 +261,14 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
+        self.data = OrderedDict()
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
+            self.grid = args[0].grid
+            self.add_data(args[0].name, args[0])
+        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
             self.grid = args[0]
         else:
             self.grid = pn.grid.Grid(*args, **kwargs)
-        self.data = OrderedDict()
 
     def __repr__(self):
         strs = []
@@ -343,9 +348,11 @@ class GridData(pn.data.Data):
             return new_data
         raise NotImplementedError('slicing not yet implemented for Grids')
 
-    #@property
-    #def function_args(self):
-    #    return self.grid.vars
+    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        for var in inputs[0].data_vars:
+            converted_inputs = [inp[var] for inp in inputs]
+            result = converted_inputs[0].__array_ufunc__(ufunc, method, *converted_inputs, **kwargs)
+            print('%s : %s'%(var, result))
 
     @property
     def vars(self):
@@ -469,6 +476,12 @@ class GridData(pn.data.Data):
     def flat(self, var):
         '''return flatened-out array'''
         return self.get_array(var, flat=True)
+
+    def __iter__(self):
+        '''
+        iterate over dimensions
+        '''
+        return iter([self[n] for n in self.data_vars])
 
 
     # --- Plotting methods ---

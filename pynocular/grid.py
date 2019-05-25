@@ -167,9 +167,9 @@ class Grid(object):
 
         for d,x in kwargs.items():
             if isinstance(x, Number):
-                self.add_dim(pn.Dimension(var=d[0], nbins=x))
+                self.add_dim(pn.Dimension(var=d, nbins=x))
             else:
-                self.add_dim(pn.Dimension(var=d[0], edges=x))
+                self.add_dim(pn.Dimension(var=d, edges=x))
 
     def add_dim(self, dim):
         '''

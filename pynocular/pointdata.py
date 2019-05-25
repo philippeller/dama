@@ -7,6 +7,7 @@ from collections.abc import Iterable
 from scipy.interpolate import griddata
 
 import pynocular as pn
+import pynocular.plotting
 from pynocular.data import Data
 from pynocular.utils.formatter import as_str, table_labels
 import tabulate
@@ -65,7 +66,7 @@ class PointDataDim(object):
     def _repr_html_(self):
         '''for jupyter'''
         if self.type == 'df':
-            return self.data._repr_html_()
+            return None
         else:
             table = [['<b>%s</b>'%self.name] + [as_str(v) for v in np.array(self)]]
             return tabulate.tabulate(table, tablefmt='html')
