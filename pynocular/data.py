@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from numbers import Number
+import warnings
 import numpy as np
 from scipy import interpolate
 from KDEpy import FFTKDE
@@ -247,7 +248,11 @@ def binwise(source, *args, density=False, **kwargs):
 
         if method == 'sum':
             # add counts
-            dest['counts'] = get_single_hist(sample=sample, grid=dest.grid, weights=None, method=method, density=density)
+            output_map = get_single_hist(sample=sample, grid=dest.grid, weights=None, method=method, density=density)
+            if density:
+                dest['density'] = output_map
+            else:
+                dest['counts'] = output_map
 
         return dest
 
@@ -352,13 +357,19 @@ def lookup(source, *args, **kwargs):
     return dest
 
 
-def kde(source, *args, bw='silverman', kernel='gaussian', **kwargs):
+def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
     '''run KDE on regular grid
 
     Parameters:
     -----------
 
     source : GridData or PointData
+    bw : str or float
+        coices of 'silverman', 'scott', 'ISJ' for 1d data
+        float specifies fixed bandwidth
+    kernel : str
+    density : bool (optional)
+        if false, multiply output by sum of data
     '''
     dest = generate_destination(source, *args, **kwargs)
 
@@ -376,8 +387,11 @@ def kde(source, *args, bw='silverman', kernel='gaussian', **kwargs):
     sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
 
     # every point must be inside output grid (requirement of KDEpy)
-    masks = [np.logical_and(sample[i] > dim.edges[0], sample[i] < dim.edges[-1]) for i, dim in enumerate(dest.grid)]
+    masks = [np.logical_and(sample[i] > dim.points[0], sample[i] < dim.points[-1]) for i, dim in enumerate(dest.grid)]
     mask = np.all(masks, axis=0)
+    n_masked = np.sum(~mask)
+    if n_masked > 0:
+        warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning)
     #print(mask)
 
     sample = [s[mask] for s in sample]
@@ -393,18 +407,26 @@ def kde(source, *args, bw='silverman', kernel='gaussian', **kwargs):
         if source_var in dest.vars:
             continue
 
-        source_data = source.get_array(source_var)
+        source_data = source.get_array(source_var, flat=True)
 
-        #if source_data.ndim > source.grid.ndim:
-        #    raise NotImplementedError('Not yet implemented for Nd data')
-        #    #output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
-        #else:
-        output_array = np.full(np.product(dest.array_shape), np.nan)
-            
-        out = kde.fit(sample, weights=source_data[mask]).evaluate(eval_grid)
-        dest[source_var] = out.reshape(dest.shape)
+        print(source_var, source_data.ndim)
+        if source_data.ndim > 1:
+            out = np.empty(shape=(dest.grid.size, *source_data.shape[1:]))
+            #out = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
+            for idx in np.ndindex(*source_data.shape[1:]):
+                out[(Ellipsis,) + idx] = kde.fit(sample, weights=source_data[(Ellipsis,) + idx][mask]).evaluate(eval_grid)
+            out_shape = (dest.shape) + (-1,)
+        else:
+            out = kde.fit(sample, weights=source_data[mask]).evaluate(eval_grid)
+            out_shape = dest.shape
+        if not density:
+            out *= np.sum(source_data[mask])
+        dest[source_var] = out.reshape(out_shape)
     out = kde.fit(sample).evaluate(eval_grid)
-    dest['density'] = out.reshape(dest.shape)
+    if density:
+        dest['density'] = out.reshape(dest.shape)
+    else:
+        dest['counts'] = out.reshape(dest.shape) * np.sum(mask)
 
     return dest
 
@@ -512,15 +534,21 @@ class Data(object):
         '''
         return lookup(self, *args, **kwargs)
 
-    def kde(self, *args, bw='silverman', kernel='gaussian', **kwargs):
+    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
         '''run KDE on regular grid
 
         Parameters:
         -----------
 
         source : GridData or PointData
+        bw : str or float
+            coices of 'silverman', 'scott', 'ISJ' for 1d data
+            float specifies fixed bandwidth
+        kernel : str
+        density : bool (optional)
+            if false, multiply output by sum of data
         '''
-        return kde(self, *args, bw=bw, kernel=kernel, **kwargs)
+        return kde(self, *args, bw=bw, kernel=kernel, density=density, **kwargs)
 
     def resample(self, *args, **kwargs):
         '''resample from binned data into other binned data
