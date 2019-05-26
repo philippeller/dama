@@ -47,7 +47,6 @@ def initialize_grid(grid, source):
                     grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], new_nbins+1)
                     continue
             # in this case it's pointdata
-            print(var)
             grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
     return grid
 
@@ -201,7 +200,7 @@ def interp(source, *args, **kwargs):
 
     return dest
 
-def binwise(source, *args, **kwargs):
+def binwise(source, *args, density=False, **kwargs):
     '''translation from array data into binned form
 
     Parameters:
@@ -239,22 +238,25 @@ def binwise(source, *args, **kwargs):
             if source_data.ndim > 1:
                 output_map = np.empty(shape=(*dest.grid.shape, *source_data.shape[1:]))
                 for idx in np.ndindex(*source_data.shape[1:]):
-                    output_map[(Ellipsis,) + idx] = get_single_hist(sample=sample, grid=dest.grid, weights=source_data[(Ellipsis,) + idx], method=method)
+                    output_map[(Ellipsis,) + idx] = get_single_hist(sample=sample, grid=dest.grid, weights=source_data[(Ellipsis,) + idx], method=method, density=density)
             else:
-                output_map = get_single_hist(sample=sample, grid=dest.grid, weights=source_data, method=method)
+                output_map = get_single_hist(sample=sample, grid=dest.grid, weights=source_data, method=method, density=density)
             
             output_map[np.isnan(output_map)] = fill_value
             dest[source_var] = output_map
 
         if method == 'sum':
             # add counts
-            dest['counts'] = get_single_hist(sample=sample, grid=dest.grid, weights=None, method=method)
+            dest['counts'] = get_single_hist(sample=sample, grid=dest.grid, weights=None, method=method, density=density)
 
         return dest
 
     # ------- function ---------
 
     elif function is not None:
+
+        assert not density, 'Density is not available together with functions'
+
         indices = dest.grid.compute_indices(sample)
         
         # ToDo: compute all vars in one loop
@@ -298,7 +300,6 @@ def binwise(source, *args, **kwargs):
 
     else:
         raise ValueError('need at least a method or a function specified')
-
 
 
 def lookup(source, *args, **kwargs):
@@ -348,6 +349,63 @@ def lookup(source, *args, **kwargs):
                 output_array[i] = source_data[idx]
 
         dest[source_var] = output_array
+    return dest
+
+
+def kde(source, *args, bw='silverman', kernel='gaussian', **kwargs):
+    '''run KDE on regular grid
+
+    Parameters:
+    -----------
+
+    source : GridData or PointData
+    '''
+    dest = generate_destination(source, *args, **kwargs)
+
+    if not isinstance(dest, pn.GridData):
+        raise TypeError('dest must have GridData')
+
+    if not dest.grid.regular:
+        raise TypeError('dest must have regular grid')
+
+    # check source has grid variables
+    for var in dest.grid.vars:
+        assert(var in source.vars), '%s not in %s'%(var, source.vars)
+
+    # prepare arrays
+    sample = [source.get_array(var, flat=True) for var in dest.grid.vars]
+
+    # every point must be inside output grid (requirement of KDEpy)
+    masks = [np.logical_and(sample[i] > dim.edges[0], sample[i] < dim.edges[-1]) for i, dim in enumerate(dest.grid)]
+    mask = np.all(masks, axis=0)
+    #print(mask)
+
+    sample = [s[mask] for s in sample]
+
+    sample = np.stack(sample).T
+    #print(sample.shape)
+
+    kde = FFTKDE(bw=bw, kernel=kernel)
+    
+    eval_grid = np.stack([dest.flat(var) for var in dest.grid.vars]).T
+
+    for source_var in source.vars:
+        if source_var in dest.vars:
+            continue
+
+        source_data = source.get_array(source_var)
+
+        #if source_data.ndim > source.grid.ndim:
+        #    raise NotImplementedError('Not yet implemented for Nd data')
+        #    #output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
+        #else:
+        output_array = np.full(np.product(dest.array_shape), np.nan)
+            
+        out = kde.fit(sample, weights=source_data[mask]).evaluate(eval_grid)
+        dest[source_var] = out.reshape(dest.shape)
+    out = kde.fit(sample).evaluate(eval_grid)
+    dest['density'] = out.reshape(dest.shape)
+
     return dest
 
 
@@ -424,11 +482,11 @@ class Data(object):
         '''
         return interp(self, *args, **kwargs)
 
-    def histogram(self, *args, **kwargs):
+    def histogram(self, *args, density=False, **kwargs):
         '''Convenience method for histograms'''
-        return binwise(self, *args, method='sum', **kwargs)
+        return binwise(self, *args, method='sum', density=density, **kwargs)
 
-    def binwise(self, *args, **kwargs):
+    def binwise(self, *args, density=False, **kwargs):
         '''translation from array data into binned form
 
         Parameters:
@@ -437,10 +495,12 @@ class Data(object):
             "sum" = weighted historgam
             "mean" = weighted histogram / histogram
         function : callable
+        density : bool (optional)
+            compute histograms as densities (not available for functions)
         fill_value : optional
             value for invalid points
         '''
-        return binwise(self, *args, **kwargs)
+        return binwise(self, *args, density=density, **kwargs)
 
     def lookup(self, *args, **kwargs):
         '''lookup the bin content at given points
@@ -452,6 +512,16 @@ class Data(object):
         '''
         return lookup(self, *args, **kwargs)
 
+    def kde(self, *args, bw='silverman', kernel='gaussian', **kwargs):
+        '''run KDE on regular grid
+
+        Parameters:
+        -----------
+
+        source : GridData or PointData
+        '''
+        return kde(self, *args, bw=bw, kernel=kernel, **kwargs)
+
     def resample(self, *args, **kwargs):
         '''resample from binned data into other binned data
         ToDo: this is super inefficient
@@ -461,16 +531,16 @@ class Data(object):
 
 
 
-def get_single_hist(sample, grid, weights, method):
+def get_single_hist(sample, grid, weights, method, density=False):
     '''Generate a single histogram
     '''
 
     # generate hists
     if method in ['sum', 'mean']:
-        weighted_hist, _ = np.histogramdd(sample=sample, bins=grid.edges, weights=weights)
+        weighted_hist, _ = np.histogramdd(sample=sample, bins=grid.edges, weights=weights, density=density)
 
     if method in ['count', 'mean']:
-        hist, _ = np.histogramdd(sample=sample, bins=grid.edges)
+        hist, _ = np.histogramdd(sample=sample, bins=grid.edges, density=density)
 
     # make outputs
     if method == 'count':

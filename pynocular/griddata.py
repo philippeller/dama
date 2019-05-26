@@ -348,11 +348,17 @@ class GridData(pn.data.Data):
             return new_data
         raise NotImplementedError('slicing not yet implemented for Grids')
 
+    @property
+    def T(self):
+        '''transpose'''
+        raise NotImplementedError()
+
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         for var in inputs[0].data_vars:
             converted_inputs = [inp[var] for inp in inputs]
             result = converted_inputs[0].__array_ufunc__(ufunc, method, *converted_inputs, **kwargs)
             print('%s : %s'%(var, result))
+        raise NotImplementedError()
 
     @property
     def vars(self):

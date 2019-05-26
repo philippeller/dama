@@ -70,6 +70,24 @@ class Dimension(object):
         True if either edges or points are not None
         '''
         return (self._edges is not None) or (self._points is not None)
+
+    def __eq__(self, other):
+        if not type(self) == type(other):
+            return False
+        equal = self.var == other.var
+        equal = equal and np.all(np.equal(self._edges, other._edges))
+        equal = equal and np.all(np.equal(self._points, other._points))
+        return equal and self._nbins == other._nbins
+
+    @property
+    def regular(self):
+        '''True if spacing of egdges and/or points is regular'''
+        regular = True
+        if self._points is not None:
+            regular = regular and np.equal.reduce(np.diff(self._points))
+        if self._edges is not None:
+            regular = regular and np.equal.reduce(np.diff(self._edges))
+        return regular
     
     @property
     def edges(self):
@@ -192,6 +210,13 @@ class Grid(object):
         else:
             raise TypeError('Cannot add type %s'%type(dim))
 
+    def __eq__(self, other):
+        if not type(self) == type(other):
+            return False
+        equal = self.vars == other.vars
+        return equal and all([self[var] == other[var] for var in self.vars])
+
+
     @property
     def T(self):
         '''transpose'''
@@ -203,6 +228,11 @@ class Grid(object):
         wether the gri is set or not
         '''
         return self.ndim > 0 and all([edge is not None for edge in self.edges])
+
+    @property
+    def regular(self):
+        '''true is all dimensions are reguallarly spaced'''
+        return all([d.regular for d in self])
 
     @property
     def ndim(self):
