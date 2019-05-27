@@ -201,15 +201,7 @@ class Grid(object):
 
         a dimesnion can also be given by kwargs
         '''
-        self.dims = [] #OrderedDict()
-
-        #if len(args) == 1 and len(kwargs) == 0:
-        #    print(type(args[0]))
-        #    print(type(self))
-        #    if isinstance(args[0], type(self)):
-        #        print('henlo!')
-        #    if type(args[0]) == type(self):
-        #        print('test')
+        self.dims = [] 
 
         for d in args:
             self.add_dim(d)
@@ -357,25 +349,52 @@ class Grid(object):
         '''
         item : int, str, slice, ierable
         '''
-        if isinstance(item, Number):
-            # index
-            return self.dims[int(item)]
-        elif isinstance(item, str):
-            # var name
+        if isinstance(item, str):
+            # by name
             if not item in self.vars:
-                # if it does not exist, add empty dim
+                # if it does not exist, add empty dim: ToDo: really?
+                print('needs to be cjecked, is weird behaviour')
                 self.add_dim(item)
             idx = self.vars.index(item)
             return self.dims[idx]
+
+        elif isinstance(item, Number):
+            return self[(item,)]
+        elif isinstance(item, slice):
+            return self[(item,)]
+        elif isinstance(item, list):
+            if all([isinstance(i, str) for i in item]):
+                new_obj = pn.grid.Grid()
+                for var in item:
+                    new_obj.dims.append(self[var])
+                return new_obj
+            elif all([isinstance(i, int) for i in item]):
+                return self[(list,)]
+            else:
+                raise IndexError('Cannot process list of indices %s'%item)
+        elif isinstance(item, tuple):
+            if all([isinstance(i, str) for i in item]):
+                return self[list(item)]
+            new_obj = pn.grid.Grid()
+            for i in range(len(self)): 
+                if i < len(item):
+                    assert item[i] is not Ellipsis
+                    new_obj.dims.append(self.dims[i][item[i]])
+                else:
+                    new_obj.dims.append(self.dims[i])
+            return new_obj
+
+
+
         elif isinstance(item, Iterable):
             # todo
             new_dims = []
             for it in item:
                 new_dims.append(self[it])
             return pn.Grid(*new_dims)
-        elif isinstance(item, slice):
-            new_names = list(self.dims.keys())[item]
-            return pn.Grid(*new_names)
+        #elif isinstance(item, slice):
+        #    new_names = list(self.dims.keys())[item]
+        #    return pn.Grid(*new_names)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 
