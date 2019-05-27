@@ -369,7 +369,7 @@ class Grid(object):
                     new_obj.dims.append(self[var])
                 return new_obj
             elif all([isinstance(i, int) for i in item]):
-                return self[(list,)]
+                return self[(item,)]
             else:
                 raise IndexError('Cannot process list of indices %s'%item)
         elif isinstance(item, tuple):
@@ -379,6 +379,9 @@ class Grid(object):
             for i in range(len(self)): 
                 if i < len(item):
                     assert item[i] is not Ellipsis
+                    if isinstance(item[i], int):
+                        # we can skip this dimesnion, as it is one element
+                        continue
                     new_obj.dims.append(self.dims[i][item[i]])
                 else:
                     new_obj.dims.append(self.dims[i])

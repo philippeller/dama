@@ -115,14 +115,23 @@ class GridArray(object):
     def ndim(self):
         return self.data.ndim
 
-    def __getitem__(self, m):
-        if isinstance(m, pn.GridArray):
-            if m.data.dtype == np.bool:
-                # if it is a mask
+    def __getitem__(self, item):
+        if isinstance(item, pn.GridArray):
+            if item.data.dtype == np.bool:
+                # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                new_data  = np.ma.MaskedArray(self.data, ~m.data)
+                new_data  = np.ma.MaskedArray(self.data, ~item.data)
                 return pn.GridArray(self.grid, self.name, new_data)
-        raise NotImplementedError('get item %s'%m)
+            raise NotImplementedError('get item %s'%item)
+        elif not isinstance(item, tuple):
+            return self[(item,)]
+        elif isinstance(item, list):
+            if all([isinstance(i, int) for i in item]):
+                return self[(list,)]
+            else:
+                raise IndexError('Cannot process list of indices %s'%item)
+        elif isinstance(item, tuple):
+            return pn.GridArray(self.grid[item], self.name, self.data[item])
 
     @property
     def T(self):
