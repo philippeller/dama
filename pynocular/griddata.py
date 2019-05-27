@@ -232,11 +232,11 @@ class GridArray(object):
         # this is a bit complicated, but apprently necessary
         # otherwise masked element s of arrays get overwritten
         if any([isinstance(i, np.ma.masked_array) for i in array_inputs]):
-            mask = np.full(array_inputs[0].shape, False)
+            mask = np.full(self.shape, False)
             for i in array_inputs:
                 if isinstance(i, np.ma.masked_array):
                     mask = mask | i.mask
-            masked_inputs = [i[~mask] for i in array_inputs]
+            masked_inputs = [i[~mask] if i.shape == self.shape else i for i in array_inputs]
             mask_result = np.asanyarray(self).__array_ufunc__(ufunc, method, *masked_inputs, **kwargs)
             if mask_result.size == np.sum(~mask):
                 result = np.empty_like(self.data)
