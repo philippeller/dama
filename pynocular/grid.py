@@ -33,11 +33,6 @@ class Dimension(object):
             assert len(edges) > 1, 'Edges must be at least length 2'
         if isinstance(points, list): points = np.array(points)
         self.var = var
-        #self._mode = mode
-        #self._min = min
-        #self._max = max
-        #self._n_points = n_points
-        #self._n_edges = n_edges
         self._edges = edges
         self._points = points
         self._nbins = nbins
@@ -63,6 +58,42 @@ class Dimension(object):
         strs.append('edges = %s)'%(self._edges.__repr__()))
         strs.append('nbins = %s)'%(self.nbins))
         return '\n'.join(strs)
+
+    def __getitem__(self, idx):
+        if idx is Ellipsis:
+            return self
+        if isinstance(idx, Number):
+            if not abs(idx) < len(self):
+                raise IndexError('Index outside range')
+            if idx < 0:
+                edge_idx = slice(idx-1, idx+1 if not idx == -1 else None)
+            else:
+                edge_idx = slice(idx, idx+2)
+        elif isinstance(idx, slice):
+            if idx.step is not None and abs(idx.step) > 1:
+                raise IndexError('Can only slice consecutive indices')
+            reverse = idx.step is not None and idx.step < 0
+            edge_idx = list(range(*idx.indices(len(self))))
+            if reverse:
+                edge_idx = [edge_idx[0] + 1] + edge_idx
+            else:
+                edge_idx = edge_idx + [edge_idx[-1] + 1]
+        elif isinstance(idx, list) or isinstance(idx, tuple):
+            if not all(i == 1 for i in np.diff(idx)):
+                raise IndexError('Can only apply consecutive indices')
+            edge_idx = list(idx)
+            edge_idx = edge_idx + [edge_idx[-1] + 1]
+        else:
+            raise NotImplementedError('%s index not supported'%type(idx))
+
+        new_obj = pn.grid.Dimension()
+        new_obj.var = self.var
+        if self._edges is not None:
+            new_obj._edges = self._edges[edge_idx]
+        if self._points is not None:
+            new_obj._points = self._points[idx]
+        new_obj._nbins = self._nbins
+        return new_obj
 
     @property
     def has_data(self):
