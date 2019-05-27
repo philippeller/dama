@@ -226,12 +226,26 @@ class GridArray(object):
     
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         '''callable for numpy ufuncs'''
-        #print(ufunc, method, inputs, kwargs)
         array_inputs = [np.asanyarray(i) for i in inputs]
 
         axis, kwargs = self._get_axis(kwargs)
-        
-        result = np.asanyarray(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
+        # this is a bit complicated, but apprently necessary
+        # otherwise masked element s of arrays get overwritten
+        if any([isinstance(i, np.ma.masked_array) for i in array_inputs]):
+            mask = np.full(array_inputs[0].shape, False)
+            for i in array_inputs:
+                if isinstance(i, np.ma.masked_array):
+                    mask = mask | i.mask
+            masked_inputs = [i[~mask] for i in array_inputs]
+            mask_result = np.asanyarray(self).__array_ufunc__(ufunc, method, *masked_inputs, **kwargs)
+            if mask_result.size == np.sum(~mask):
+                result = np.empty_like(self.data)
+                result[mask] = self.data[mask]
+                result[~mask] = mask_result
+            else:
+                result = mask_result
+        else:
+            result = np.asanyarray(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
 
         return self._pack_result(result, axis)
         

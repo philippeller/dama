@@ -415,12 +415,14 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
             #out = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
             for idx in np.ndindex(*source_data.shape[1:]):
                 out[(Ellipsis,) + idx] = kde.fit(sample, weights=source_data[(Ellipsis,) + idx][mask]).evaluate(eval_grid)
+                if not density:
+                    out[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][mask])
             out_shape = (dest.shape) + (-1,)
         else:
             out = kde.fit(sample, weights=source_data[mask]).evaluate(eval_grid)
             out_shape = dest.shape
-        if not density:
-            out *= np.sum(source_data[mask])
+            if not density:
+                out *= np.sum(source_data[mask])
         dest[source_var] = out.reshape(out_shape)
     out = kde.fit(sample).evaluate(eval_grid)
     if density:
