@@ -131,7 +131,19 @@ class GridArray(object):
             else:
                 raise IndexError('Cannot process list of indices %s'%item)
         elif isinstance(item, tuple):
-            return pn.GridArray(self.grid[item], self.name, self.data[item])
+            new_grid = self.grid[item]
+            if len(new_grid) == 0:
+                # then we have a single element
+                return self.data[item]
+            return pn.GridArray(new_grid, self.name, self.data[item])
+
+    def __setitem__(self, var, val):
+        if isinstance(var, str):
+            assert var not in self.grid.vars, "Cannot set grid dimension"
+            assert val.shape == self.shape, "Incompatible dimensions %s and %s"%(self.shape, val.shape)
+            self._data = np.asanyarray(val)
+        else:
+            self[var]._data[:] = val._data
 
     @property
     def T(self):
@@ -351,24 +363,33 @@ class GridData(pn.data.Data):
     def __setitem__(self, var, val):
         self.add_data(var, val)
 
-    def __getitem__(self, var):
-        if isinstance(var, str):
-            if var in self.vars:
-                if var in self.data_vars:
-                    data = self.data[var]
+    def __getitem__(self, item):
+        if isinstance(item, str):
+            if item in self.vars:
+                if item in self.data_vars:
+                    data = self.data[item]
                 else:
                     data = None
-                new_data = pn.GridArray(self.grid, var, data)
+                new_data = pn.GridArray(self.grid, item, data)
                 return new_data
 
-        # create new instance with mask or slice applied
-        new_data = GridData(self.grid)
-        if isinstance(var, Iterable):
-            for v in var:
+        # create new instance with only those vars
+        if isinstance(item, Iterable) and all([isinstance(v, str) for v in item]):
+            new_data = pn.GridData(self.grid)
+            for v in item:
                 if v in self.data_vars:
                     new_data[v] = self.data[v]
             return new_data
-        raise NotImplementedError('slicing not yet implemented for Grids')
+
+        # slice
+        new_grid = self.grid[item]
+        if len(new_grid) == 0:
+            return {v:self.data[v][item] for v in self.data_vars}
+        new_data = pn.GridData(new_grid)
+        for v in self.data_vars:
+            new_data[v] = self.data[v][item]
+        return new_data
+        
 
     @property
     def T(self):
@@ -473,6 +494,9 @@ class GridData(pn.data.Data):
                 dims[d] = np.arange(n+1)
             self.grid = pn.Grid(**dims)
 
+        if data.ndim < self.ndim and self.shape[-1] == 1:
+            # add new axis
+            data = data[..., np.newaxis]
         if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
 
