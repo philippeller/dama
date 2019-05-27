@@ -172,7 +172,8 @@ class GridArray(object):
         '''translate axis to index'''
         axis = kwargs.get('axis', None)
         if isinstance(axis, str):
-            kwargs['axis'] = self.grid.vars.index(axis)
+            axis = self.grid.vars.index(axis)
+            kwargs['axis'] = axis
         return axis, kwargs
 
     def _pack_result(self, result, axis):
@@ -187,9 +188,7 @@ class GridArray(object):
                 # new grid
                 if axis is not None:
                     new_grid = copy.deepcopy(self.grid)
-                    if not isinstance(axis, str):
-                        axis = list(self.grid.dims.keys())[axis]
-                    new_grid.dims.pop(axis)
+                    del(new_grid.dims[axis])
                 else:
                     new_grid = self.grid
                 
@@ -279,7 +278,7 @@ class GridData(pn.data.Data):
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
             self.grid = args[0].grid
             self.add_data(args[0].name, args[0])
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.grid.Grid):
+        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
             self.grid = args[0]
         else:
             self.grid = pn.grid.Grid(*args, **kwargs)

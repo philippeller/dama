@@ -201,7 +201,7 @@ class Grid(object):
 
         a dimesnion can also be given by kwargs
         '''
-        self.dims = OrderedDict()
+        self.dims = [] #OrderedDict()
 
         #if len(args) == 1 and len(kwargs) == 0:
         #    print(type(args[0]))
@@ -231,7 +231,8 @@ class Grid(object):
         in case of a basestring, a new empty dimension gets added
         '''
         if isinstance(dim, pn.Dimension):
-            self.dims[dim.var] = dim
+            assert dim.var not in self.vars
+            self.dims.append(dim)
         elif isinstance(dim, dict):
             dim = pn.Dimension(**dim)
             self.add_dim(dim)
@@ -277,21 +278,21 @@ class Grid(object):
         '''
         grid dimension variables
         '''
-        return list(self.dims.keys())
+        return [d.var for d in self]
 
     @property
     def edges(self):
         '''
         all edges
         '''
-        return [dim.edges for dim in self.dims.values()]
+        return [dim.edges for dim in self]
 
     @property
     def points(self):
         '''
         all points
         '''
-        return [dim.points for dim in self.dims.values()]
+        return [dim.points for dim in self]
 
     @property
     def point_meshgrid(self):
@@ -314,7 +315,7 @@ class Grid(object):
         '''
         size = total number of bins / points
         '''
-        return np.product([len(x[1]) for x in self.dims.items()])
+        return np.product([len(d) for d in self])
 
     def __len__(self):
         return self.ndim
@@ -324,15 +325,15 @@ class Grid(object):
         string representation
         '''
         strs = []
-        for dim in self.dims.items():
-            strs.append('%s : %s'%dim)
+        for dim in self:
+            strs.append('%s'%dim)
         return '\n'.join(strs)
 
     def __repr__(self):
         strs = []
         strs.append('Grid(')
-        for dim in self.dims.items():
-            strs.append('%s,'%dim[1].__repr__())
+        for dim in self:
+            strs.append('%s,'%dim.__repr__())
         strs[-1] += ')'
         return '\n'.join(strs)
 
@@ -340,7 +341,7 @@ class Grid(object):
         '''
         iterate over dimensions
         '''
-        return iter([self[n] for n in self.dims.keys()])
+        return iter(self.dims)
 
     @property
     def shape(self):
@@ -357,12 +358,17 @@ class Grid(object):
         item : int, str, slice, ierable
         '''
         if isinstance(item, Number):
-            return list(self.dims.values())[int(item)]
+            # index
+            return self.dims[int(item)]
         elif isinstance(item, str):
+            # var name
             if not item in self.vars:
+                # if it does not exist, add empty dim
                 self.add_dim(item)
-            return self.dims[item]
+            idx = self.vars.index(item)
+            return self.dims[idx]
         elif isinstance(item, Iterable):
+            # todo
             new_dims = []
             for it in item:
                 new_dims.append(self[it])
