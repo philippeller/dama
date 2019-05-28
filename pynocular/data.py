@@ -391,8 +391,7 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
     mask = np.all(masks, axis=0)
     n_masked = np.sum(~mask)
     if n_masked > 0:
-        warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning)
-    #print(mask)
+        warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
 
     sample = [s[mask] for s in sample]
 
