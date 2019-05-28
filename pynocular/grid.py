@@ -21,6 +21,133 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
+
+class edges(object):
+    '''Holding binning edges'''
+    
+    def __init__(self, *args, delta=None, points=None, **kwargs):
+        '''
+        Paramters
+        ---------
+        args : either (nbins,) or (min, max, nbins) or (array,)
+        delta : float (optional):
+            specify the the delta between two subsequent edges
+        points : array (optional)
+            create edges from points
+
+        '''
+        #print(args, kwargs)
+        self._edges = None
+        if points is not None:
+            self._add_edges(self.edges_from_points(points))
+        elif len(args) == 1 and isinstance(args[0], pn.edges):
+            self._add_edges(args[0].edges)
+        elif len(args) == 1 and isinstance(args[0], np.ndarray):
+            self._add_edges(args[0])
+        elif len(args) == 1 and isinstance(args[0], list):
+            self._add_edges(np.array(args[0]))
+        elif len(args) == 0 and delta is None and len(kwargs) == 0:
+            pass
+        elif len(args) == 1 and args[0] is None:
+            pass
+        else:
+            raise NotImplementedError()
+
+    def __array__(self):
+        if len(self) == 1:
+            return self._edges[0]
+        return self._edges
+
+    def __repr__(self):
+        return self._edges.__repr__()
+
+    def __str__(self):
+        return self._edges.__str__()
+
+    def edges_from_points(self, points):
+        '''
+        create edges around points
+        '''
+        diff = np.diff(points)/2.
+        return np.concatenate([[points[0]-diff[0]], points[:-1] + diff, [points[-1] + diff[-1]]])
+
+    def min(self):
+        return np.min(self.edges)
+    
+    def max(self):
+        return np.max(self.edges)
+
+    @property
+    def points(self):
+        '''
+        create points from centers between edges
+        '''
+        points = np.average(self._edges, axis=1) 
+        if isinstance(points, Number):
+            return np.array(points)
+        return points
+
+    def _add_edges(self, edges):
+        if edges.ndim == 2:
+            self._edges = edges
+        elif edges.ndim == 1:
+            assert len(edges) > 1, 'Edges must be at least length 2'
+            self._edges = np.empty((len(edges) - 1, 2))
+            self._edges[:,0] = edges[:-1]
+            self._edges[:,1] = edges[1:]
+        else:
+            raise ValueError()
+
+    @property
+    def consecutive(self):
+        #print(self._edges)
+        '''True if edges consecutive, i.e. no gaps'''
+        return np.all(self._edges[1:,0] == self._edges[:-1,1])
+
+    @property
+    def regular(self):
+        '''True if spacing of edges is regular'''
+        return np.equal.reduce(self._edges[:,1] - self._edges[:,0])
+
+    def __len__(self):
+        return self._edges.shape[0]
+
+    @property
+    def edges(self):
+        '''return edges'''
+        return self._edges
+
+    @edges.setter
+    def edges(self, val):
+        self._add_edges(val)
+
+    @property
+    def width(self):
+        '''return the bin width'''
+        return np.abs(self._edges[:,1] - self._edges[:,0])
+
+    @property
+    def squeezed_edges(self):
+        '''return edges in squeezed form
+        that is a 1d array as used in historgam functions and the like
+        only available for consecutive edges'''
+        if self.consecutive:
+            squeezed_edges = np.empty(len(self) + 1)
+            squeezed_edges[:-1] = self._edges[:,0]
+            squeezed_edges[-1] = self._edges[-1,1]
+            return squeezed_edges
+        else:
+            raise ValueError('Can only provide squeezed edges for consecutive edges')
+
+    def __getitem__(self, idx):
+        if idx is Ellipsis:
+            return self
+        new_edges = self._edges[idx]
+        return pn.edges(new_edges)
+
+    def __eq__(self, other):
+        return np.all(np.equal(self._edges, other._edges))
+
 class Dimension(object):
     '''
     Class to hold a single dimension of a Grid
@@ -28,12 +155,8 @@ class Dimension(object):
     '''
     def __init__(self, var=None, edges=None, points=None, nbins=10):
 
-        if isinstance(edges, list): edges = np.array(edges)
-        if edges is not None:
-            assert len(edges) > 1, 'Edges must be at least length 2'
-        if isinstance(points, list): points = np.array(points)
         self.var = var
-        self._edges = edges
+        self._edges = pn.edges(edges)
         self._points = points
         self._nbins = nbins
 
@@ -41,7 +164,7 @@ class Dimension(object):
         if self._points is not None:
             return len(self._points)
         elif self._edges is not None:
-            return len(self._edges) - 1
+            return len(self._edges)
         return None
 
     def __str__(self):
@@ -62,51 +185,34 @@ class Dimension(object):
     def __getitem__(self, idx):
         if idx is Ellipsis:
             return self
-        if isinstance(idx, Number):
-            if not abs(idx) < len(self):
-                raise IndexError('Index outside range')
-            if idx < 0:
-                edge_idx = slice(idx-1, idx+1 if not idx == -1 else None)
-            else:
-                edge_idx = slice(idx, idx+2)
-        elif isinstance(idx, slice):
-            if idx.step is not None and abs(idx.step) > 1:
-                raise IndexError('Can only slice consecutive indices')
-            reverse = idx.step is not None and idx.step < 0
-            edge_idx = list(range(*idx.indices(len(self))))
-            if reverse:
-                edge_idx = [edge_idx[0] + 1] + edge_idx
-            else:
-                edge_idx = edge_idx + [edge_idx[-1] + 1]
-        elif isinstance(idx, list) or isinstance(idx, tuple):
-            if not all(i == 1 for i in np.diff(idx)):
-                raise IndexError('Can only apply consecutive indices')
-            edge_idx = list(idx)
-            edge_idx = edge_idx + [edge_idx[-1] + 1]
-        else:
-            raise NotImplementedError('%s index not supported'%type(idx))
 
         new_obj = pn.grid.Dimension()
         new_obj.var = self.var
         if self._edges is not None:
-            new_obj._edges = self._edges[edge_idx]
+            new_obj._edges = self._edges[idx]
         if self._points is not None:
             new_obj._points = self._points[idx]
         new_obj._nbins = self._nbins
         return new_obj
 
     @property
+    def initialized(self):
+        '''wether dimension is initialized'''
+        return self._edges._edges is not None or self._points is not None
+
+
+    @property
     def has_data(self):
         '''
         True if either edges or points are not None
         '''
-        return (self._edges is not None) or (self._points is not None)
+        return (self._edges.edges is not None) or (self._points is not None)
 
     def __eq__(self, other):
         if not type(self) == type(other):
             return False
         equal = self.var == other.var
-        equal = equal and np.all(np.equal(self._edges, other._edges))
+        equal = equal and self._edges == other._edges
         equal = equal and np.all(np.equal(self._points, other._points))
         return equal and self._nbins == other._nbins
 
@@ -116,29 +222,23 @@ class Dimension(object):
         regular = True
         if self._points is not None:
             regular = regular and np.equal.reduce(np.diff(self._points))
-        if self._edges is not None:
-            regular = regular and np.equal.reduce(np.diff(self._edges))
+        if self._edges.edges is not None:
+            regular = regular and self._edges.regular
         return regular
     
     @property
     def edges(self):
-        if self._edges is not None:
+        if self._edges._edges is not None:
             return self._edges
         elif self._points is not None:
-            return self.edges_from_points()
+            return pn.edges(points=self._points)
         return None
-
-    @property
-    def bin_edges(self):
-        '''
-        just for convenience
-        '''
-        return self.edges
 
     @edges.setter
     def edges(self, edges):
+        edges = pn.edges(edges)
         if self.has_data:
-            if not len(edges) == len(self) + 1:
+            if not len(edges) == len(self):
                 raise IndexError('incompatible length of edges')
         self._edges = edges
 
@@ -147,7 +247,7 @@ class Dimension(object):
         if self._points is not None:
             return self._points
         elif self._edges is not None:
-            return self.points_from_edges()
+            return self._edges.points
         return None
 
     @points.setter
@@ -158,8 +258,12 @@ class Dimension(object):
         self._points = points
 
     @property
+    def squeezed_edges(self):
+        return self.edges.squeezed_edges
+
+    @property
     def nbins(self):
-        if self._points is None and self._edges is None:
+        if self._points is None and self._edges._edges is None:
             return self._nbins
         else:
             return len(self.points)
@@ -170,22 +274,6 @@ class Dimension(object):
             self._nbins = nbins
         else:
             raise ValueError('Cannot set n since bins are already defined')
-
-    def edges_from_points(self):
-        '''
-        create edges around points
-        '''
-        diff = np.diff(self.points)/2.
-        return np.concatenate([[self.points[0]-diff[0]], self.points[:-1] + diff, [self.points[-1] + diff[-1]]])
-
-    def points_from_edges(self):
-        '''
-        create points from centers between edges
-        '''
-        points = 0.5 * (self.edges[1:] + self.edges[:-1])
-        if isinstance(points, Number):
-            return np.array(points)
-        return points
 
 
 
@@ -249,14 +337,18 @@ class Grid(object):
     @property
     def initialized(self):
         '''
-        wether the gri is set or not
+        wether the grid is set or not
         '''
-        return self.ndim > 0 and all([edge is not None for edge in self.edges])
+        return self.ndim > 0 and all([d.initialized for d in self])
 
     @property
     def regular(self):
         '''true is all dimensions are reguallarly spaced'''
         return all([d.regular for d in self])
+
+    def consecutive(self):
+        '''true is all edges are consecutive'''
+        return all([d.edges.consecutive for d in self])
 
     @property
     def ndim(self):
@@ -280,6 +372,13 @@ class Grid(object):
         return [dim.edges for dim in self]
 
     @property
+    def squeezed_edges(self):
+        '''
+        all squeezed edges
+        '''
+        return [dim.squeezed_edges for dim in self]
+
+    @property
     def points(self):
         '''
         all points
@@ -296,7 +395,7 @@ class Grid(object):
 
     @property
     def edge_meshgrid(self):
-        return np.meshgrid(*self.edges)
+        return np.meshgrid(*self.squeezed_edges)
 
     @property
     def edge_mgrid(self):
@@ -353,7 +452,7 @@ class Grid(object):
             # by name
             if not item in self.vars:
                 # if it does not exist, add empty dim: ToDo: really?
-                print('needs to be cjecked, is weird behaviour')
+                print('needs to be checked, is weird behaviour')
                 self.add_dim(item)
             idx = self.vars.index(item)
             return self.dims[idx]
@@ -412,9 +511,12 @@ class Grid(object):
             assert sample.shape[0] == self.ndim
         elif isinstance(sample, list):
             assert len(sample) == self.ndim
+        
+        if not self.consecutive:
+            raise NotImplementedError()
 
         # array holding raveld indices
-        multi_index = [digitize_inclusive(sample[i], self.edges[i]) for i in range(self.ndim)]
+        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.ndim)]
         return np.ravel_multi_index(multi_index, [d+2 for d in self.shape])
 
 def digitize_inclusive(x, bins):
