@@ -209,7 +209,7 @@ class GridArray(object):
                 # new grid
                 if axis is not None:
                     new_grid = copy.deepcopy(self.grid)
-                    del(new_grid.dims[axis])
+                    del(new_grid.axes[axis])
                 else:
                     new_grid = self.grid
                 
@@ -318,7 +318,7 @@ class GridData(pn.data.Data):
 
     def _repr_html_(self):
         '''for jupyter'''
-        if self.grid.ndim == 2:
+        if self.grid.naxes == 2:
             table_x = [0] * (self.grid.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.grid.shape[1] + 1)]
             
@@ -445,7 +445,7 @@ class GridData(pn.data.Data):
 
     @property
     def ndim(self):
-        return self.grid.ndim
+        return self.grid.naxes
 
     @property
     def array_shape(self):
@@ -467,7 +467,7 @@ class GridData(pn.data.Data):
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
         if isinstance(data, pn.GridArray):
-            if self.grid.ndim == 0:
+            if self.grid.naxes == 0:
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
@@ -475,7 +475,7 @@ class GridData(pn.data.Data):
 
         elif isinstance(data, pn.GridData):
             assert len(data.data_vars) == 1
-            if self.grid.ndim == 0:
+            if self.grid.naxes == 0:
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
@@ -489,10 +489,10 @@ class GridData(pn.data.Data):
             else:
                 dim_names = ['x%i' for i in range(data.ndim+1)]
                 dim_names.delete(var)
-            dims = OrderedDict()
+            axes = OrderedDict()
             for d,n in zip(dim_names, data.shape):
-                dims[d] = np.arange(n+1)
-            self.grid = pn.Grid(**dims)
+                axes[d] = np.arange(n+1)
+            self.grid = pn.Grid(**axes)
 
         if data.ndim < self.ndim and self.shape[-1] == 1:
             # add new axis
@@ -519,7 +519,7 @@ class GridData(pn.data.Data):
         else:
             array = self.data[var]
         if flat:
-            if array.ndim == self.grid.ndim:
+            if array.ndim == self.grid.naxes:
                 return array.ravel()
             return array.reshape(self.grid.size, -1)
 
@@ -555,7 +555,7 @@ class GridData(pn.data.Data):
         '''
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        if self.grid.ndim == 2:
+        if self.grid.naxes == 2:
             return pn.plotting.plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
         raise ValueError('Can only plot maps of 2d grids')

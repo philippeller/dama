@@ -148,9 +148,9 @@ class edges(object):
     def __eq__(self, other):
         return np.all(np.equal(self._edges, other._edges))
 
-class Dimension(object):
+class Axis(object):
     '''
-    Class to hold a single dimension of a Grid
+    Class to hold a single Axis of a Grid
     which can have points and/or edges
     '''
     def __init__(self, var=None, edges=None, points=None, nbins=10):
@@ -176,7 +176,7 @@ class Dimension(object):
 
     def __repr__(self):
         strs = []
-        strs.append('Dimension("%s",'%self.var)
+        strs.append('Axis("%s",'%self.var)
         strs.append('points = %s,'%(self._points.__repr__()))
         strs.append('edges = %s)'%(self._edges.__repr__()))
         strs.append('nbins = %s)'%(self.nbins))
@@ -186,7 +186,7 @@ class Dimension(object):
         if idx is Ellipsis:
             return self
 
-        new_obj = pn.grid.Dimension()
+        new_obj = pn.grid.Axis()
         new_obj.var = self.var
         if self._edges is not None:
             new_obj._edges = self._edges[idx]
@@ -197,7 +197,7 @@ class Dimension(object):
 
     @property
     def initialized(self):
-        '''wether dimension is initialized'''
+        '''wether axis is initialized'''
         return self._edges._edges is not None or self._points is not None
 
 
@@ -279,48 +279,50 @@ class Dimension(object):
 
 class Grid(object):
     '''
-    Class to hold grid-like points, such as bin edges
+    Class to hold a number of axes
     '''
     def __init__(self, *args, **kwargs):
         '''
         Paramters:
         ----------
-        dims : Dimension or Grid object, or list thereof
+        args : Axis or Grid object, or list thereof
 
-        a dimesnion can also be given by kwargs
+        an axis can also be given by kwargs
+        kwargs : str,Number or str,array
+
         '''
-        self.dims = [] 
+        self.axes = [] 
 
         for d in args:
-            self.add_dim(d)
+            self.add_axis(d)
 
         for d,x in kwargs.items():
             if isinstance(x, Number):
-                self.add_dim(pn.Dimension(var=d, nbins=x))
+                self.add_axis(pn.Axis(var=d, nbins=x))
             else:
-                self.add_dim(pn.Dimension(var=d, edges=x))
+                self.add_axis(pn.Axis(var=d, edges=x))
 
-    def add_dim(self, dim):
+    def add_axis(self, axis):
         '''
-        add aditional Dimension
+        add aditional Axis
 
         Paramters:
         ----------
-        dim : Dimension or dict or basestring
+        axis : Axis or dict or basestring
 
-        in case of a basestring, a new empty dimension gets added
+        in case of a basestring, a new empty axisension gets added
         '''
-        if isinstance(dim, pn.Dimension):
-            assert dim.var not in self.vars
-            self.dims.append(dim)
-        elif isinstance(dim, dict):
-            dim = pn.Dimension(**dim)
-            self.add_dim(dim)
-        elif isinstance(dim, str):
-            new_dim = pn.Dimension(var=dim)
-            self.add_dim(new_dim)
+        if isinstance(axis, pn.Axis):
+            assert axis.var not in self.vars
+            self.axes.append(axis)
+        elif isinstance(axis, dict):
+            axis = pn.Axis(**axis)
+            self.add_axis(axis)
+        elif isinstance(axis, str):
+            new_axis = pn.Axis(var=axis)
+            self.add_axis(new_axis)
         else:
-            raise TypeError('Cannot add type %s'%type(dim))
+            raise TypeError('Cannot add type %s'%type(axis))
 
     def __eq__(self, other):
         if not type(self) == type(other):
@@ -339,11 +341,11 @@ class Grid(object):
         '''
         wether the grid is set or not
         '''
-        return self.ndim > 0 and all([d.initialized for d in self])
+        return self.naxes > 0 and all([d.initialized for d in self])
 
     @property
     def regular(self):
-        '''true is all dimensions are reguallarly spaced'''
+        '''true is all axisensions are reguallarly spaced'''
         return all([d.regular for d in self])
 
     def consecutive(self):
@@ -351,16 +353,16 @@ class Grid(object):
         return all([d.edges.consecutive for d in self])
 
     @property
-    def ndim(self):
+    def naxes(self):
         '''
-        number of grid dimensions
+        number of grid axisensions
         '''
-        return len(self.dims)
+        return len(self.axes)
 
     @property
     def vars(self):
         '''
-        grid dimension variables
+        grid axisension variables
         '''
         return [d.var for d in self]
 
@@ -369,21 +371,21 @@ class Grid(object):
         '''
         all edges
         '''
-        return [dim.edges for dim in self]
+        return [axis.edges for axis in self]
 
     @property
     def squeezed_edges(self):
         '''
         all squeezed edges
         '''
-        return [dim.squeezed_edges for dim in self]
+        return [axis.squeezed_edges for axis in self]
 
     @property
     def points(self):
         '''
         all points
         '''
-        return [dim.points for dim in self]
+        return [axis.points for axis in self]
 
     @property
     def point_meshgrid(self):
@@ -409,30 +411,30 @@ class Grid(object):
         return np.product([len(d) for d in self])
 
     def __len__(self):
-        return self.ndim
+        return self.naxes
 
     def __str__(self):
         '''
         string representation
         '''
         strs = []
-        for dim in self:
-            strs.append('%s'%dim)
+        for axis in self:
+            strs.append('%s'%axis)
         return '\n'.join(strs)
 
     def __repr__(self):
         strs = []
         strs.append('Grid(')
-        for dim in self:
-            strs.append('%s,'%dim.__repr__())
+        for axis in self:
+            strs.append('%s,'%axis.__repr__())
         strs[-1] += ')'
         return '\n'.join(strs)
 
     def __iter__(self):
         '''
-        iterate over dimensions
+        iterate over axisensions
         '''
-        return iter(self.dims)
+        return iter(self.axes)
 
     @property
     def shape(self):
@@ -440,8 +442,8 @@ class Grid(object):
         shape
         '''
         shape = []
-        for dim in self:
-            shape.append(len(dim))
+        for axis in self:
+            shape.append(len(axis))
         return tuple(shape)
 
     def __getitem__(self, item):
@@ -451,11 +453,11 @@ class Grid(object):
         if isinstance(item, str):
             # by name
             if not item in self.vars:
-                # if it does not exist, add empty dim: ToDo: really?
+                # if it does not exist, add empty axis: ToDo: really?
                 print('needs to be checked, is weird behaviour')
-                self.add_dim(item)
+                self.add_axis(item)
             idx = self.vars.index(item)
-            return self.dims[idx]
+            return self.axes[idx]
 
         elif isinstance(item, Number):
             return self[(item,)]
@@ -465,7 +467,7 @@ class Grid(object):
             if all([isinstance(i, str) for i in item]):
                 new_obj = pn.grid.Grid()
                 for var in item:
-                    new_obj.dims.append(self[var])
+                    new_obj.axes.append(self[var])
                 return new_obj
             elif all([isinstance(i, int) for i in item]):
                 return self[(item,)]
@@ -479,44 +481,44 @@ class Grid(object):
                 if i < len(item):
                     assert item[i] is not Ellipsis
                     if isinstance(item[i], int):
-                        # we can skip this dimesnion, as it is one element
+                        # we can skip this axisesnion, as it is one element
                         continue
-                    new_obj.dims.append(self.dims[i][item[i]])
+                    new_obj.axes.append(self.axes[i][item[i]])
                 else:
-                    new_obj.dims.append(self.dims[i])
+                    new_obj.axes.append(self.axes[i])
             return new_obj
 
 
 
         elif isinstance(item, Iterable):
             # todo
-            new_dims = []
+            new_axes = []
             for it in item:
-                new_dims.append(self[it])
-            return pn.Grid(*new_dims)
+                new_axes.append(self[it])
+            return pn.Grid(*new_axes)
         #elif isinstance(item, slice):
-        #    new_names = list(self.dims.keys())[item]
+        #    new_names = list(self.axes.keys())[item]
         #    return pn.Grid(*new_names)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 
     def __setitem__(self, item, val):
-        raise AttributeError("to set a grid dimension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
+        raise AttributeError("to set a grid axisension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
 
     def compute_indices(self, sample):
         '''
         calculate the bin indices for a a given sample
         '''
         if isinstance(sample, np.ndarray):
-            assert sample.shape[0] == self.ndim
+            assert sample.shape[0] == self.naxes
         elif isinstance(sample, list):
-            assert len(sample) == self.ndim
+            assert len(sample) == self.naxes
         
         if not self.consecutive:
             raise NotImplementedError()
 
         # array holding raveld indices
-        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.ndim)]
+        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.naxes)]
         return np.ravel_multi_index(multi_index, [d+2 for d in self.shape])
 
 def digitize_inclusive(x, bins):

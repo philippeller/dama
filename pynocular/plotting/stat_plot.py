@@ -28,11 +28,11 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.ndim == 2
+    assert source.grid.naxes == 2
 
     data = source.get_array(var)
 
-    if data.ndim == source.grid.ndim + 1 and data.shape[-1] == 3:
+    if data.ndim == source.grid.naxes + 1 and data.shape[-1] == 3:
         # plot as image
         pc = ax.imshow(data.swapaxes(0,1)[::-1,:,:], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()))
 
@@ -86,7 +86,7 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.ndim == 2
+    assert source.grid.naxes == 2
     X, Y = source.grid.point_meshgrid
 
     cs = ax.contour(X, Y, source[var].T, **kwargs)
@@ -100,7 +100,7 @@ def plot_step(source, var, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.ndim == 1
+    assert source.grid.naxes == 1
     histtype = kwargs.pop('histtype', 'step')
 
     # let's only plot finite values, otherwise it freakes out
@@ -117,7 +117,7 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.ndim == 1
+    assert source.grid.naxes == 1
     
     cmap = kwargs.pop('cmap', 'Blues')
     cmap = plt.get_cmap(cmap)
@@ -164,7 +164,7 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
         upper_error = lower_error
     else:
         raise TypeError('errors must be tuple of variable names or a single variable name')
-    assert source.grid.ndim == 1
+    assert source.grid.naxes == 1
 
     ax.bar(source.grid[0].points,
            lower_error + upper_error,

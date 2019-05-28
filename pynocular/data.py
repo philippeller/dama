@@ -158,12 +158,12 @@ def interp(source, *args, **kwargs):
         return dest
     
     if method is None:
-        if dest.grid.ndim > 2:
+        if dest.grid.naxes > 2:
             method = 'linear'
         else:
             method = 'cubic'
 
-    if method == 'cubic' and dest.grid.ndim > 2:
+    if method == 'cubic' and dest.grid.naxes > 2:
         raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
     
 
@@ -335,8 +335,8 @@ def lookup(source, *args, **kwargs):
 
         source_data = source.get_array(source_var)
 
-        if source_data.ndim > source.grid.ndim:
-            output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
+        if source_data.ndim > source.grid.naxes:
+            output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.naxes:], np.nan)
         else:
             output_array = np.full(np.product(dest.array_shape), np.nan)
 
@@ -390,8 +390,8 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
     masks = [np.logical_and(sample[i] > dim.points[0], sample[i] < dim.points[-1]) for i, dim in enumerate(dest.grid)]
     mask = np.all(masks, axis=0)
     n_masked = np.sum(~mask)
-    if n_masked > 0:
-        warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
+    #if n_masked > 0:
+    #    warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
 
     sample = [s[mask] for s in sample]
 
@@ -408,7 +408,7 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
 
         source_data = source.get_array(source_var, flat=True)
 
-        print(source_var, source_data.ndim)
+        #print(source_var, source_data.ndim)
         if source_data.ndim > 1:
             out = np.empty(shape=(dest.grid.size, *source_data.shape[1:]))
             #out = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
