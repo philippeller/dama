@@ -36,7 +36,7 @@ def initialize_grid(grid, source):
     '''
     # check dest grid is set up, otherwise do so
     for var in grid.vars:
-        if grid[var].edges is None:
+        if not grid[var].initialized:
             # check if it might be from a grid
             if isinstance(source, pn.GridData):
                 if var in source.grid.vars:
@@ -45,7 +45,7 @@ def initialize_grid(grid, source):
                         new_nbins = int(source.grid[var].nbins * grid[var].nbins)
                     else:
                         new_nbins = grid[var].nbins
-                    grid[var].edges = np.linspace(source.grid[var].edges[0], source.grid[var].edges[-1], new_nbins+1)
+                    grid[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
                     continue
             # in this case it's pointdata
             grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
@@ -471,7 +471,7 @@ def resample(source, *args, **kwargs):
                 lookup_array[i] = source_data[idx]
 
         # now bin both these points into destination
-        bins = dest.grid.edges
+        bins = dest.grid.squeezed_edges
         lu_hist, _ = np.histogramdd(sample=lookup_sample, bins=bins, weights=lookup_array)
         lu_counts, _ = np.histogramdd(sample=lookup_sample, bins=bins)
         lu_hist /= lu_counts
@@ -567,10 +567,10 @@ def get_single_hist(sample, grid, weights, method, density=False):
 
     # generate hists
     if method in ['sum', 'mean']:
-        weighted_hist, _ = np.histogramdd(sample=sample, bins=grid.edges, weights=weights, density=density)
+        weighted_hist, _ = np.histogramdd(sample=sample, bins=grid.squeezed_edges, weights=weights, density=density)
 
     if method in ['count', 'mean']:
-        hist, _ = np.histogramdd(sample=sample, bins=grid.edges, density=density)
+        hist, _ = np.histogramdd(sample=sample, bins=grid.squeezed_edges, density=density)
 
     # make outputs
     if method == 'count':

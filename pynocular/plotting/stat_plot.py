@@ -34,7 +34,7 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
 
     if data.ndim == source.grid.ndim + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0,1)[::-1,:,:], extent=(source.grid.edges[0][0], source.grid.edges[0][-1], source.grid.edges[1][0], source.grid.edges[1][-1]))
+        pc = ax.imshow(data.swapaxes(0,1)[::-1,:,:], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()))
 
     else:
         X, Y = source.grid.edge_meshgrid
@@ -44,8 +44,8 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(source.grid.vars[1])
-    ax.set_xlim(source.grid.edges[0][0], source.grid.edges[0][-1])
-    ax.set_ylim(source.grid.edges[1][0], source.grid.edges[1][-1])
+    ax.set_xlim(source.grid.edges[0].min(), source.grid.edges[0].max())
+    ax.set_ylim(source.grid.edges[1].min(), source.grid.edges[1].max())
     return pc
 
 def plot(source, x, y, *args, **kwargs):
@@ -105,8 +105,8 @@ def plot_step(source, var, fig=None, ax=None, **kwargs):
 
     # let's only plot finite values, otherwise it freakes out
     mask = np.isfinite(source[var])
-    ax.hist(source.grid[0].points[mask], bins=source.grid[0].edges, weights=source.get_array(var)[mask], histtype=histtype, **kwargs)
-    ax.set_xlabel(source.grid[0].var)
+    ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=source.get_array(var)[mask], histtype=histtype, **kwargs)
+    ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
 
 def plot_bands(source, var, fig=None, ax=None, **kwargs):
@@ -135,17 +135,17 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
         upper_idx = n_points - i - 1
 
         if not upper_idx == i:
-            ax.bar(source.grid[0].points,
+            ax.bar(source.grid.points[0],
                    data[:, upper_idx] - data[:,i],
                    bottom=data[:,i],
-                   width = np.diff(source.grid[0].edges),
+                   width = source.grid.edges[0].width,
                    color=colors[i],
                    **kwargs)
         else:
             mask = np.isfinite(data[:,i])
-            ax.hist(source.grid[0].points[mask], bins=source.grid[0].edges, weights=data[:,i][mask], histtype='step', color=colors[i], **kwargs)
+            ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=data[:,i][mask], histtype='step', color=colors[i], **kwargs)
 
-    ax.set_xlabel(source.grid[0].var)
+    ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
 
 def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
@@ -169,6 +169,6 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
     ax.bar(source.grid[0].points,
            lower_error + upper_error,
            bottom=source[var] - lower_error,
-           width = np.diff(source.grid[0].edges),
+           width = source.grid[0].edges.width,
            **kwargs)
     ax.set_xlabel(source.grid[0].var)

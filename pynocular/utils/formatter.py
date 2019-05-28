@@ -54,6 +54,7 @@ def table_labels(grid, dim):
     labels : list of str
     '''
     if grid[grid.vars[dim]]._edges is not None:
-        return ['<b>[%s, %s]</b>'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
+        #return ['<b>%s</b>'%(as_str(grid[grid.vars[dim]].edges[i]), as_str(grid[grid.vars[dim]].edges[i+1])) for i in range(grid.shape[dim])]
+        return ['<b>%s</b>'%as_str(grid[grid.vars[dim]].edges[i]) for i in range(grid.shape[dim])]
     else:
         return ['<b>%s</b>'%as_str(grid[grid.vars[dim]].points[i]) for i in range(grid.shape[dim])]
