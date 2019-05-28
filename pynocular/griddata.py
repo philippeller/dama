@@ -42,7 +42,7 @@ class GridArray(object):
 
     def _repr_html_(self):
         '''for juopyter'''
-        if self.ndim == 2:
+        if self.naxes == 2:
             table_x = [0] * (self.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.shape[1] + 1)]
             
@@ -62,7 +62,7 @@ class GridArray(object):
                     
             return tabulate.tabulate(table, tablefmt='html')
         
-        elif self.ndim == 1:
+        elif self.naxes == 1:
             table_x = [0] * (self.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(2)]
             table[0][0] = '<b>%s</b>'%self.grid.vars[0]
@@ -115,6 +115,10 @@ class GridArray(object):
     def ndim(self):
         return self.data.ndim
 
+    @property
+    def naxes(self):
+        return self.grid.naxes
+
     def __getitem__(self, item):
         if isinstance(item, pn.GridArray):
             if item.data.dtype == np.bool:
@@ -148,9 +152,15 @@ class GridArray(object):
     @property
     def T(self):
         '''transpose'''
-        if self.ndim > 1:
-            return pn.GridArray(self.grid.T, self.name, self.data.T)
-        return self
+        if self.ndim > self.naxes + 1:
+            raise NotImplementedError()
+        if self.naxes == 1:
+            return self
+        if self.naxes > 1:
+            new_data = self.data.T
+        if self.ndim == self.naxes + 1:
+            new_data = np.rollaxis(new_data, 0, self.ndim)
+        return pn.GridArray(self.grid.T, self.name, new_data)
     
     @property
     def shape(self):
@@ -397,7 +407,11 @@ class GridData(pn.data.Data):
     @property
     def T(self):
         '''transpose'''
-        raise NotImplementedError()
+        new_obj = pn.GridData()
+        new_obj.grid = self.grid.T
+        new_obj.data = [d.T for d in self]
+        return new_obj
+        #raise NotImplementedError()
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         for var in inputs[0].data_vars:
