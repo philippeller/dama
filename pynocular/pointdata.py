@@ -42,12 +42,15 @@ class PointDataDim(object):
             if isinstance(args[0], pandas.core.series.Series):
                 self.data = args[0]
                 self.name = args[0].name
-            elif isinstance(args[0], OrderedDict) and len(args[0]) == 1:
+            elif isinstance(args[0], dict) and len(args[0]) == 1:
                 self.data = args[0].values()[0]
                 self.name = args[0].keys()[0]
             else:
                 raise ValueError()
-        elif len(args) == 0 and len(kwargs) > 1:
+        elif len(args) == 2 and len(kwargs) == 0:
+            self.data = args[1]
+            self.name = args[0]
+        elif len(args) == 0 and len(kwargs) == 1:
             self.data = kwargs[0].values()[0]
             self.name = kwargs[0].keys()[0]
         else:
@@ -57,8 +60,8 @@ class PointDataDim(object):
     def type(self):
         if isinstance(self.data, pandas.core.series.Series):
             return 'df'
-        elif isinstance(self.data, OrderedDict):
-            return 'dict'
+        elif isinstance(self.data, np.ndarray):
+            return 'simple'
 
     def __repr__(self):
         return 'PointDataDim(%s : %s)'%(self.name, self.data)
@@ -86,17 +89,17 @@ class PointDataDim(object):
     def __pow__(self, other):
         return np.power(self, other)
     def __lt__(self, other):
-        return np.less(self, other)	
+        return np.less(self, other)     
     def __le__(self, other):
-        return np.less_equal(self, other)	
+        return np.less_equal(self, other)       
     def __eq__(self, other):
-        return np.equal(self, other)	
+        return np.equal(self, other)    
     def __ne__(self, other):
-        return np.not_equal(self, other)	
+        return np.not_equal(self, other)        
     def __gt__(self, other):
-        return np.greater(self, other)	
+        return np.greater(self, other)  
     def __ge__(self, other): 
-        return np.greater_equal(self, other)	
+        return np.greater_equal(self, other)    
 
     def __array__(self):
         return self.values
@@ -123,26 +126,35 @@ class PointDataDim(object):
                 return np.asscalar(result)
         return result
 
+    def __len__(self):
+        return self.data.shape[0]
+
+
 class PointData(Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
     def __init__(self, *args, **kwargs):
+        self.data = []
+
         if len(args) == 0 and len(kwargs) == 0:
-            self.data = OrderedDict()
+            pass
         elif len(args) == 1 and len(kwargs) == 0:
             if isinstance(args[0], pandas.core.series.Series):
                 self.data = pandas.DataFrame(args[0])
             elif isinstance(args[0], pandas.core.frame.DataFrame):
                 self.data = args[0]
-            elif isinstance(args[0], OrderedDict):
-                self.data = args[0]
+            elif isinstance(args[0], list):
+                args = args[0]
             else:
-                self.data = OrderedDict(args[0])
-        elif len(args) == 0 and len(kwargs) > 0:
-            self.data = OrderedDict(kwargs)
-        else:
-            raise ValueError("Did not understand input arguments")
+                raise ValueError("Did not understand input arguments")
+        if all([isinstance(a, pn.PointDataDim) for a in args]):
+            self.data = list(args)
+        if len(kwargs) > 0:
+            for k,v in kwargs.items():
+                self[k] = v
+        #else:
+        #    raise ValueError("Did not understand input arguments")
 
     def __repr__(self):
         return 'PointData(%s)'%self.data.__repr__()
@@ -155,7 +167,7 @@ class PointData(Data):
         if self.type == 'df':
             return self.data._repr_html_()
         else:
-            table = [['<b>%s</b>'%var] + [as_str(v) for v in np.array(self[var])] for var in self.vars]
+            table = [['<b>%s</b>'%a.name] + [as_str(d) for d in np.array(a)] for a in self]
             return tabulate.tabulate(table, tablefmt='html')
 
 
@@ -166,13 +178,19 @@ class PointData(Data):
         '''
         if self.type == 'df':
             return list(self.data.columns)
-        elif self.type == 'dict':
-            return list(self.data.keys())
+        elif self.type == 'simple':
+            return [a.name for a in self]
         else:
             return []
 
     @property
+    def data_vars(self):
+        '''Available variables'''
+        return self.vars
+
+    @property
     def ndim(self):
+        # ToDo: not good, call differently
         return len(self.vars)
 
     @property
@@ -183,33 +201,18 @@ class PointData(Data):
         -------
         type : str
             if data is a pandas.DataFrame: "df"
-            else: "dict"
+            else: "simple"
         '''
         if isinstance(self.data, pandas.core.frame.DataFrame):
             return 'df'
-        elif isinstance(self.data, OrderedDict):
-            return 'dict'
-
-    @property
-    def data_vars(self):
-        '''Available variables'''
-        return self.vars
-
-    def rename(self, old, new):
-        '''Rename a single variable'''
-        if self.type == 'df':
-            self.data.rename(columns={old:new}, inplace=True)
-        elif self.type == 'dict':
-            self.data[new] = self.data.pop(old)
-
-    def update(self, new_data):
-        self.data.update(new_data.data)
+        elif isinstance(self.data, list): 
+            return 'simple'
 
     def __len__(self):
         if self.type == 'df':
             return len(self.data)
-        elif self.type == 'dict':
-            return len(self.data[list(self.data.keys())[0]])
+        elif self.type == 'simple':
+            return len(self.data[0])
 
     @property
     def array_shape(self):
@@ -219,20 +222,37 @@ class PointData(Data):
         -------
         shape : tuple
         '''
+        # ToDo can also not asume that
         return (len(self),)
 
     def __setitem__(self, var, val):
         if self.ndim > 0:
             assert len(val) == len(self), 'Incompatible dimensions'
+
         if isinstance(val, pn.PointDataDim):
-            self.data[var] = val.data
+            if self.type == 'df':
+                self.data[var] = val.data
+            else:
+                val.name = var
+                if var in self.vars:
+                     idx = self.vars.index(var)
+                     self.data[idx] = val
+                else:
+                    self.data.append(val)
         elif isinstance(val, pn.PointData):
-            # is this fair enough?
+            # ToDo: is this fair enough?
             self.data[var] = val.data[val.vars[-1]]
+        elif isinstance(val, np.ndarray):
+            if self.type == 'df':
+                self.data[var] = val
+            else:
+                val = pn.PointDataDim(var, val)
+                self[var] = val
         else:
-            self.data[var] = val
+            raise ValueError()
 
     def __getitem__(self, var):
+        #print(var)
         if self.type == 'df':
             result = self.data[var]
             if isinstance(result, pandas.core.frame.DataFrame):
@@ -242,24 +262,33 @@ class PointData(Data):
 
         if isinstance(var, str):
             if var in self.vars:
-                new_data = PointDataDim()
-                new_data.data = self.data[var]
-                new_data.name = var
-                return new_data
+                idx = self.vars.index(var)
+                return self.data[idx]
+            else:
+                raise IndexError('No variable %s in DataSet'%var)
 
         # create new instance with mask or slice applied
-        new_data = OrderedDict()
+        new_data = []
 
-        if isinstance(var, Iterable):
+        if isinstance(var, (tuple, list)) and all([isinstance(v, str) for v in var]):
             for v in var:
-                new_data[v] = self.data[v]
+                new_data.append(self[v])
         else:
-            for key, val in self.data.items():
-                new_data[key] = val[var]
+            for d in self:
+                new_data.append(d[var])
         return PointData(new_data)
-	
+        
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
+
+    def __iter__(self):
+        '''
+        iterate over dimensions
+        '''
+        if self.type == 'df':
+            return iter([self.data[var] for var in self.vars])
+        return iter(self.data)
+
 
     # --- Plotting functions ---
 

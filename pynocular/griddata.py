@@ -466,9 +466,11 @@ class GridData(pn.data.Data):
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
+            data.name = var
             #data = data.data
 
         elif isinstance(data, pn.GridData):
+            # ToDo: needed?
             assert len(data.data_vars) == 1
             if self.grid.naxes == 0:
                 self.grid == data.grid
