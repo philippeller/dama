@@ -295,7 +295,8 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        self.data = OrderedDict()
+        self.data = []
+
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
             self.grid = args[0].grid
             self.add_data(args[0].name, args[0])
@@ -335,8 +336,9 @@ class GridData(pn.data.Data):
             for i in range(self.shape[0]):
                 for j in range(self.shape[1]):
                     all_data = []
-                    for var in self.data_vars:
-                        all_data.append('%s = %s'%(var, as_str(self.data[var][i,j])))
+                    #for var in self.data_vars:
+                    for d in self:
+                        all_data.append('%s = %s'%(d.name, as_str(d.data[i,j])))
                     table[j+1][i+1] = '<br>'.join(all_data)
                     
             return tabulate.tabulate(table, tablefmt='html')
@@ -352,8 +354,8 @@ class GridData(pn.data.Data):
             
             for i in range(self.shape[0]):
                 table[0][i+1] = x_labels[i]
-                for j, var in enumerate(self.data_vars):
-                    table[j+1][i+1] = as_str(self.data[var][i])
+                for j, d in enumerate(self):
+                    table[j+1][i+1] = as_str(d.data[i])
 
             return tabulate.tabulate(table, tablefmt='html')
         
@@ -367,7 +369,8 @@ class GridData(pn.data.Data):
         if isinstance(item, str):
             if item in self.vars:
                 if item in self.data_vars:
-                    data = self.data[item]
+                    idx = self.data_vars.index(item)
+                    data = self.data[idx]
                 else:
                     data = None
                 new_data = pn.GridArray(self.grid, item, data)
@@ -384,10 +387,10 @@ class GridData(pn.data.Data):
         # slice
         new_grid = self.grid[item]
         if len(new_grid) == 0:
-            return {v:self.data[v][item] for v in self.data_vars}
+            return {d.name:d[item] for d in self}
         new_data = pn.GridData(new_grid)
-        for v in self.data_vars:
-            new_data[v] = self.data[v][item]
+        for d in self:
+            new_data[d.name] = d[item]
         return new_data
         
 
@@ -408,36 +411,14 @@ class GridData(pn.data.Data):
         '''
         Available variables
         '''
-        return self.grid.vars + list(self.data.keys())
+        return self.grid.vars + self.data_vars
 
     @property
     def data_vars(self):
         '''
         only data variables (no grid vars)
         '''
-        return list(self.data.keys())
-
-    def rename(self, old, new):
-        '''rename one array
-
-        Parameters
-        ----------
-        old : str
-        new : str
-        '''
-        self.data[new] = self.data.pop(old)
-
-    def update(self, new_data):
-        '''update
-
-        Parameters
-        ----------
-        new_data : GridData
-        '''
-        if not self.grid.initialized:
-            self.grid = new_data.grid
-        assert self.grid == new_data.grid
-        self.data.update(new_data.data)
+        return [d.name for d in self]
 
     @property
     def shape(self):
@@ -471,7 +452,7 @@ class GridData(pn.data.Data):
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
-            data = data.data
+            #data = data.data
 
         elif isinstance(data, pn.GridData):
             assert len(data.data_vars) == 1
@@ -479,28 +460,35 @@ class GridData(pn.data.Data):
                 self.grid == data.grid
             else:
                 assert self.grid == data.grid
-            data = data.get_array(data.data_vars[0])
+            data = data[0]
 
         elif self.ndim == 0:
             print('adding default grid')
             # make a default grid:
             if data.ndim <= 3 and var not in ['x', 'y', 'z']:
-                dim_names = ['x', 'y', 'z']
+                axes_names = ['x', 'y', 'z']
             else:
-                dim_names = ['x%i' for i in range(data.ndim+1)]
-                dim_names.delete(var)
+                axes_names = ['x%i' for i in range(data.ndim+1)]
+                axes_names.delete(var)
             axes = OrderedDict()
-            for d,n in zip(dim_names, data.shape):
+            for d,n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n+1)
             self.grid = pn.Grid(**axes)
 
         if data.ndim < self.ndim and self.shape[-1] == 1:
             # add new axis
             data = data[..., np.newaxis]
+            
+        data = pn.GridArray(self.grid, var, data)
+
         if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
 
-        self.data[var] = data
+        if var in self.data_vars:
+            idx = self.data_vars.index(var)
+            self.data[idx] = data
+        else:
+            self.data.append(data)
 
     def get_array(self, var, flat=False):
         '''
@@ -517,7 +505,7 @@ class GridData(pn.data.Data):
         if var in self.grid.vars:
             array = self.grid.point_mgrid[self.grid.vars.index(var)]
         else:
-            array = self.data[var]
+            array = np.asanyarray(self[var])
         if flat:
             if array.ndim == self.grid.naxes:
                 return array.ravel()
@@ -533,7 +521,7 @@ class GridData(pn.data.Data):
         '''
         iterate over dimensions
         '''
-        return iter([self[n] for n in self.data_vars])
+        return iter(self.data)
 
 
     # --- Plotting methods ---
