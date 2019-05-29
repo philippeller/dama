@@ -1,15 +1,11 @@
 from __future__ import absolute_import
-import six
 import numpy as np
 import pandas
-from collections import OrderedDict
-from collections.abc import Iterable
-from scipy.interpolate import griddata
 
 import pynocular as pn
 import pynocular.plotting
 from pynocular.data import Data
-from pynocular.utils.formatter import as_str, table_labels
+from pynocular.utils.formatter import as_str
 import tabulate
 
 
@@ -76,8 +72,7 @@ class PointDataDim(object):
 
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
-    def __len__(self):
-        return len(self.data)
+
     def __add__(self, other):
         return np.add(self, other)
     def __sub__(self, other):
@@ -89,17 +84,17 @@ class PointDataDim(object):
     def __pow__(self, other):
         return np.power(self, other)
     def __lt__(self, other):
-        return np.less(self, other)     
+        return np.less(self, other)
     def __le__(self, other):
-        return np.less_equal(self, other)       
+        return np.less_equal(self, other)
     def __eq__(self, other):
-        return np.equal(self, other)    
+        return np.equal(self, other)
     def __ne__(self, other):
-        return np.not_equal(self, other)        
+        return np.not_equal(self, other)
     def __gt__(self, other):
-        return np.greater(self, other)  
+        return np.greater(self, other)
     def __ge__(self, other): 
-        return np.greater_equal(self, other)    
+        return np.greater_equal(self, other)
 
     def __array__(self):
         return self.values
@@ -151,7 +146,7 @@ class PointData(Data):
         if all([isinstance(a, pn.PointDataDim) for a in args]):
             self.data = list(args)
         if len(kwargs) > 0:
-            for k,v in kwargs.items():
+            for k, v in kwargs.items():
                 self[k] = v
         #else:
         #    raise ValueError("Did not understand input arguments")
@@ -235,8 +230,8 @@ class PointData(Data):
             else:
                 val.name = var
                 if var in self.vars:
-                     idx = self.vars.index(var)
-                     self.data[idx] = val
+                    idx = self.vars.index(var)
+                    self.data[idx] = val
                 else:
                     self.data.append(val)
         elif isinstance(val, pn.PointData):

@@ -46,19 +46,19 @@ class GridArray(object):
             table_x = [0] * (self.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.shape[1] + 1)]
             
-            table[0][0] = '<b>%s \ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
+            table[0][0] = '<b>%s \\ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
             
             x_labels = table_labels(self.grid, 0)
             y_labels = table_labels(self.grid, 1)
                         
             for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]                    
+                table[0][i+1] = x_labels[i]
             for i in range(self.shape[1]):
                 table[i+1][0] = y_labels[i]
                 
             for i in range(self.shape[0]):
                 for j in range(self.shape[1]):
-                    table[j+1][i+1] = as_str(self.data[i,j])
+                    table[j+1][i+1] = as_str(self.data[i, j])
                     
             return tabulate.tabulate(table, tablefmt='html')
         
@@ -124,7 +124,7 @@ class GridArray(object):
             if item.data.dtype == np.bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                new_data  = np.ma.MaskedArray(self.data, ~item.data)
+                new_data = np.ma.MaskedArray(self.data, ~item.data)
                 return pn.GridArray(self.grid, self.name, new_data)
             raise NotImplementedError('get item %s'%item)
         elif not isinstance(item, tuple):
@@ -292,7 +292,7 @@ class GridArray(object):
     #    print('   self is %s' % repr(self))
     #    print('   arr is %s' % repr(out_arr))
     #    # then just call the parent
-    #    return np.array(self).__array_wrap__(self, out_arr, context)          
+    #    return np.array(self).__array_wrap__(self, out_arr, context)
 
 
 
@@ -333,13 +333,13 @@ class GridData(pn.data.Data):
             table_x = [0] * (self.grid.shape[0] + 1)
             table = [copy.copy(table_x) for _ in range(self.grid.shape[1] + 1)]
             
-            table[0][0] = '<b>%s \ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
+            table[0][0] = '<b>%s \\ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
             
             x_labels = table_labels(self.grid, 0)
             y_labels = table_labels(self.grid, 1)
                         
             for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]                    
+                table[0][i+1] = x_labels[i]
             for i in range(self.shape[1]):
                 table[i+1][0] = y_labels[i]
                 
@@ -348,7 +348,7 @@ class GridData(pn.data.Data):
                     all_data = []
                     #for var in self.data_vars:
                     for d in self:
-                        all_data.append('%s = %s'%(d.name, as_str(d.data[i,j])))
+                        all_data.append('%s = %s'%(d.name, as_str(d.data[i, j])))
                     table[j+1][i+1] = '<br>'.join(all_data)
                     
             return tabulate.tabulate(table, tablefmt='html')
@@ -397,7 +397,7 @@ class GridData(pn.data.Data):
         # slice
         new_grid = self.grid[item]
         if len(new_grid) == 0:
-            return {d.name:d[item] for d in self}
+            return {d.name : d[item] for d in self}
         new_data = pn.GridData(new_grid)
         for d in self:
             new_data[d.name] = d[item]
@@ -487,7 +487,7 @@ class GridData(pn.data.Data):
                 axes_names = ['x%i' for i in range(data.ndim+1)]
                 axes_names.delete(var)
             axes = OrderedDict()
-            for d,n in zip(axes_names, data.shape):
+            for d, n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n+1)
             self.grid = pn.Grid(**axes)
 

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-from collections import Iterable
 from numbers import Number
 import numpy as np
 import pynocular as pn

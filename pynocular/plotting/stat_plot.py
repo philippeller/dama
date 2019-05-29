@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -34,8 +35,7 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
 
     if data.ndim == source.grid.naxes + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0,1)[::-1,:,:], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()))
-
+        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()))
     else:
         X, Y = source.grid.edge_meshgrid
         pc = ax.pcolormesh(X, Y, data.T, linewidth=0, rasterized=True, **kwargs)
@@ -136,14 +136,14 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
 
         if not upper_idx == i:
             ax.bar(source.grid.points[0],
-                   data[:, upper_idx] - data[:,i],
-                   bottom=data[:,i],
-                   width = source.grid.edges[0].width,
+                   data[:, upper_idx] - data[:, i],
+                   bottom=data[:, i],
+                   width=source.grid.edges[0].width,
                    color=colors[i],
                    **kwargs)
         else:
-            mask = np.isfinite(data[:,i])
-            ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=data[:,i][mask], histtype='step', color=colors[i], **kwargs)
+            mask = np.isfinite(data[:, i])
+            ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=data[:, i][mask], histtype='step', color=colors[i], **kwargs)
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
@@ -169,6 +169,6 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
     ax.bar(source.grid[0].points,
            lower_error + upper_error,
            bottom=source[var] - lower_error,
-           width = source.grid[0].edges.width,
+           width=source.grid[0].edges.width,
            **kwargs)
     ax.set_xlabel(source.grid[0].var)

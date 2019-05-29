@@ -69,7 +69,7 @@ class edges(object):
         create edges around points
         '''
         diff = np.diff(points)/2.
-        return np.concatenate([[points[0]-diff[0]], points[:-1] + diff, [points[-1] + diff[-1]]])
+        return np.concatenate([[points[0] - diff[0]], points[:-1] + diff, [points[-1] + diff[-1]]])
 
     def min(self):
         return np.min(self.edges)
@@ -93,8 +93,8 @@ class edges(object):
         elif edges.ndim == 1:
             assert len(edges) > 1, 'Edges must be at least length 2'
             self._edges = np.empty((len(edges) - 1, 2))
-            self._edges[:,0] = edges[:-1]
-            self._edges[:,1] = edges[1:]
+            self._edges[:, 0] = edges[:-1]
+            self._edges[:, 1] = edges[1:]
         else:
             raise ValueError()
 
@@ -102,12 +102,12 @@ class edges(object):
     def consecutive(self):
         #print(self._edges)
         '''True if edges consecutive, i.e. no gaps'''
-        return np.all(self._edges[1:,0] == self._edges[:-1,1])
+        return np.all(self._edges[1:, 0] == self._edges[:-1, 1])
 
     @property
     def regular(self):
         '''True if spacing of edges is regular'''
-        return np.equal.reduce(self._edges[:,1] - self._edges[:,0])
+        return np.equal.reduce(self._edges[:, 1] - self._edges[:, 0])
 
     def __len__(self):
         return self._edges.shape[0]
@@ -124,7 +124,7 @@ class edges(object):
     @property
     def width(self):
         '''return the bin width'''
-        return np.abs(self._edges[:,1] - self._edges[:,0])
+        return np.abs(self._edges[:, 1] - self._edges[:, 0])
 
     @property
     def squeezed_edges(self):
@@ -133,8 +133,8 @@ class edges(object):
         only available for consecutive edges'''
         if self.consecutive:
             squeezed_edges = np.empty(len(self) + 1)
-            squeezed_edges[:-1] = self._edges[:,0]
-            squeezed_edges[-1] = self._edges[-1,1]
+            squeezed_edges[:-1] = self._edges[:, 0]
+            squeezed_edges[-1] = self._edges[-1, 1]
             return squeezed_edges
         else:
             raise ValueError('Can only provide squeezed edges for consecutive edges')
@@ -296,7 +296,7 @@ class Grid(object):
         for d in args:
             self.add_axis(d)
 
-        for d,x in kwargs.items():
+        for d, x in kwargs.items():
             if isinstance(x, Number):
                 self.add_axis(pn.Axis(var=d, nbins=x))
             else:
@@ -519,7 +519,7 @@ class Grid(object):
 
         # array holding raveld indices
         multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.naxes)]
-        return np.ravel_multi_index(multi_index, [d+2 for d in self.shape])
+        return np.ravel_multi_index(multi_index, [d + 2 for d in self.shape])
 
 def digitize_inclusive(x, bins):
     idx = np.digitize(x, bins)

@@ -29,7 +29,7 @@ def initialize_grid(grid, source):
     ----------
     grid : pn.Grid
     source : pn.GridData, pn.PointData
-
+    
     Returns
     -------
     grid : pn.Grid
@@ -156,7 +156,7 @@ def interp(source, *args, **kwargs):
             dest[source_var] = output_array
 
         return dest
-    
+
     if method is None:
         if dest.grid.naxes > 2:
             method = 'linear'
@@ -165,13 +165,13 @@ def interp(source, *args, **kwargs):
 
     if method == 'cubic' and dest.grid.naxes > 2:
         raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-    
+
 
     # check source has grid variables
     for var in dest.grid.vars:
         assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
-    
+
     xi = dest.grid.point_mgrid
 
     for source_var in source.vars:
@@ -389,7 +389,7 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
     # every point must be inside output grid (requirement of KDEpy)
     masks = [np.logical_and(sample[i] > dim.points[0], sample[i] < dim.points[-1]) for i, dim in enumerate(dest.grid)]
     mask = np.all(masks, axis=0)
-    n_masked = np.sum(~mask)
+    #n_masked = np.sum(~mask)
     #if n_masked > 0:
     #    warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
 
