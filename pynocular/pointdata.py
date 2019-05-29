@@ -1,11 +1,10 @@
 from __future__ import absolute_import
 import numpy as np
 import pandas
-
 import pynocular as pn
 import pynocular.plotting
 from pynocular.data import Data
-from pynocular.utils.formatter import as_str
+from pynocular.utils.formatter import format_html
 import tabulate
 
 
@@ -67,8 +66,7 @@ class PointDataDim(object):
         if self.type == 'df':
             return None
         else:
-            table = [['<b>%s</b>'%self.name] + [as_str(v) for v in np.array(self)]]
-            return tabulate.tabulate(table, tablefmt='html')
+            return format_html(self)
 
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
@@ -162,8 +160,7 @@ class PointData(Data):
         if self.type == 'df':
             return self.data._repr_html_()
         else:
-            table = [['<b>%s</b>'%a.name] + [as_str(d) for d in np.array(a)] for a in self]
-            return tabulate.tabulate(table, tablefmt='html')
+            return format_html(self)
 
 
     @property

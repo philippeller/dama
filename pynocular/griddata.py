@@ -4,7 +4,7 @@ from collections.abc import Iterable
 import copy
 import numpy as np
 import pynocular as pn
-from pynocular.utils.formatter import as_str, table_labels
+from pynocular.utils.formatter import format_html
 import pynocular.plotting
 import tabulate
 
@@ -41,45 +41,8 @@ class GridArray(object):
         return 'GridArray(%s : %s)'%(self.name, self.data)
 
     def _repr_html_(self):
-        '''for juopyter'''
-        if self.naxes == 2:
-            table_x = [0] * (self.shape[0] + 1)
-            table = [copy.copy(table_x) for _ in range(self.shape[1] + 1)]
-            
-            table[0][0] = '<b>%s \\ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
-            
-            x_labels = table_labels(self.grid, 0)
-            y_labels = table_labels(self.grid, 1)
-                        
-            for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]
-            for i in range(self.shape[1]):
-                table[i+1][0] = y_labels[i]
-                
-            for i in range(self.shape[0]):
-                for j in range(self.shape[1]):
-                    table[j+1][i+1] = as_str(self.data[i, j])
-                    
-            return tabulate.tabulate(table, tablefmt='html')
-        
-        elif self.naxes == 1:
-            table_x = [0] * (self.shape[0] + 1)
-            table = [copy.copy(table_x) for _ in range(2)]
-            table[0][0] = '<b>%s</b>'%self.grid.vars[0]
-            table[1][0] = '<b>%s</b>'%self.name
-            
-            x_labels = table_labels(self.grid, 0)
-
-            
-            for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]
-                table[1][i+1] = as_str(self.data[i])
-
-            return tabulate.tabulate(table, tablefmt='html')
-        
-        else:
-            return self.__repr__()
-            
+        '''for jupyter'''
+        return format_html(self)
     
     def __str__(self):
         return '%s : %s'%(self.name, self.data)
@@ -329,48 +292,7 @@ class GridData(pn.data.Data):
 
     def _repr_html_(self):
         '''for jupyter'''
-        if self.grid.naxes == 2:
-            table_x = [0] * (self.grid.shape[0] + 1)
-            table = [copy.copy(table_x) for _ in range(self.grid.shape[1] + 1)]
-            
-            table[0][0] = '<b>%s \\ %s</b>'%(self.grid.vars[1], self.grid.vars[0])
-            
-            x_labels = table_labels(self.grid, 0)
-            y_labels = table_labels(self.grid, 1)
-                        
-            for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]
-            for i in range(self.shape[1]):
-                table[i+1][0] = y_labels[i]
-                
-            for i in range(self.shape[0]):
-                for j in range(self.shape[1]):
-                    all_data = []
-                    #for var in self.data_vars:
-                    for d in self:
-                        all_data.append('%s = %s'%(d.name, as_str(d.data[i, j])))
-                    table[j+1][i+1] = '<br>'.join(all_data)
-                    
-            return tabulate.tabulate(table, tablefmt='html')
-        
-        elif self.ndim == 1:
-            table_x = [0] * (self.grid.shape[0] + 1)
-            table = [copy.copy(table_x) for _ in range(len(self.data_vars)+1)]
-            table[0][0] = '<b>%s</b>'%self.grid.vars[0]
-            for i, var in enumerate(self.data_vars):
-                table[i+1][0] = '<b>%s</b>'%var
-            
-            x_labels = table_labels(self.grid, 0)
-            
-            for i in range(self.shape[0]):
-                table[0][i+1] = x_labels[i]
-                for j, d in enumerate(self):
-                    table[j+1][i+1] = as_str(d.data[i])
-
-            return tabulate.tabulate(table, tablefmt='html')
-        
-        else:
-            return self.__repr__()
+        return format_html(self)
 
     def __setitem__(self, var, val):
         self.add_data(var, val)
