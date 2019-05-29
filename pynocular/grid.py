@@ -100,7 +100,6 @@ class edges(object):
 
     @property
     def consecutive(self):
-        #print(self._edges)
         '''True if edges consecutive, i.e. no gaps'''
         return np.all(self._edges[1:, 0] == self._edges[:-1, 1])
 

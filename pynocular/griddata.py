@@ -308,6 +308,17 @@ class GridData(pn.data.Data):
                 new_data = pn.GridArray(self.grid, item, data)
                 return new_data
 
+        # mask
+        if isinstance(item, pn.GridArray):
+            if item.data.dtype == np.bool:
+                # in this case it is a mask
+                # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
+                new_data = pn.GridData(self.grid)
+                for v in self.data_vars:
+                    new_data[v] = self[v][item]
+                return new_data
+            raise NotImplementedError('get item %s'%item)
+
         # create new instance with only those vars
         if isinstance(item, Iterable) and all([isinstance(v, str) for v in item]):
             new_data = pn.GridData(self.grid)
@@ -336,12 +347,22 @@ class GridData(pn.data.Data):
         #raise NotImplementedError()
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
+        '''interface to numpy unversal functions'''
+        scalar_results = OrderedDict()
+        array_result = pn.GridData()
         for var in inputs[0].data_vars:
             converted_inputs = [inp[var] for inp in inputs]
             result = converted_inputs[0].__array_ufunc__(ufunc, method, *converted_inputs, **kwargs)
-            print('%s : %s'%(var, result))
-        raise NotImplementedError()
-
+            if isinstance(result, pn.GridArray):
+                array_result[var] = result
+            else:
+                scalar_results[var] = result
+        if len(array_result.data_vars) == 0:
+            return scalar_results
+        if len(scalar_results) == 0:
+            return array_result
+        return scalar_results, array_result
+ 
     @property
     def vars(self):
         '''
@@ -384,8 +405,8 @@ class GridData(pn.data.Data):
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
         if isinstance(data, pn.GridArray):
-            if self.grid.naxes == 0:
-                self.grid == data.grid
+            if not self.grid.initialized:
+                self.grid = data.grid
             else:
                 assert self.grid == data.grid
             data.name = var
@@ -416,7 +437,7 @@ class GridData(pn.data.Data):
         if data.ndim < self.ndim and self.shape[-1] == 1:
             # add new axis
             data = data[..., np.newaxis]
-            
+
         data = pn.GridArray(self.grid, var, data)
 
         if not data.shape[:self.ndim] == self.shape:
