@@ -21,36 +21,6 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-def initialize_grid(grid, source):
-    '''Method to initialize a grid if grid is not fully set up
-    it derive information from source
-    
-    Parameters
-    ----------
-    grid : pn.Grid
-    source : pn.GridData, pn.PointData
-    
-    Returns
-    -------
-    grid : pn.Grid
-    '''
-    # check dest grid is set up, otherwise do so
-    for var in grid.vars:
-        if not grid[var].initialized:
-            # check if it might be from a grid
-            if isinstance(source, pn.GridData):
-                if var in source.grid.vars:
-                    if isinstance(grid[var].nbins, float):
-                        # this measn we want to multiply the old nbins
-                        new_nbins = int(source.grid[var].nbins * grid[var].nbins)
-                    else:
-                        new_nbins = grid[var].nbins
-                    grid[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
-                    continue
-            # in this case it's pointdata
-            grid[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), grid[var].nbins+1)
-    return grid
-
 def generate_destination(source, *args, **kwargs):
     '''Correctly set up a destination data format
     depending on the supplied input
@@ -67,10 +37,12 @@ def generate_destination(source, *args, **kwargs):
     if len(args) == 1 and len(kwargs) == 0:
         dest = args[0]
         if isinstance(dest, pn.GridData):
-            grid = initialize_grid(dest.grid, source)
+            grid = dest.grid
+            grid.initialize(source)
             return pn.GridData(grid)
         if isinstance(dest, pn.grid.Grid):
-            grid = initialize_grid(dest, source)
+            grid = dest
+            grid.initialize(source)
             return pn.GridData(grid)
         if isinstance(dest, pn.PointData):
             return pn.PointData(dest.data)
@@ -89,7 +61,7 @@ def generate_destination(source, *args, **kwargs):
 
     # instantiate
     grid = pn.grid.Grid(*args, **kwargs)
-    grid = initialize_grid(grid, source)
+    grid.initialize(source)
 
     return pn.GridData(grid)
 

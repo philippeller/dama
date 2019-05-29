@@ -302,6 +302,31 @@ class Grid(object):
             else:
                 self.add_axis(pn.Axis(var=d, edges=x))
 
+    def initialize(self, source):
+        '''Method to initialize the grid if grid is not fully set up
+        it derive information from source
+        
+        Parameters
+        ----------
+        source : pn.GridData, pn.PointData
+        
+        '''
+        # check dest grid is set up, otherwise do so
+        for var in self.vars:
+            if not self[var].initialized:
+                # check if it might be from a grid
+                if isinstance(source, pn.GridData):
+                    if var in source.grid.vars:
+                        if isinstance(self[var].nbins, float):
+                            # this measn we want to multiply the old nbins
+                            new_nbins = int(source.grid[var].nbins * self[var].nbins)
+                        else:
+                            new_nbins = self[var].nbins
+                        self[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
+                        continue
+                # in this case it's pointdata
+                self[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), self[var].nbins+1)
+
     def add_axis(self, axis):
         '''
         add aditional Axis
