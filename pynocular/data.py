@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+'''Module providing a data base class and translation methods'''
 from numbers import Number
 import warnings
 import numpy as np
@@ -67,8 +68,8 @@ def generate_destination(source, *args, **kwargs):
 
 
 
-def interp(source, *args, **kwargs):
-    '''interpolation from array data into grids
+def interp(source, *args, method=None, fill_value=np.nan, **kwargs):
+    '''interpolation from any data to another
 
     Parameters:
     -----------
@@ -79,11 +80,7 @@ def interp(source, *args, **kwargs):
     fill_value : Number (optional)
         value for invalid points
     '''
-    method = kwargs.pop('method', None)
-
     assert method in [None, 'nearest', 'linear', 'cubic'], 'Illegal method %s'%method
-
-    fill_value = kwargs.pop('fill_value', np.nan)
 
     dest = generate_destination(source, *args, **kwargs)
 
@@ -173,7 +170,7 @@ def interp(source, *args, **kwargs):
 
     return dest
 
-def binwise(source, *args, density=False, **kwargs):
+def binwise(source, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
     '''translation from array data into binned form
 
     Parameters:
@@ -185,10 +182,6 @@ def binwise(source, *args, density=False, **kwargs):
     fill_value : optional
         value for invalid points
     '''
-    method = kwargs.pop('method', None)
-    function = kwargs.pop('function', None)
-    fill_value = kwargs.pop('fill_value', np.nan)
-
     if method is None and function is None:
         method = "sum"
 
@@ -284,8 +277,6 @@ def lookup(source, *args, **kwargs):
 
     Parameters:
     -----------
-
-    source_var : string
     '''
     if not hasattr(source, 'grid'):
         raise TypeError('source must have a grid defined')
@@ -454,17 +445,13 @@ def resample(source, *args, **kwargs):
 
 
 
-
-
 class Data(object):
     '''
-    Data base class to hold any form of data representation
+    Data base class
     '''
 
-    # ToDo: make this wrapping of functions into a decorator
-
-    def interp(self, *args, **kwargs):
-        '''interpolation from array data into grids
+    def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
+        '''interpolation from any data fromat to another
 
         Parameters:
         -----------
@@ -475,13 +462,13 @@ class Data(object):
         fill_value : optional
             value for invalid points
         '''
-        return interp(self, *args, **kwargs)
+        return interp(self, *args, method=method, fill_value=fill_value, **kwargs)
 
     def histogram(self, *args, density=False, **kwargs):
         '''Convenience method for histograms'''
         return binwise(self, *args, method='sum', density=density, **kwargs)
 
-    def binwise(self, *args, density=False, **kwargs):
+    def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
         '''translation from array data into binned form
 
         Parameters:
@@ -495,15 +482,13 @@ class Data(object):
         fill_value : optional
             value for invalid points
         '''
-        return binwise(self, *args, density=density, **kwargs)
+        return binwise(self, *args, method=method, function=function, fill_value=fill_value, density=density, **kwargs)
 
     def lookup(self, *args, **kwargs):
         '''lookup the bin content at given points
 
         Parameters:
         -----------
-
-        source_var : string
         '''
         return lookup(self, *args, **kwargs)
 
@@ -513,7 +498,6 @@ class Data(object):
         Parameters:
         -----------
 
-        source : GridData or PointData
         bw : str or float
             coices of 'silverman', 'scott', 'ISJ' for 1d data
             float specifies fixed bandwidth
