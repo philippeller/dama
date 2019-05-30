@@ -35,7 +35,7 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
 
     if data.ndim == source.grid.naxes + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()))
+        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()), **kwargs)
     else:
         X, Y = source.grid.edge_meshgrid
         pc = ax.pcolormesh(X, Y, data.T, linewidth=0, rasterized=True, **kwargs)

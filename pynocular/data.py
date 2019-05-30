@@ -162,6 +162,7 @@ def interp(source, *args, method=None, fill_value=np.nan, **kwargs):
         if source_data.ndim > 1:
             dest_map = np.full(shape=(*dest.grid.shape, *source_data.shape[1:]), fill_value=np.nan)
             for idx in np.ndindex(*source_data.shape[1:]):
+
                 dest_map[(Ellipsis,) + idx] = interpolate.griddata(points=sample.T, values=source_data[(Ellipsis,) + idx][dim_mask], xi=tuple(xi), method=method, fill_value=fill_value)
         else:
             dest_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)

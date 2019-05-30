@@ -73,6 +73,9 @@ class GridArray(object):
     def __ge__(self, other): 
         return np.greater_equal(self, other)
 
+    @property
+    def size(self):
+        return self.data.size
 
     @property
     def ndim(self):
@@ -108,9 +111,19 @@ class GridArray(object):
         if isinstance(var, str):
             assert var not in self.grid.vars, "Cannot set grid dimension"
             assert val.shape == self.shape, "Incompatible dimensions %s and %s"%(self.shape, val.shape)
+            # should we allow for that?
             self._data = np.asanyarray(val)
         else:
-            self[var]._data[:] = val._data
+            array = self[var]._data
+            if isinstance(array, np.ma.masked_array):
+                print(np.sum(array.mask))
+                mask = ~array.mask
+            else:
+                mask = slice(None)
+            if np.isscalar(val):
+                array[mask] = val
+            else:
+                array[mask] = val._data
 
     @property
     def T(self):
@@ -136,7 +149,7 @@ class GridArray(object):
     @property
     def data(self):
         if self.name in self.grid.vars:
-            return self.grid.point_mgrid[self.grid.vars.index(self.name)]
+            return self.grid.point_meshgrid[self.grid.vars.index(self.name)]
         else:
             return np.asanyarray(self._data)
 
@@ -431,7 +444,7 @@ class GridData(pn.data.Data):
                 axes_names.delete(var)
             axes = OrderedDict()
             for d, n in zip(axes_names, data.shape):
-                axes[d] = np.arange(n+1)
+                axes[d] = np.arange(n)
             self.grid = pn.Grid(**axes)
 
         if data.ndim < self.ndim and self.shape[-1] == 1:

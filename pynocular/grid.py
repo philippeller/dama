@@ -59,7 +59,7 @@ class edges(object):
         return self._edges
 
     def __repr__(self):
-        return self._edges.__repr__()
+        return 'edges: ' + self._edges.__repr__()
 
     def __str__(self):
         return self._edges.__str__()
@@ -142,6 +142,8 @@ class edges(object):
         if idx is Ellipsis:
             return self
         new_edges = self._edges[idx]
+        if np.isscalar(new_edges):
+            return new_edges
         return pn.edges(new_edges)
 
     def __eq__(self, other):
@@ -187,7 +189,7 @@ class Axis(object):
 
         new_obj = pn.grid.Axis()
         new_obj.var = self.var
-        if self._edges is not None:
+        if self._edges._edges is not None:
             new_obj._edges = self._edges[idx]
         if self._points is not None:
             new_obj._points = self._points[idx]
@@ -298,8 +300,12 @@ class Grid(object):
         for d, x in kwargs.items():
             if isinstance(x, Number):
                 self.add_axis(pn.Axis(var=d, nbins=x))
-            else:
+            elif isinstance(x, (list, np.ndarray)):
+                self.add_axis(pn.Axis(var=d, points=np.asanyarray(x)))
+            elif isinstance(x, pn.edges):
                 self.add_axis(pn.Axis(var=d, edges=x))
+            else:
+                raise ValueError('Did not understand %s : %s'%(d, x))
 
     def initialize(self, source):
         '''Method to initialize the grid if grid is not fully set up
@@ -413,7 +419,7 @@ class Grid(object):
 
     @property
     def point_meshgrid(self):
-        return np.meshgrid(*self.points)
+        return np.meshgrid(*self.points, indexing='ij')
 
     @property
     def point_mgrid(self):

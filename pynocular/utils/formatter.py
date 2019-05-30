@@ -54,7 +54,7 @@ def make_table_labels(axis):
     -------
     labels : list of str
     '''
-    if axis._edges is not None:
+    if axis._points is None:
         if len(axis) <= N_MAX:
             return ['<b>%s</b>'%as_str(axis.edges[i]) for i in range(len(axis))]
         else:
@@ -63,13 +63,22 @@ def make_table_labels(axis):
             labels += ['<b>%s</b>'%as_str(axis.edges[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
     # ToDo: a bit too much copy-paste going on here...
-    else:
+    elif axis._edges._edges is None:
         if len(axis) <= N_MAX:
             return ['<b>%s</b>'%as_str(axis.points[i]) for i in range(len(axis))]
         else:
             labels = ['<b>%s</b>'%as_str(axis.points[i]) for i in range(N_MAX//2)]
             labels += ['...']
             labels += ['<b>%s</b>'%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
+            return labels
+    else:
+        print('hello')
+        if len(axis) <= N_MAX:
+            return ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis))]
+        else:
+            labels = ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(N_MAX//2)]
+            labels += ['...']
+            labels += ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
 
 
