@@ -52,14 +52,24 @@ class GridArray(object):
 
     def __add__(self, other):
         return np.add(self, other)
+    def __radd__(self, other):
+        return np.add(other, self)
     def __sub__(self, other):
         return np.subtract(self, other)
+    def __rsub__(self, other):
+        return np.subtract(other, self)
     def __mul__(self, other):
         return np.multiply(self, other)
+    def __rmul__(self, other):
+        return np.multiply(other, self)
     def __truediv__(self, other):
         return np.divide(self, other)
+    def __rtruediv__(self, other):
+        return np.divide(other, self)
     def __pow__(self, other):
         return np.power(self, other)
+    def __rpow__(self, other):
+        return np.power(other, self)
     def __lt__(self, other):
         return np.less(self, other)
     def __le__(self, other):
