@@ -124,16 +124,14 @@ class GridArray(object):
             # should we allow for that?
             self._data = np.asanyarray(val)
         else:
-            array = self[var]._data
-            if isinstance(array, np.ma.masked_array):
-                print(np.sum(array.mask))
-                mask = ~array.mask
+            if isinstance(self[var]._data, np.ma.masked_array):
+                mask = ~self[var]._data.mask
             else:
                 mask = slice(None)
             if np.isscalar(val):
-                array[mask] = val
+                self[var]._data[mask] = val
             else:
-                array[mask] = val._data
+                self[var]._data[mask] = val._data[mask]
 
     @property
     def T(self):
@@ -187,10 +185,22 @@ class GridArray(object):
 
     def _get_axis(self, kwargs):
         '''translate axis to index'''
-        axis = kwargs.get('axis', None)
-        if isinstance(axis, str):
-            axis = self.grid.vars.index(axis)
-            kwargs['axis'] = axis
+        if not 'axis' in kwargs:
+            return None, kwargs
+        axis = kwargs.get('axis')
+        if not isinstance(axis, tuple) and axis is not None:
+            axis = (axis,)
+        if axis is not None:
+            new_axis = []
+            for a in axis:
+                # translate them
+                if isinstance(a, str):
+                    a = self.grid.vars.index(a)
+                if a < 0:
+                    a += self.ndim
+                new_axis.append(a)
+            axis = tuple(new_axis)
+        kwargs['axis'] = axis
         return axis, kwargs
 
     def _pack_result(self, result, axis):
@@ -203,13 +213,18 @@ class GridArray(object):
                     new_name = self.name
                     
                 # new grid
-                if axis is not None:
+                if axis is not None and any([a < self.grid.naxes for a in axis]):
                     new_grid = copy.deepcopy(self.grid)
-                    del(new_grid.axes[axis])
+                    for a in sorted(axis)[::-1]:
+                        # need to be careful, and start deleting from last element
+                        if a < self.grid.naxes:
+                            del(new_grid.axes[a])
                 else:
                     new_grid = self.grid
                 
                 new_obj = pn.GridArray(new_grid, new_name, result)
+                if new_obj.naxes == 0:
+                    return new_obj.data
                 return new_obj
             if result.ndim == 0:
                 return np.asscalar(result)

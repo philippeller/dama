@@ -72,7 +72,6 @@ def make_table_labels(axis):
             labels += ['<b>%s</b>'%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
     else:
-        print('hello')
         if len(axis) <= N_MAX:
             return ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis))]
         else:
@@ -161,6 +160,9 @@ def format_html(data):
             table = []
             table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
             table.append(make_table_row(data))
+
+        else:
+            return None
 
         return tabulate.tabulate(table, tablefmt='html')
 
