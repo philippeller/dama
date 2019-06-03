@@ -25,8 +25,9 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 def wrap(func):
+    '''wrapper function to translate named axis to int indices
+    and to re-pack results into correct form'''
     def wrapped_func(*args, **kwargs):
-
         # find first instance of GridArray:
         first = None
         inputs = []
@@ -40,7 +41,6 @@ def wrap(func):
 
         if first is None:
             raise ValueError()
-
         if 'axis' in kwargs:
             axis = kwargs.get('axis')
             if not isinstance(axis, tuple) and axis is not None:
@@ -63,7 +63,6 @@ def wrap(func):
             axis = None
 
         result = func(*inputs, **kwargs)
-
         if isinstance(result, (np.ma.masked_array, np.ndarray)):
             if result.ndim > 0: 
                 # new grid
@@ -91,11 +90,20 @@ class GridArray(np.ma.MaskedArray):
     '''
     def __new__(cls, input_array, *args, grid=None, **kwargs):
         #print(type(input_array))
-        super().__new__(cls, input_array, *args, **kwargs)
-        #print('new: args, kwargs', args, kwargs)
-        obj = np.ma.asarray(input_array).view(cls, *args, **kwargs)
-        #print(type(input_array))
-        obj.grid = grid
+
+        # ToDo: sort out kwargs
+        dtype = kwargs.pop('dtype', None)
+        order = kwargs.pop('order', 'K')
+        subok = kwargs.pop('subok', False)
+        ndmin = kwargs.pop('ndmin', 0)
+
+        super().__new__(cls, input_array, dtype=dtype, order=order, subok=subok, ndmin=ndmin)
+
+        obj = np.ma.asarray(input_array).view(cls)
+        if grid is not None:
+            obj.grid = grid
+        else:
+            obj.grid = pn.grid.Grid(*args, **kwargs)
         return obj
 
     def __array_finalize__(self, obj, *args, **kwargs):
@@ -126,18 +134,10 @@ class GridArray(np.ma.MaskedArray):
         #print('getitem')
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
-                #print('get masked')
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
                 new_item = pn.GridArray(np.ma.asarray(self), grid=self.grid)
                 new_item.mask = mask
                 return new_item
-                #print(self.mask)
-                return self
-                # in this case it is a mask
-                # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                #new_data = np.ma.MaskedArray(self, ~item)
-                #return np.ma.asarray(self)
-                #return pn.GridArray(new_data, grid=self.grid)
             raise NotImplementedError('get item %s'%item)
         if not isinstance(item, tuple):
             return self[(item,)]
@@ -154,21 +154,18 @@ class GridArray(np.ma.MaskedArray):
             return pn.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
     def __setitem__(self, var, val):
-        #print('setitem')
-        if isinstance(var, str):
-            assert var not in self.grid.vars, "Cannot set grid dimension"
-            assert val.shape == self.shape, "Incompatible dimensions %s and %s"%(self.shape, val.shape)
-            # should we allow for that?
-            self._data = np.asanyarray(val)
+        # ToDo: a[[1,3,5]] *= x does not assign
+        if np.isscalar(self[var]):
+            self.data[var] = val
+            return
+        if isinstance(self[var]._data, np.ma.masked_array):
+            mask = ~self[var]._data.mask
         else:
-            if isinstance(self[var]._data, np.ma.masked_array):
-                mask = ~self[var]._data.mask
-            else:
-                mask = slice(None)
-            if np.isscalar(val):
-                self[var]._data[mask] = val
-            else:
-                self[var]._data[mask] = val._data[mask]
+            mask = slice(None)
+        if np.isscalar(val):
+            self[var]._data[mask] = val
+        else:
+            self[var]._data[mask] = val._data[mask]
 
     @property
     def T(self):
@@ -246,6 +243,9 @@ class GridArray(np.ma.MaskedArray):
     @wrap
     def median(self, **kwargs):
         return np.ma.median(self, **kwargs)
+    @wrap
+    def cumsum(self, **kwargs):
+        return np.ma.cumsum(self, **kwargs)
 
     @wrap
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
