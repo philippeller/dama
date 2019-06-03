@@ -40,7 +40,7 @@ def as_str(a):
         return str(a)
     if isinstance(a, Number):
         return ('%.'+str(PRECISION)+'g')%a
-    return np.array2string(np.asanyarray(a), precision=PRECISION, threshold=2, edgeitems=2)
+    return np.array2string(np.ma.asarray(a), precision=PRECISION, threshold=2, edgeitems=2)
 
 
 def make_table_labels(axis):
@@ -85,7 +85,7 @@ def make_table_labels(axis):
 def make_table_row(data):
     '''forma a simgle table row'''
     row = ['<b>%s</b>'%data.name]
-    array = np.array(data)
+    array = np.ma.asarray(data)
     if array.shape[0] <= N_MAX:
         row += [as_str(v) for v in array]
     else:
@@ -96,6 +96,7 @@ def make_table_row(data):
     return row
 
 def make_2d_table(data):
+
     x_labels = make_table_labels(data.grid.axes[0])
     y_labels = make_table_labels(data.grid.axes[1])
 
@@ -134,7 +135,7 @@ def make_2d_table(data):
 def get_item(data, idx):
     '''Get a string formatted item from a GridArray or gridData object at index idx'''
     if isinstance(data, pn.GridArray):
-        return as_str(data.data[idx])
+        return as_str(data[idx])
     elif isinstance(data, pn.GridData):
         # collect all items
         all_data = []

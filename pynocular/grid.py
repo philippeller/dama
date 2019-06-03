@@ -109,6 +109,8 @@ class edges(object):
         return np.equal.reduce(self._edges[:, 1] - self._edges[:, 0])
 
     def __len__(self):
+        if self._edges is None:
+            return 0
         return self._edges.shape[0]
 
     @property
