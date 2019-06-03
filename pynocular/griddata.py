@@ -24,30 +24,85 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
+def wrap(func):
+    def wrapped_func(*args, **kwargs):
 
-#class GridArray(object):
-#class GridArray(np.ndarray):
+        # find first instance of GridArray:
+        first = None
+        inputs = []
+        for arg in args:
+            if isinstance(arg, pn.GridArray):
+                inputs.append(np.ma.asarray(arg))
+                if first is None:
+                    first = arg
+            else:
+                inputs.append(arg)
+
+        if first is None:
+            raise ValueError()
+
+        if 'axis' in kwargs:
+            axis = kwargs.get('axis')
+            if not isinstance(axis, tuple) and axis is not None:
+                axis = (axis,)
+            if axis is not None:
+                new_axis = []
+                for a in axis:
+                    # translate them
+                    if isinstance(a, str):
+                        a = first.grid.vars.index(a)
+                    if a < 0:
+                        a += first.ndim
+                    new_axis.append(a)
+                if len(new_axis) == 1:
+                    kwargs['axis'] = new_axis[0]
+                else:
+                    kwargs['axis'] = tuple(new_axis)
+                axis = new_axis
+        else:
+            axis = None
+
+        result = func(*inputs, **kwargs)
+
+        if isinstance(result, (np.ma.masked_array, np.ndarray)):
+            if result.ndim > 0: 
+                # new grid
+                if axis is not None and any([a < first.grid.naxes for a in axis]):
+                    new_grid = copy.deepcopy(first.grid)
+                    for a in sorted(axis)[::-1]:
+                        # need to be careful, and start deleting from last element
+                        if a < first.grid.naxes:
+                            del(new_grid.axes[a])
+                else:
+                    new_grid = first.grid
+                
+                new_obj = pn.GridArray(result, grid=new_grid)
+                if new_obj.naxes == 0:
+                    return new_obj.data
+                return new_obj
+            if result.ndim == 0:
+                return np.asscalar(result)
+        return result
+    return wrapped_func
+
+
 class GridArray(np.ma.MaskedArray):
     '''Structure to hold a single GridData item
     '''
     def __new__(cls, input_array, *args, grid=None, **kwargs):
-        print(type(input_array))
+        #print(type(input_array))
         super().__new__(cls, input_array, *args, **kwargs)
-        print('new: ', input_array, args, kwargs)
+        #print('new: ', input_array, args, kwargs)
         obj = np.ma.asarray(input_array).view(cls, *args, **kwargs)
-        #print(obj)
-        print(type(input_array))
+        #print(type(input_array))
         obj.grid = grid
         return obj
 
-    #def __init__(self, *args, **kwargs):
-    #   print('init')
-
     def __array_finalize__(self, obj):
         super().__array_finalize__(obj)
-        print('finalize')
-        print(type(obj))
-        print(obj)
+        #print('finalize')
+        #print(type(obj))
+        #print(obj)
         if obj is None: return
         #print(self.grid)
         self.grid = getattr(obj, 'grid', None)
@@ -63,29 +118,15 @@ class GridArray(np.ma.MaskedArray):
     def __str__(self):
         return '%s : %s'%(self.name, np.ma.asarray(self))
 
-    def cumsum(self):
-        print('cumsum')
-
-    def __reduce__(self):
-        print('reduce')
-
-    def __array_function__(self):
-        print('array function')
-
     @property
     def naxes(self):
         return self.grid.naxes
 
     def __getitem__(self, item, *args):
-        print('getitem')
-        #print(args)
-        
-        #return np.ma.MaskedArray.__getitem__(np.ma.asarray(self), np.ma.asarray(item))
-        #print(res)
-        #print('result:',res.mask)
+        #print('getitem')
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
-                print('get masked')
+                #print('get masked')
                 mask = ~np.logical_and(~self.mask, ~np.asarray(item))
                 new_item = pn.GridArray(np.ma.asarray(self), grid=self.grid)
                 new_item.mask = mask
@@ -113,7 +154,7 @@ class GridArray(np.ma.MaskedArray):
             return pn.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
     def __setitem__(self, var, val):
-        print('setitem')
+        #print('setitem')
         if isinstance(var, str):
             assert var not in self.grid.vars, "Cannot set grid dimension"
             assert val.shape == self.shape, "Incompatible dimensions %s and %s"%(self.shape, val.shape)
@@ -142,175 +183,94 @@ class GridArray(np.ma.MaskedArray):
             new_data = np.rollaxis(new_data, 0, self.ndim)
         return pn.GridArray(new_data, grid=self.grid.T)
     
-    #@property
-    #def shape(self):
-    #    return self.data.shape
-            
-    #@property
-    #def values(self):
-    #    return self.get_array()
-
-    #def get_array(self, flat=False):
-    #    '''return array values
-
-    #    Parameters
-    #    ----------
-    #    flat : bool
-    #        flat-out the grid dimensions
-
-    #    Retursn
-    #    -------
-    #    array
-    #    '''
-    #    array = self.data
-    #    if flat:
-    #        if array.ndim == self.grid.ndim:
-    #            return array.ravel()
-    #        return array.reshape(self.grid.size, -1)
-    #    return array
-
-    #def __array__(self, *args):
-    #    if len(args) > 0:
-    #        #pass
-    #        raise NotImplementedError(args)
-    #    return self.values
-
-    #def __mul__(self, other):
-    #    res = np.ma.multiply(self, other)
-    #    #return res.view(pn.GridArray)
-    #    res.grid = self.grid
-    #    return res
-
-    def _get_axis(self, kwargs):
-        '''translate axis to index'''
-        if not 'axis' in kwargs:
-            return None, kwargs
-        axis = kwargs.get('axis')
-        if not isinstance(axis, tuple) and axis is not None:
-            axis = (axis,)
-        if axis is not None:
-            new_axis = []
-            for a in axis:
-                # translate them
-                if isinstance(a, str):
-                    a = self.grid.vars.index(a)
-                if a < 0:
-                    a += self.ndim
-                new_axis.append(a)
-            axis = tuple(new_axis)
-        kwargs['axis'] = axis
-        return axis, kwargs
-
-    def _pack_result(self, result, axis):
-        '''repack result into correct type'''
-        print('pack')
-        if isinstance(result, (np.ma.masked_array, np.ndarray)):
-            if result.ndim > 0: 
-                #if self.name in self.grid.vars:
-                #    new_name = 'f(%s)'%self.name
-                #else:
-                #    new_name = self.name
-                    
-                # new grid
-                if axis is not None and any([a < self.grid.naxes for a in axis]):
-                    new_grid = copy.deepcopy(self.grid)
-                    for a in sorted(axis)[::-1]:
-                        # need to be careful, and start deleting from last element
-                        if a < self.grid.naxes:
-                            del(new_grid.axes[a])
-                else:
-                    new_grid = self.grid
-                
-                new_obj = pn.GridArray(result, grid=new_grid)
-                if new_obj.naxes == 0:
-                    return new_obj.data
-                return new_obj
-            if result.ndim == 0:
-                return np.asscalar(result)
-        return result
-
-
+    @wrap
+    def __add__(self, other):
+        return np.ma.add(self, other)
+    @wrap
+    def __radd__(self, other):
+        return np.ma.add(other, self)
+    @wrap
+    def __sub__(self, other):
+        return np.ma.subtract(self, other)
+    @wrap
+    def __rsub__(self, other):
+        return np.ma.subtract(other, self)
+    @wrap
+    def __mul__(self, other):
+        return np.ma.multiply(self, other)
+    @wrap
+    def __rmul__(self, other):
+        return np.ma.multiply(other, self)
+    @wrap
+    def __truediv__(self, other):
+        return np.ma.divide(self, other)
+    @wrap
+    def __rtruediv__(self, other):
+        return np.ma.divide(other, self)
+    @wrap
+    def __pow__(self, other):
+        return np.ma.power(self, other)
+    @wrap
+    def __rpow__(self, other):
+        return np.ma.power(other, other)
+    @wrap
+    def __lt__(self, other):
+        return np.ma.less(self, other)
+    @wrap
+    def __le__(self, other):
+        return np.ma.less_equal(self, other)
+    @wrap
+    def __eq__(self, other):
+        return np.ma.equal(self, other)
+    @wrap
+    def __ne__(self, other):
+        return np.ma.not_equal(self, other)
+    @wrap
+    def __gt__(self, other):
+        return np.ma.greater(self, other)
+    @wrap
+    def __ge__(self, other): 
+        return np.ma.greater_equal(self, other)
+    @wrap
     def sum(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.sum(np.ma.asarray(self), **kwargs)
-        return self._pack_result(result, axis)
-        
+        return np.ma.sum(self, **kwargs)
+    @wrap
     def mean(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.mean(np.ma.asarray(self), **kwargs)
-        return self._pack_result(result, axis)
-        
+        return np.ma.mean(self, **kwargs)
+    @wrap
     def std(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.std(np.ma.asarray(self), **kwargs)
-        return self._pack_result(result, axis)
-        
+        return np.ma.std(self, **kwargs)
+    @wrap
     def average(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.average(np.ma.asarray(self), **kwargs)
-        return self._pack_result(result, axis)
-    
+        return np.ma.average(self, **kwargs)
+    @wrap
     def median(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.median(np.ma.asarray(self), **kwargs)
-        return self._pack_result(result, axis)
-    
+        return np.ma.median(self, **kwargs)
+
+    @wrap
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         '''callable for numpy ufuncs'''
-        print('ufunc')
-        #array_inputs = [np.ma.asarray(i) for i in inputs]
-        array_inputs = [np.asarray(i) for i in inputs]
-        print(array_inputs)
-
-        axis, kwargs = self._get_axis(kwargs)
-        ## this is a bit complicated, but apprently necessary
-        ## otherwise masked element s of arrays get overwritten
-        #if any([isinstance(i, np.ma.masked_array) for i in array_inputs]):
-        #    mask = np.full(self.shape, False)
-        #    for i in array_inputs:
-        #        if isinstance(i, np.ma.masked_array):
-        #            mask = mask | i.mask
-        #    masked_inputs = [i[~mask] if i.shape == self.shape else i for i in array_inputs]
-        #    #mask_result = np.asanyarray(self).__array_ufunc__(ufunc, method, *masked_inputs, **kwargs)
-        #    mask_result = super().__array_ufunc__(ufunc, method, *masked_inputs, **kwargs)
-        #    if mask_result.size == np.sum(~mask):
-        #        result = np.empty_like(self.data)
-        #        result[mask] = self.data[mask]
-        #        result[~mask] = mask_result
-        #    else:
-        #        result = mask_result
-        #else:
-        #    #result = np.asanyarray(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
-        result = super(pn.GridArray, self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
-        print(result)
-        return self._pack_result(result, axis)
+        #print('ufunc')
+        return np.ma.asarray(self).__array_ufunc__(ufunc, method, *inputs, **kwargs)
         
-    def __array__(self):
-        print('array')
+    #def __array__(self):
+    #    print('array')
 
 
-    def __array_prepare__(self, result, context=None):
-        print('prepare')
-        return result
+    #def __array_prepare__(self, result, context=None):
+    #    #print('prepare')
+    #    return result
 
     def __array_wrap__(self, out_arr, context=None):
-        print('In __array_wrap__:')
-        print('   self is %s' % repr(self))
-        print('   arr is %s' % repr(out_arr))
+        #print('In __array_wrap__:')
+        #print('   self is %s' % repr(self))
+        #print('   arr is %s' % repr(out_arr))
         obj = np.ma.asarray(out_arr).view(pn.GridArray)
-        #print(obj)
-        #print(type(input_array))
         obj.grid = self.grid
-        # then just call the parent
-        #result = self.values.__array_wrap__(self.values, out_arr, context)
-        #return np.asanyarray(self).__array_wrap__(np.asanyarray(self), out_arr, context)
-        #print(result)
-        return self._pack_result(out_arr.reshape(self.shape), None)
+        return obj
+
+
+
 
 
 
