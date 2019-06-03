@@ -244,6 +244,12 @@ class GridArray(np.ma.MaskedArray):
     def median(self, **kwargs):
         return np.ma.median(self, **kwargs)
     @wrap
+    def min(self, **kwargs):
+        return np.ma.min(self, **kwargs)
+    @wrap
+    def max(self, **kwargs):
+        return np.ma.max(self, **kwargs)
+    @wrap
     def cumsum(self, **kwargs):
         return np.ma.cumsum(self, **kwargs)
 
