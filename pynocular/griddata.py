@@ -92,21 +92,21 @@ class GridArray(np.ma.MaskedArray):
     def __new__(cls, input_array, *args, grid=None, **kwargs):
         #print(type(input_array))
         super().__new__(cls, input_array, *args, **kwargs)
-        #print('new: ', input_array, args, kwargs)
+        #print('new: args, kwargs', args, kwargs)
         obj = np.ma.asarray(input_array).view(cls, *args, **kwargs)
         #print(type(input_array))
         obj.grid = grid
         return obj
 
-    def __array_finalize__(self, obj):
+    def __array_finalize__(self, obj, *args, **kwargs):
         super().__array_finalize__(obj)
-        #print('finalize')
-        #print(type(obj))
-        #print(obj)
-        if obj is None: return
-        #print(self.grid)
+        #print('finalize: args, kwargs', args, kwargs)
+        if obj is None:
+            print('obj none')
+            return
         self.grid = getattr(obj, 'grid', None)
         self.name = getattr(obj, 'name', 'noname')
+        return self
 
     def __repr__(self):
         return 'GridArray(%s : %s)'%(self.name, np.ma.asarray(self))
@@ -127,7 +127,7 @@ class GridArray(np.ma.MaskedArray):
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
                 #print('get masked')
-                mask = ~np.logical_and(~self.mask, ~np.asarray(item))
+                mask = np.logical_and(~self.mask, ~np.asarray(item))
                 new_item = pn.GridArray(np.ma.asarray(self), grid=self.grid)
                 new_item.mask = mask
                 return new_item
@@ -253,16 +253,16 @@ class GridArray(np.ma.MaskedArray):
         #print('ufunc')
         return np.ma.asarray(self).__array_ufunc__(ufunc, method, *inputs, **kwargs)
         
-    #def __array__(self):
-    #    print('array')
+    def __array__(self):
+        print('array')
 
 
-    #def __array_prepare__(self, result, context=None):
-    #    #print('prepare')
-    #    return result
+    def __array_prepare__(self, result, context=None):
+        print('prepare')
+        return result
 
     def __array_wrap__(self, out_arr, context=None):
-        #print('In __array_wrap__:')
+        print('In __array_wrap__:')
         #print('   self is %s' % repr(self))
         #print('   arr is %s' % repr(out_arr))
         obj = np.ma.asarray(out_arr).view(pn.GridArray)
