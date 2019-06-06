@@ -129,9 +129,9 @@ class PointData(Data):
         if self.type == 'df':
             result = self.data[var]
             if isinstance(result, pandas.core.frame.DataFrame):
-                return PointData(result)
+                return pn.PointData(result)
             elif isinstance(result, pandas.core.series.Series):
-                return PointArray(result)
+                return pn.PointArray(result)
 
         if isinstance(var, str):
             if var in self.vars:

@@ -32,12 +32,13 @@ class GridData(pn.Data):
         Set the grid
         '''
         self.data = {}
+        self.grid = None
 
-        # ToDo: instantiate from kwarg GridArrays
-        #if len(args) == 0 and len(kwargs) > 0 and all(isinstance(kwarg, pn.GridArray):
+        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
         #    self.grid = args[0].grid
-        #    self.add_data(args[0].name, args[0])
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
+            for n,d in kwargs.items():
+                self.add_data(n, d)
+        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
             self.grid = args[0]
         else:
             self.grid = pn.Grid(*args, **kwargs)
@@ -164,14 +165,14 @@ class GridData(pn.Data):
             name of data
         data : GridArray, GridData, Array
         '''
-        if var in self.grid.vars:
-            raise ValueError('Variable `%s` is already a grid dimension!'%var)
-
         if isinstance(data, (pn.GridArray, GridData)):
-            if not self.grid.initialized:
+            if self.grid is None or not self.grid.initialized:
                 self.grid = data.grid
             else:
                 assert self.grid == data.grid
+
+        if var in self.grid.vars:
+            raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
         if isinstance(data, pn.GridData):
             assert len(data.data_vars) == 1
