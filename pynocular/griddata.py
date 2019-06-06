@@ -23,7 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class GridData(pn.data.Data):
+class GridData(pn.Data):
     '''
     Class to hold grid data
     '''
@@ -33,13 +33,14 @@ class GridData(pn.data.Data):
         '''
         self.data = {}
 
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
-            self.grid = args[0].grid
-            self.add_data(args[0].name, args[0])
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
+        # ToDo: instantiate from kwarg GridArrays
+        #if len(args) == 0 and len(kwargs) > 0 and all(isinstance(kwarg, pn.GridArray):
+        #    self.grid = args[0].grid
+        #    self.add_data(args[0].name, args[0])
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
             self.grid = args[0]
         else:
-            self.grid = pn.grid.Grid(*args, **kwargs)
+            self.grid = pn.Grid(*args, **kwargs)
 
     def __repr__(self):
         strs = []
@@ -92,10 +93,10 @@ class GridData(pn.data.Data):
         # slice
         new_grid = self.grid[item]
         if len(new_grid) == 0:
-            return {d.name : d[item] for d in self}
+            return {n : d[item] for n,d in self.items()}
         new_data = pn.GridData(new_grid)
-        for d in self:
-            new_data[d.name] = d[item]
+        for n,d in self.items():
+            new_data[n] = d[item]
         return new_data
         
 

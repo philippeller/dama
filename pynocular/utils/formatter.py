@@ -82,9 +82,12 @@ def make_table_labels(axis):
 
 
 
-def make_table_row(name, aray):
+def make_table_row(name, array):
     '''forma a simgle table row'''
-    row = ['<b>%s</b>'%name]
+    if name is not None:
+        row = ['<b>%s</b>'%name]
+    else:
+        row = []
     array = np.ma.asarray(array)
     if array.shape[0] <= N_MAX:
         row += [as_str(v) for v in array]
@@ -146,11 +149,11 @@ def get_item(data, idx):
 
 def format_html(data):
     if isinstance(data, pn.PointData):
-        table = [make_table_row(a) for a in data]
+        table = [make_table_row(n, d) for n, d in data.items()]
         return tabulate.tabulate(table, tablefmt='html')
 
     if isinstance(data, pn.PointArray):
-        table = [make_table_row(data)]
+        table = [make_table_row(None, data)]
         return tabulate.tabulate(table, tablefmt='html')
 
     if isinstance(data, pn.GridArray):

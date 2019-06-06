@@ -26,7 +26,7 @@ class PointData(Data):
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
     def __init__(self, *args, **kwargs):
-        self.data = []
+        self.data = {}
 
         if len(args) == 0 and len(kwargs) == 0:
             pass
@@ -35,12 +35,10 @@ class PointData(Data):
                 self.data = pandas.DataFrame(args[0])
             elif isinstance(args[0], pandas.core.frame.DataFrame):
                 self.data = args[0]
-            elif isinstance(args[0], list):
+            elif isinstance(args[0], dict):
                 args = args[0]
             else:
                 raise ValueError("Did not understand input arguments")
-        if all([isinstance(a, pn.PointArray) for a in args]):
-            self.data = list(args)
         if len(kwargs) > 0:
             for k, v in kwargs.items():
                 self[k] = v
@@ -69,7 +67,7 @@ class PointData(Data):
         if self.type == 'df':
             return list(self.data.columns)
         elif self.type == 'simple':
-            return [a.name for a in self]
+            return list(self.data.keys())
         else:
             return []
 
@@ -77,11 +75,6 @@ class PointData(Data):
     def data_vars(self):
         '''Available variables'''
         return self.vars
-
-    @property
-    def ndim(self):
-        # ToDo: not good, call differently
-        return len(self.vars)
 
     @property
     def type(self):
@@ -95,48 +88,38 @@ class PointData(Data):
         '''
         if isinstance(self.data, pandas.core.frame.DataFrame):
             return 'df'
-        elif isinstance(self.data, list): 
-            return 'simple'
+        return 'simple'
 
     def __len__(self):
-        if self.type == 'df':
-            return len(self.data)
-        elif self.type == 'simple':
-            return len(self.data[0])
+        return len(self.data)
 
     @property
     def array_shape(self):
-        '''the shape of a single variable
+        '''the shape (first dimesnion only) of a single variable
 
         Returns
         -------
         shape : tuple
         '''
-        # ToDo can also not asume that
-        return (len(self),)
+        if self.type == 'df':
+            return (len(self.data),)
+        elif self.type == 'simple':
+            return (len(self[self.vars[0]]),)
 
     def __setitem__(self, var, val):
-        if self.ndim > 0:
-            assert len(val) == len(self), 'Incompatible dimensions'
+        if len(self) > 0:
+            assert len(val) == self.array_shape[0], 'Incompatible dimensions'
 
         if isinstance(val, pn.PointArray):
-            if self.type == 'df':
-                self.data[var] = val.data
-            else:
-                val.name = var
-                if var in self.vars:
-                    idx = self.vars.index(var)
-                    self.data[idx] = val
-                else:
-                    self.data.append(val)
-        elif isinstance(val, pn.PointData):
-            # ToDo: is this fair enough?
-            self.data[var] = val.data[val.vars[-1]]
+            self.data[var] = val
+        #elif isinstance(val, pn.PointData):
+        #    # ToDo: is this fair enough?
+        #    self.data[var] = val.data[val.vars[-1]]
         elif isinstance(val, np.ndarray):
             if self.type == 'df':
                 self.data[var] = val
             else:
-                val = pn.PointArray(var, val)
+                val = pn.PointArray(val)
                 self[var] = val
         else:
             raise ValueError()
@@ -152,20 +135,19 @@ class PointData(Data):
 
         if isinstance(var, str):
             if var in self.vars:
-                idx = self.vars.index(var)
-                return self.data[idx]
+                return self.data[var]
             else:
                 raise IndexError('No variable %s in DataSet'%var)
 
         # create new instance with mask or slice applied
-        new_data = []
+        new_data = {}
 
         if isinstance(var, (tuple, list)) and all([isinstance(v, str) for v in var]):
             for v in var:
-                new_data.append(self[v])
+                new_data[v] = self[v]
         else:
-            for d in self:
-                new_data.append(d[var])
+            for n,d in self.items():
+                new_data[n] = d[var]
         return PointData(new_data)
         
     def get_array(self, var, flat=False):
@@ -179,6 +161,12 @@ class PointData(Data):
             return iter([self.data[var] for var in self.vars])
         return iter(self.data)
 
+    def values(self):
+        return self.data.values()
+
+    def items(self):
+        return self.data.items()
+
 
     # --- Plotting functions ---
 
@@ -188,7 +176,7 @@ class PointData(Data):
     def plot(self, *args, **kwargs):
         if len(args) > 1:
             pn.plotting.plot(self, args[0], args[1], *args[2:], **kwargs)
-        elif self.ndim == 2:
+        elif len(self) == 2:
             pn.plotting.plot(self, *self.vars, *args, **kwargs)
         else:
             raise ValueError('Need to specify variables to plot')
