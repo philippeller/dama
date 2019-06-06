@@ -31,7 +31,7 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        self.data = []
+        self.data = {}
 
         if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
             self.grid = args[0].grid
@@ -64,16 +64,15 @@ class GridData(pn.data.Data):
         if isinstance(item, str):
             if item in self.vars:
                 if item in self.data_vars:
-                    idx = self.data_vars.index(item)
-                    data = self.data[idx]
+                    data = self.data[item]
                 else:
-                    data = None
-                new_data = pn.GridArray(self.grid, item, data)
+                    raise NotImplementedError()
+                new_data = pn.GridArray(data, grid=self.grid)
                 return new_data
 
         # mask
         if isinstance(item, pn.GridArray):
-            if item.data.dtype == np.bool:
+            if item.dtype == np.bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
                 new_data = pn.GridData(self.grid)
@@ -138,7 +137,7 @@ class GridData(pn.data.Data):
         '''
         only data variables (no grid vars)
         '''
-        return [d.name for d in self]
+        return list(self.data.keys())
 
     @property
     def shape(self):
@@ -167,24 +166,17 @@ class GridData(pn.data.Data):
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
-        if isinstance(data, pn.GridArray):
+        if isinstance(data, (pn.GridArray, GridData)):
             if not self.grid.initialized:
                 self.grid = data.grid
             else:
                 assert self.grid == data.grid
-            data.name = var
-            #data = data.data
 
-        elif isinstance(data, pn.GridData):
-            # ToDo: needed?
+        if isinstance(data, pn.GridData):
             assert len(data.data_vars) == 1
-            if self.grid.naxes == 0:
-                self.grid == data.grid
-            else:
-                assert self.grid == data.grid
             data = data[0]
 
-        elif self.ndim == 0:
+        if self.ndim == 0:
             print('adding default grid')
             # make a default grid:
             if data.ndim <= 3 and var not in ['x', 'y', 'z']:
@@ -192,7 +184,7 @@ class GridData(pn.data.Data):
             else:
                 axes_names = ['x%i' for i in range(data.ndim+1)]
                 axes_names.delete(var)
-            axes = OrderedDict()
+            axes = {}
             for d, n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n)
             self.grid = pn.Grid(**axes)
@@ -201,20 +193,16 @@ class GridData(pn.data.Data):
             # add new axis
             data = data[..., np.newaxis]
 
-        data = pn.GridArray(self.grid, var, data)
+        data = np.ma.asarray(data)
 
         if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
 
-        if var in self.data_vars:
-            idx = self.data_vars.index(var)
-            self.data[idx] = data
-        else:
-            self.data.append(data)
+        self.data[var] = data
 
     def get_array(self, var, flat=False):
         '''
-        return array of data
+        return bare array of data
 
         Parameters:
         -----------
@@ -227,7 +215,7 @@ class GridData(pn.data.Data):
         if var in self.grid.vars:
             array = self.grid.point_mgrid[self.grid.vars.index(var)]
         else:
-            array = np.asanyarray(self[var])
+            array = self.data[var]
         if flat:
             if array.ndim == self.grid.naxes:
                 return array.ravel()
@@ -243,7 +231,14 @@ class GridData(pn.data.Data):
         '''
         iterate over dimensions
         '''
-        return iter(self.data)
+        return iter(self.values())
+
+    def values(self):
+        return self.data.values()
+
+    def items(self):
+        return self.data.items()
+
 
 
     # --- Plotting methods ---
