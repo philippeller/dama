@@ -35,7 +35,6 @@ class GridData(pn.Data):
         self.grid = None
 
         if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
-        #    self.grid = args[0].grid
             for n,d in kwargs.items():
                 self.add_data(n, d)
         elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
@@ -68,7 +67,7 @@ class GridData(pn.Data):
                 if item in self.data_vars:
                     data = self.data[item]
                 else:
-                    raise NotImplementedError()
+                    data = self.get_array(item)
                 new_data = pn.GridArray(data, grid=self.grid)
                 return new_data
 
@@ -106,7 +105,8 @@ class GridData(pn.Data):
         '''transpose'''
         new_obj = pn.GridData()
         new_obj.grid = self.grid.T
-        new_obj.data = [d.T for d in self]
+        for n, d in self.items():
+            new_obj[n] = d.T
         return new_obj
         #raise NotImplementedError()
 
@@ -215,7 +215,7 @@ class GridData(pn.Data):
             if true return flattened (1d) array
         '''
         if var in self.grid.vars:
-            array = self.grid.point_mgrid[self.grid.vars.index(var)]
+            array = self.grid.point_meshgrid[self.grid.vars.index(var)]
         else:
             array = self.data[var]
         if flat:
@@ -239,7 +239,7 @@ class GridData(pn.Data):
         return self.data.values()
 
     def items(self):
-        return self.data.items()
+        return [(n, pn.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
 
 
 
