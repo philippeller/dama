@@ -40,7 +40,7 @@ def as_str(a):
         return str(a)
     if isinstance(a, Number):
         return ('%.'+str(PRECISION)+'g')%a
-    return np.array2string(np.asanyarray(a), precision=PRECISION, threshold=2, edgeitems=2)
+    return np.array2string(np.ma.asarray(a), precision=PRECISION, threshold=2, edgeitems=2)
 
 
 def make_table_labels(axis):
@@ -82,10 +82,13 @@ def make_table_labels(axis):
 
 
 
-def make_table_row(data):
+def make_table_row(name, array):
     '''forma a simgle table row'''
-    row = ['<b>%s</b>'%data.name]
-    array = np.array(data)
+    if name is not None:
+        row = ['<b>%s</b>'%name]
+    else:
+        row = []
+    array = np.ma.asarray(array)
     if array.shape[0] <= N_MAX:
         row += [as_str(v) for v in array]
     else:
@@ -96,6 +99,7 @@ def make_table_row(data):
     return row
 
 def make_2d_table(data):
+
     x_labels = make_table_labels(data.grid.axes[0])
     y_labels = make_table_labels(data.grid.axes[1])
 
@@ -134,22 +138,22 @@ def make_2d_table(data):
 def get_item(data, idx):
     '''Get a string formatted item from a GridArray or gridData object at index idx'''
     if isinstance(data, pn.GridArray):
-        return as_str(data.data[idx])
+        return as_str(data[idx])
     elif isinstance(data, pn.GridData):
         # collect all items
         all_data = []
-        for d in data:
-            all_data.append('%s = %s'%(d.name, as_str(d.data[idx])))
+        for n, d in data.items():
+            all_data.append('%s = %s'%(n, as_str(d[idx])))
         return '<br>'.join(all_data)
 
 
 def format_html(data):
     if isinstance(data, pn.PointData):
-        table = [make_table_row(a) for a in data]
+        table = [make_table_row(n, d) for n, d in data.items()]
         return tabulate.tabulate(table, tablefmt='html')
 
-    if isinstance(data, pn.PointDataDim):
-        table = [make_table_row(data)]
+    if isinstance(data, pn.PointArray):
+        table = [make_table_row(None, data)]
         return tabulate.tabulate(table, tablefmt='html')
 
     if isinstance(data, pn.GridArray):
@@ -159,7 +163,7 @@ def format_html(data):
         elif data.naxes == 1:
             table = []
             table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
-            table.append(make_table_row(data))
+            table.append(make_table_row('', data))
 
         else:
             return None
@@ -174,8 +178,8 @@ def format_html(data):
         elif data.ndim == 1:
             table = []
             table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
-            for d in data:
-                table.append(make_table_row(d))
+            for d in data.items():
+                table.append(make_table_row(*d))
 
         return tabulate.tabulate(table, tablefmt='html')
 

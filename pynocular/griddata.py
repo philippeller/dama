@@ -8,8 +8,6 @@ from pynocular.utils.formatter import format_html
 import pynocular.plotting
 import tabulate
 
-#__all__ = ['GridData']
-
 __license__ = '''Copyright 2019 Philipp Eller
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,280 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class GridArray(object):
-    '''Structure to hold a single GridData item
-    '''
-    def __init__(self, grid, name, input_array=None):
-        self.grid = grid
-        self.name = name
-        
-        if name in self.grid.vars:
-            assert input_array is None, "Cannot add data with name same as grid variable"
-        self._data = np.asanyarray(input_array)
-
-        
-    def __repr__(self):
-        return 'GridArray(%s : %s)'%(self.name, self.data)
-
-    def _repr_html_(self):
-        '''for jupyter'''
-        return format_html(self)
-    
-    def __str__(self):
-        return '%s : %s'%(self.name, self.data)
-
-    def __len__(self):
-        return len(self.data)
-
-    def __add__(self, other):
-        return np.add(self, other)
-    def __radd__(self, other):
-        return np.add(other, self)
-    def __sub__(self, other):
-        return np.subtract(self, other)
-    def __rsub__(self, other):
-        return np.subtract(other, self)
-    def __mul__(self, other):
-        return np.multiply(self, other)
-    def __rmul__(self, other):
-        return np.multiply(other, self)
-    def __truediv__(self, other):
-        return np.divide(self, other)
-    def __rtruediv__(self, other):
-        return np.divide(other, self)
-    def __pow__(self, other):
-        return np.power(self, other)
-    def __rpow__(self, other):
-        return np.power(other, self)
-    def __lt__(self, other):
-        return np.less(self, other)
-    def __le__(self, other):
-        return np.less_equal(self, other)
-    def __eq__(self, other):
-        return np.equal(self, other)
-    def __ne__(self, other):
-        return np.not_equal(self, other)
-    def __gt__(self, other):
-        return np.greater(self, other)
-    def __ge__(self, other): 
-        return np.greater_equal(self, other)
-
-    @property
-    def size(self):
-        return self.data.size
-
-    @property
-    def ndim(self):
-        return self.data.ndim
-
-    @property
-    def naxes(self):
-        return self.grid.naxes
-
-    def __getitem__(self, item):
-        if isinstance(item, pn.GridArray):
-            if item.data.dtype == np.bool:
-                # in this case it is a mask
-                # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                new_data = np.ma.MaskedArray(self.data, ~item.data)
-                return pn.GridArray(self.grid, self.name, new_data)
-            raise NotImplementedError('get item %s'%item)
-        elif not isinstance(item, tuple):
-            return self[(item,)]
-        elif isinstance(item, list):
-            if all([isinstance(i, int) for i in item]):
-                return self[(list,)]
-            else:
-                raise IndexError('Cannot process list of indices %s'%item)
-        elif isinstance(item, tuple):
-            new_grid = self.grid[item]
-            if len(new_grid) == 0:
-                # then we have a single element
-                return self.data[item]
-            return pn.GridArray(new_grid, self.name, self.data[item])
-
-    def __setitem__(self, var, val):
-        if isinstance(var, str):
-            assert var not in self.grid.vars, "Cannot set grid dimension"
-            assert val.shape == self.shape, "Incompatible dimensions %s and %s"%(self.shape, val.shape)
-            # should we allow for that?
-            self._data = np.asanyarray(val)
-        else:
-            if isinstance(self[var]._data, np.ma.masked_array):
-                mask = ~self[var]._data.mask
-            else:
-                mask = slice(None)
-            if np.isscalar(val):
-                self[var]._data[mask] = val
-            else:
-                self[var]._data[mask] = val._data[mask]
-
-    @property
-    def T(self):
-        '''transpose'''
-        if self.ndim > self.naxes + 1:
-            raise NotImplementedError()
-        if self.naxes == 1:
-            return self
-        if self.naxes > 1:
-            new_data = self.data.T
-        if self.ndim == self.naxes + 1:
-            new_data = np.rollaxis(new_data, 0, self.ndim)
-        return pn.GridArray(self.grid.T, self.name, new_data)
-    
-    @property
-    def shape(self):
-        return self.data.shape
-            
-    @property
-    def values(self):
-        return self.get_array()
-
-    @property
-    def data(self):
-        if self.name in self.grid.vars:
-            return self.grid.point_meshgrid[self.grid.vars.index(self.name)]
-        else:
-            return np.asanyarray(self._data)
-
-    def get_array(self, flat=False):
-        '''return array values
-
-        Parameters
-        ----------
-        flat : bool
-            flat-out the grid dimensions
-
-        Retursn
-        -------
-        array
-        '''
-        array = self.data
-        if flat:
-            if array.ndim == self.grid.ndim:
-                return array.ravel()
-            return array.reshape(self.grid.size, -1)
-        return array
-
-    def __array__(self):
-        return self.values
-
-    def _get_axis(self, kwargs):
-        '''translate axis to index'''
-        if not 'axis' in kwargs:
-            return None, kwargs
-        axis = kwargs.get('axis')
-        if not isinstance(axis, tuple) and axis is not None:
-            axis = (axis,)
-        if axis is not None:
-            new_axis = []
-            for a in axis:
-                # translate them
-                if isinstance(a, str):
-                    a = self.grid.vars.index(a)
-                if a < 0:
-                    a += self.ndim
-                new_axis.append(a)
-            axis = tuple(new_axis)
-        kwargs['axis'] = axis
-        return axis, kwargs
-
-    def _pack_result(self, result, axis):
-        '''repack result into correct type'''
-        if isinstance(result, np.ndarray):
-            if result.ndim > 0: 
-                if self.name in self.grid.vars:
-                    new_name = 'f(%s)'%self.name
-                else:
-                    new_name = self.name
-                    
-                # new grid
-                if axis is not None and any([a < self.grid.naxes for a in axis]):
-                    new_grid = copy.deepcopy(self.grid)
-                    for a in sorted(axis)[::-1]:
-                        # need to be careful, and start deleting from last element
-                        if a < self.grid.naxes:
-                            del(new_grid.axes[a])
-                else:
-                    new_grid = self.grid
-                
-                new_obj = pn.GridArray(new_grid, new_name, result)
-                if new_obj.naxes == 0:
-                    return new_obj.data
-                return new_obj
-            if result.ndim == 0:
-                return np.asscalar(result)
-        return result
-
-
-    def mean(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.mean(np.asanyarray(self), **kwargs)
-        return self._pack_result(result, axis)
-        
-    def std(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.std(np.asanyarray(self), **kwargs)
-        return self._pack_result(result, axis)
-        
-    def average(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.average(np.asanyarray(self), **kwargs)
-        return self._pack_result(result, axis)
-    
-    def median(self, **kwargs):
-        '''necessary as it is not calling __array_ufunc__''' 
-        axis, kwargs = self._get_axis(kwargs)
-        result = np.median(np.asanyarray(self), **kwargs)
-        return self._pack_result(result, axis)
-    
-    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        '''callable for numpy ufuncs'''
-        array_inputs = [np.asanyarray(i) for i in inputs]
-
-        axis, kwargs = self._get_axis(kwargs)
-        # this is a bit complicated, but apprently necessary
-        # otherwise masked element s of arrays get overwritten
-        if any([isinstance(i, np.ma.masked_array) for i in array_inputs]):
-            mask = np.full(self.shape, False)
-            for i in array_inputs:
-                if isinstance(i, np.ma.masked_array):
-                    mask = mask | i.mask
-            masked_inputs = [i[~mask] if i.shape == self.shape else i for i in array_inputs]
-            mask_result = np.asanyarray(self).__array_ufunc__(ufunc, method, *masked_inputs, **kwargs)
-            if mask_result.size == np.sum(~mask):
-                result = np.empty_like(self.data)
-                result[mask] = self.data[mask]
-                result[~mask] = mask_result
-            else:
-                result = mask_result
-        else:
-            result = np.asanyarray(self).__array_ufunc__(ufunc, method, *array_inputs, **kwargs)
-
-        return self._pack_result(result, axis)
-        
-
-    #def __array_prepare__(self, result, context=None):
-    #    print('prepare')
-    #    return result
-
-    #def __array_finalize__(self, obj):
-    #    print('finalize')
-
-    #def __array_wrap__(self, out_arr, context=None):
-    #    print('In __array_wrap__:')
-    #    print('   self is %s' % repr(self))
-    #    print('   arr is %s' % repr(out_arr))
-    #    # then just call the parent
-    #    return np.array(self).__array_wrap__(self, out_arr, context)
-
-
-
-
-class GridData(pn.data.Data):
+class GridData(pn.Data):
     '''
     Class to hold grid data
     '''
@@ -306,15 +31,16 @@ class GridData(pn.data.Data):
         '''
         Set the grid
         '''
-        self.data = []
+        self.data = {}
+        self.grid = None
 
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.GridArray):
-            self.grid = args[0].grid
-            self.add_data(args[0].name, args[0])
+        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
+            for n,d in kwargs.items():
+                self.add_data(n, d)
         elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
             self.grid = args[0]
         else:
-            self.grid = pn.grid.Grid(*args, **kwargs)
+            self.grid = pn.Grid(*args, **kwargs)
 
     def __repr__(self):
         strs = []
@@ -339,16 +65,15 @@ class GridData(pn.data.Data):
         if isinstance(item, str):
             if item in self.vars:
                 if item in self.data_vars:
-                    idx = self.data_vars.index(item)
-                    data = self.data[idx]
+                    data = self.data[item]
                 else:
-                    data = None
-                new_data = pn.GridArray(self.grid, item, data)
+                    data = self.get_array(item)
+                new_data = pn.GridArray(data, grid=self.grid)
                 return new_data
 
         # mask
         if isinstance(item, pn.GridArray):
-            if item.data.dtype == np.bool:
+            if item.dtype == np.bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
                 new_data = pn.GridData(self.grid)
@@ -368,10 +93,10 @@ class GridData(pn.data.Data):
         # slice
         new_grid = self.grid[item]
         if len(new_grid) == 0:
-            return {d.name : d[item] for d in self}
+            return {n : d[item] for n,d in self.items()}
         new_data = pn.GridData(new_grid)
-        for d in self:
-            new_data[d.name] = d[item]
+        for n,d in self.items():
+            new_data[n] = d[item]
         return new_data
         
 
@@ -380,7 +105,8 @@ class GridData(pn.data.Data):
         '''transpose'''
         new_obj = pn.GridData()
         new_obj.grid = self.grid.T
-        new_obj.data = [d.T for d in self]
+        for n, d in self.items():
+            new_obj[n] = d.T
         return new_obj
         #raise NotImplementedError()
 
@@ -413,7 +139,7 @@ class GridData(pn.data.Data):
         '''
         only data variables (no grid vars)
         '''
-        return [d.name for d in self]
+        return list(self.data.keys())
 
     @property
     def shape(self):
@@ -439,27 +165,20 @@ class GridData(pn.data.Data):
             name of data
         data : GridArray, GridData, Array
         '''
-        if var in self.grid.vars:
-            raise ValueError('Variable `%s` is already a grid dimension!'%var)
-
-        if isinstance(data, pn.GridArray):
-            if not self.grid.initialized:
+        if isinstance(data, (pn.GridArray, GridData)):
+            if self.grid is None or not self.grid.initialized:
                 self.grid = data.grid
             else:
                 assert self.grid == data.grid
-            data.name = var
-            #data = data.data
 
-        elif isinstance(data, pn.GridData):
-            # ToDo: needed?
+        if var in self.grid.vars:
+            raise ValueError('Variable `%s` is already a grid dimension!'%var)
+
+        if isinstance(data, pn.GridData):
             assert len(data.data_vars) == 1
-            if self.grid.naxes == 0:
-                self.grid == data.grid
-            else:
-                assert self.grid == data.grid
             data = data[0]
 
-        elif self.ndim == 0:
+        if self.ndim == 0:
             print('adding default grid')
             # make a default grid:
             if data.ndim <= 3 and var not in ['x', 'y', 'z']:
@@ -467,7 +186,7 @@ class GridData(pn.data.Data):
             else:
                 axes_names = ['x%i' for i in range(data.ndim+1)]
                 axes_names.delete(var)
-            axes = OrderedDict()
+            axes = {}
             for d, n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n)
             self.grid = pn.Grid(**axes)
@@ -476,20 +195,16 @@ class GridData(pn.data.Data):
             # add new axis
             data = data[..., np.newaxis]
 
-        data = pn.GridArray(self.grid, var, data)
+        data = np.ma.asarray(data)
 
         if not data.shape[:self.ndim] == self.shape:
             raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
 
-        if var in self.data_vars:
-            idx = self.data_vars.index(var)
-            self.data[idx] = data
-        else:
-            self.data.append(data)
+        self.data[var] = data
 
     def get_array(self, var, flat=False):
         '''
-        return array of data
+        return bare array of data
 
         Parameters:
         -----------
@@ -500,9 +215,9 @@ class GridData(pn.data.Data):
             if true return flattened (1d) array
         '''
         if var in self.grid.vars:
-            array = self.grid.point_mgrid[self.grid.vars.index(var)]
+            array = self.grid.point_meshgrid[self.grid.vars.index(var)]
         else:
-            array = np.asanyarray(self[var])
+            array = self.data[var]
         if flat:
             if array.ndim == self.grid.naxes:
                 return array.ravel()
@@ -518,7 +233,14 @@ class GridData(pn.data.Data):
         '''
         iterate over dimensions
         '''
-        return iter(self.data)
+        return iter(self.values())
+
+    def values(self):
+        return self.data.values()
+
+    def items(self):
+        return [(n, pn.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
+
 
 
     # --- Plotting methods ---
