@@ -149,7 +149,7 @@ def format_html(data):
         table = [make_table_row(a) for a in data]
         return tabulate.tabulate(table, tablefmt='html')
 
-    if isinstance(data, pn.PointDataDim):
+    if isinstance(data, pn.PointArray):
         table = [make_table_row(data)]
         return tabulate.tabulate(table, tablefmt='html')
 
