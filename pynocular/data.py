@@ -46,7 +46,7 @@ def generate_destination(source, *args, **kwargs):
             grid.initialize(source)
             return pn.GridData(grid)
         if isinstance(dest, pn.PointData):
-            return pn.PointData(dest.data)
+            return dest
 
     # check if source has a grid and if any args are in there
     if isinstance(source, pn.GridData):
@@ -141,7 +141,7 @@ def interp(source, *args, method=None, fill_value=np.nan, **kwargs):
         assert(var in source.vars), '%s not in %s'%(var, source.vars)
 
 
-    xi = dest.grid.point_mgrid
+    xi = dest.grid.point_meshgrid
 
     for source_var in source.vars:
         if source_var in dest.grid.vars:
