@@ -147,7 +147,7 @@ class GridData(pn.Data):
 
     @property
     def ndim(self):
-        return self.grid.naxes
+        return self.grid.nax
 
     @property
     def array_shape(self):
@@ -219,7 +219,7 @@ class GridData(pn.Data):
         else:
             array = self.data[var]
         if flat:
-            if array.ndim == self.grid.naxes:
+            if array.ndim == self.grid.nax:
                 return array.ravel()
             return array.reshape(self.grid.size, -1)
 
@@ -262,8 +262,8 @@ class GridData(pn.Data):
         '''
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        if self.grid.naxes == 2:
-            return pn.plotting.plot_map(self, var, cbar=cbar, fig=fig, ax=ax, **kwargs)
+        if self.grid.nax == 2:
+            return pn.plotting.plot_map(self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
         raise ValueError('Can only plot maps of 2d grids')
 

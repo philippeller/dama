@@ -22,7 +22,7 @@ limitations under the License.'''
 
 N_MAX = 12
 '''max rows to display in html formatting'''
-PRECISION = 2
+PRECISION = 3
 '''signfificant figures to dispay'''
 
 def as_str(a):
@@ -157,10 +157,10 @@ def format_html(data):
         return tabulate.tabulate(table, tablefmt='html')
 
     if isinstance(data, pn.GridArray):
-        if data.naxes == 2:
+        if data.nax == 2:
             table = make_2d_table(data)
         
-        elif data.naxes == 1:
+        elif data.nax == 1:
             table = []
             table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
             table.append(make_table_row('', data))
@@ -172,7 +172,7 @@ def format_html(data):
 
 
     if isinstance(data, pn.GridData):
-        if data.grid.naxes == 2:
+        if data.grid.nax == 2:
             table = make_2d_table(data)
         
         elif data.ndim == 1:

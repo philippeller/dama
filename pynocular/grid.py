@@ -115,7 +115,7 @@ class Grid(object):
         '''
         wether the grid is set or not
         '''
-        return self.naxes > 0 and all([d.initialized for d in self])
+        return self.nax > 0 and all([d.initialized for d in self])
 
     @property
     def regular(self):
@@ -127,7 +127,7 @@ class Grid(object):
         return all([d.edges.consecutive for d in self])
 
     @property
-    def naxes(self):
+    def nax(self):
         '''
         number of grid axisensions
         '''
@@ -185,7 +185,7 @@ class Grid(object):
         return np.product([len(d) for d in self])
 
     def __len__(self):
-        return self.naxes
+        return self.nax
 
     def __str__(self):
         '''
@@ -284,15 +284,15 @@ class Grid(object):
         calculate the bin indices for a a given sample
         '''
         if isinstance(sample, np.ndarray):
-            assert sample.shape[0] == self.naxes
+            assert sample.shape[0] == self.nax
         elif isinstance(sample, list):
-            assert len(sample) == self.naxes
+            assert len(sample) == self.nax
         
         if not self.consecutive:
             raise NotImplementedError()
 
         # array holding raveld indices
-        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.naxes)]
+        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.nax)]
         return np.ravel_multi_index(multi_index, [d + 2 for d in self.shape])
 
 def digitize_inclusive(x, bins):

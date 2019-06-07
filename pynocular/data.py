@@ -127,12 +127,12 @@ def interp(source, *args, method=None, fill_value=np.nan, **kwargs):
         return dest
 
     if method is None:
-        if dest.grid.naxes > 2:
+        if dest.grid.nax > 2:
             method = 'linear'
         else:
             method = 'cubic'
 
-    if method == 'cubic' and dest.grid.naxes > 2:
+    if method == 'cubic' and dest.grid.nax > 2:
         raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
 
 
@@ -299,8 +299,8 @@ def lookup(source, *args, **kwargs):
 
         source_data = source.get_array(source_var)
 
-        if source_data.ndim > source.grid.naxes:
-            output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.naxes:], np.nan)
+        if source_data.ndim > source.grid.nax:
+            output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.nax:], np.nan)
         else:
             output_array = np.full(np.product(dest.array_shape), np.nan)
 

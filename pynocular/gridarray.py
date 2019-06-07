@@ -62,17 +62,17 @@ def wrap(func):
         if isinstance(result, (np.ma.masked_array, np.ndarray)):
             if result.ndim > 0: 
                 # new grid
-                if axis is not None and any([a < first.grid.naxes for a in axis]):
+                if axis is not None and any([a < first.grid.nax for a in axis]):
                     new_grid = copy.deepcopy(first.grid)
                     for a in sorted(axis)[::-1]:
                         # need to be careful, and start deleting from last element
-                        if a < first.grid.naxes:
+                        if a < first.grid.nax:
                             del(new_grid.axes[a])
                 else:
                     new_grid = first.grid
                 
                 new_obj = pn.GridArray(result, grid=new_grid)
-                if new_obj.naxes == 0:
+                if new_obj.nax == 0:
                     return new_obj.data
                 return new_obj
             if result.ndim == 0:
@@ -121,8 +121,8 @@ class GridArray(np.ma.MaskedArray):
         return '%s : %s'%(self.name, np.ma.asarray(self))
 
     @property
-    def naxes(self):
-        return self.grid.naxes
+    def nax(self):
+        return self.grid.nax
 
     def __getitem__(self, item, *args):
         #print('getitem')
@@ -164,13 +164,13 @@ class GridArray(np.ma.MaskedArray):
     @property
     def T(self):
         '''transpose'''
-        if self.ndim > self.naxes + 1:
+        if self.ndim > self.nax + 1:
             raise NotImplementedError()
-        if self.naxes == 1:
+        if self.nax == 1:
             return self
-        if self.naxes > 1:
+        if self.nax > 1:
             new_data = self.data.T
-        if self.ndim == self.naxes + 1:
+        if self.ndim == self.nax + 1:
             new_data = np.rollaxis(new_data, 0, self.ndim)
         return pn.GridArray(new_data, grid=self.grid.T)
     
@@ -270,8 +270,25 @@ class GridArray(np.ma.MaskedArray):
         return obj
 
 
+    def plot(self, **kwargs):
+        if self.nax == 1:
+            return self.plot_step(**kwargs)
+        elif self.nax == 2:
+            return self.plot_map(**kwargs)
+        else:
+            raise NotImplementedError()
 
+    def plot_map(self, label=None, cbar=False, fig=None, ax=None, **kwargs):
+        '''
+        plot array as a map
 
+        ax : pyplot axes object
+        '''
+        if self.nax == 2:
+            return pn.plotting.plot_map(self, label=label, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
+        raise ValueError('Can only plot maps of 2d grids')
 
+    def plot_step(self, label=None, fig=None, ax=None, **kwargs):
+        return pn.plotting.plot_step(self, label=label, fig=fig, ax=ax, **kwargs)
 

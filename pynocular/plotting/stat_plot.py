@@ -20,7 +20,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
+def plot_map(garray, label=None, cbar=False, fig=None, ax=None, **kwargs):
     '''
     plot a 2d color map
     '''
@@ -29,24 +29,44 @@ def plot_map(source, var, cbar=False, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.naxes == 2
+    assert garray.grid.nax == 2
 
-    data = source.get_array(var)
+    data = garray
 
-    if data.ndim == source.grid.naxes + 1 and data.shape[-1] == 3:
+    if data.ndim == garray.grid.nax + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(source.grid.edges[0].min(), source.grid.edges[0].max(), source.grid.edges[1].min(), source.grid.edges[1].max()), **kwargs)
+        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(garray.grid.edges[0].min(), garray.grid.edges[0].max(), garray.grid.edges[1].min(), garray.grid.edges[1].max()), **kwargs)
     else:
-        X, Y = source.grid.edge_meshgrid
+        X, Y = garray.grid.edge_meshgrid
         pc = ax.pcolormesh(X, Y, data.T, linewidth=0, rasterized=True, **kwargs)
         if cbar:
-            fig.colorbar(pc, ax=ax, label=var)
+            fig.colorbar(pc, ax=ax, label=label)
 
-    ax.set_xlabel(source.grid.vars[0])
-    ax.set_ylabel(source.grid.vars[1])
-    ax.set_xlim(source.grid.edges[0].min(), source.grid.edges[0].max())
-    ax.set_ylim(source.grid.edges[1].min(), source.grid.edges[1].max())
+    ax.set_xlabel(garray.grid.vars[0])
+    ax.set_ylabel(garray.grid.vars[1])
+    ax.set_xlim(garray.grid.edges[0].min(), garray.grid.edges[0].max())
+    ax.set_ylim(garray.grid.edges[1].min(), garray.grid.edges[1].max())
     return pc
+
+def plot_step(garray, label=None, fig=None, ax=None, **kwargs):
+    '''
+    plot a step function, i.e. histogram
+    '''
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
+    assert garray.grid.nax == 1
+    histtype = kwargs.pop('histtype', 'step')
+
+    # let's only plot finite values, otherwise it freakes out
+    mask = np.isfinite(garray)
+    ax.hist(garray.grid.points[0][mask], bins=garray.grid.squeezed_edges[0], weights=garray[mask], histtype=histtype, **kwargs)
+    ax.set_xlabel(garray.grid.vars[0])
+    ax.set_ylabel(label)
+
+
+# --- to be fixed ---
 
 def plot(source, x, y, *args, **kwargs):
     '''2d plot'''
@@ -86,28 +106,11 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.naxes == 2
+    assert source.grid.nax == 2
     X, Y = source.grid.point_meshgrid
 
     cs = ax.contour(X, Y, source[var].T, **kwargs)
     return cs
-
-def plot_step(source, var, fig=None, ax=None, **kwargs):
-    '''
-    plot a step function, i.e. histogram
-    '''
-    if fig is None:
-        fig = plt.gcf()
-    if ax is None:
-        ax = plt.gca()
-    assert source.grid.naxes == 1
-    histtype = kwargs.pop('histtype', 'step')
-
-    # let's only plot finite values, otherwise it freakes out
-    mask = np.isfinite(source[var])
-    ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=source.get_array(var)[mask], histtype=histtype, **kwargs)
-    ax.set_xlabel(source.grid.vars[0])
-    ax.set_ylabel(var)
 
 def plot_bands(source, var, fig=None, ax=None, **kwargs):
     '''
@@ -117,7 +120,7 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.naxes == 1
+    assert source.grid.nax == 1
     
     cmap = kwargs.pop('cmap', 'Blues')
     cmap = plt.get_cmap(cmap)
@@ -164,7 +167,7 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
         upper_error = lower_error
     else:
         raise TypeError('errors must be tuple of variable names or a single variable name')
-    assert source.grid.naxes == 1
+    assert source.grid.nax == 1
 
     ax.bar(source.grid[0].points,
            lower_error + upper_error,
