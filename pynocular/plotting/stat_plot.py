@@ -31,7 +31,7 @@ def plot_map(garray, label=None, cbar=False, fig=None, ax=None, **kwargs):
         ax = plt.gca()
     assert garray.grid.nax == 2
 
-    data = garray
+    data = np.ma.asarray(garray)
 
     if data.ndim == garray.grid.nax + 1 and data.shape[-1] == 3:
         # plot as image
@@ -57,13 +57,14 @@ def plot_step(garray, label=None, fig=None, ax=None, **kwargs):
     if ax is None:
         ax = plt.gca()
     assert garray.grid.nax == 1
-    histtype = kwargs.pop('histtype', 'step')
 
-    # let's only plot finite values, otherwise it freakes out
-    mask = np.isfinite(garray)
-    ax.hist(garray.grid.points[0][mask], bins=garray.grid.squeezed_edges[0], weights=garray[mask], histtype=histtype, **kwargs)
+    data = np.ma.asarray(garray)
+    data = np.ma.append(data, data[-1])
+
+    s = ax.step(garray.grid.squeezed_edges[0], data, where='post', **kwargs)
     ax.set_xlabel(garray.grid.vars[0])
     ax.set_ylabel(label)
+    return s
 
 
 # --- to be fixed ---

@@ -67,6 +67,9 @@ class edges(object):
         '''
         create edges around points
         '''
+        if len(points) == 1:
+            # in this case we cannot do a delta, just make the binwidth = 1.0 by default
+            return np.array([[points[0] - 0.5, points[0] + 0.5]])
         diff = np.diff(points)/2.
         return np.concatenate([[points[0] - diff[0]], points[:-1] + diff, [points[-1] + diff[-1]]])
 
