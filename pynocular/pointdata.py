@@ -107,14 +107,15 @@ class PointData(Data):
             return (len(self[self.vars[0]]),)
 
     def __setitem__(self, var, val):
+        val = np.asanyarray(val)
+        if val.ndim == 0:
+            val = val[np.newaxis]
+
         if len(self) > 0:
             assert len(val) == self.array_shape[0], 'Incompatible dimensions'
 
         if isinstance(val, pn.PointArray):
             self.data[var] = val
-        #elif isinstance(val, pn.PointData):
-        #    # ToDo: is this fair enough?
-        #    self.data[var] = val.data[val.vars[-1]]
         elif isinstance(val, np.ndarray):
             if self.type == 'df':
                 self.data[var] = val
@@ -125,7 +126,6 @@ class PointData(Data):
             raise ValueError()
 
     def __getitem__(self, var):
-        #print(var)
         if self.type == 'df':
             result = self.data[var]
             if isinstance(result, pandas.core.frame.DataFrame):

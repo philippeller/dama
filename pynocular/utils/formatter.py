@@ -89,6 +89,8 @@ def make_table_row(name, array):
     else:
         row = []
     array = np.ma.asarray(array)
+    #if array.ndim == 0:
+    #    return [as_str(array)]
     if array.shape[0] <= N_MAX:
         row += [as_str(v) for v in array]
     else:

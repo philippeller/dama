@@ -125,7 +125,6 @@ class GridArray(np.ma.MaskedArray):
         return self.grid.nax
 
     def __getitem__(self, item, *args):
-        #print('getitem')
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
@@ -133,7 +132,7 @@ class GridArray(np.ma.MaskedArray):
                 new_item.mask = mask
                 return new_item
             raise NotImplementedError('get item %s'%item)
-        if not isinstance(item, tuple):
+        if not isinstance(item, tuple) and not isinstance(item, slice):
             return self[(item,)]
         elif isinstance(item, list):
             if all([isinstance(i, int) for i in item]):

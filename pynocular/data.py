@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from scipy import interpolate
 from KDEpy import FFTKDE
+#import numpy_indexed as npi
 import pynocular as pn
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -278,6 +279,9 @@ def lookup(source, *args, **kwargs):
 
     Parameters:
     -----------
+
+    ToDo: use ndimage.map_coordinates for regular grids
+
     '''
     if not hasattr(source, 'grid'):
         raise TypeError('source must have a grid defined')
@@ -292,6 +296,7 @@ def lookup(source, *args, **kwargs):
     sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
 
     indices = source.grid.compute_indices(sample)
+    #g = npi.group_by(idx)
 
     for source_var in source.vars:
         if source_var in dest.vars:
@@ -303,6 +308,9 @@ def lookup(source, *args, **kwargs):
             output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.nax:], np.nan)
         else:
             output_array = np.full(np.product(dest.array_shape), np.nan)
+
+        # testing this new thing
+        #for idx, data in g.split_iterable_as_unordered_iterable(
 
 
         #TODO: make this better

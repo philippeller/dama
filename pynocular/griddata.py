@@ -275,7 +275,7 @@ class GridData(pn.Data):
     def plot_step(self, var=None, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return pn.plotting.plot_step(self, var, fig=fig, ax=ax, **kwargs)
+        return pn.plotting.plot_step(self[var], label=var, fig=fig, ax=ax, **kwargs)
 
     def plot_bands(self, var=None, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
