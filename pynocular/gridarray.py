@@ -107,18 +107,17 @@ class GridArray(np.ma.MaskedArray):
             print('obj none')
             return
         self.grid = getattr(obj, 'grid', None)
-        self.name = getattr(obj, 'name', 'noname')
         return self
 
     def __repr__(self):
-        return 'GridArray(%s : %s)'%(self.name, np.ma.asarray(self))
+        return 'GridArray(%s)'%(np.ma.asarray(self))
 
     def _repr_html_(self):
         '''for jupyter'''
         return format_html(self)
     
     def __str__(self):
-        return '%s : %s'%(self.name, np.ma.asarray(self))
+        return '%s'%(np.ma.asarray(self))
 
     @property
     def nax(self):
@@ -132,33 +131,39 @@ class GridArray(np.ma.MaskedArray):
                 new_item.mask = mask
                 return new_item
             raise NotImplementedError('get item %s'%item)
-        if not isinstance(item, tuple) and not isinstance(item, slice):
+        if not isinstance(item, tuple): # and not isinstance(item, slice):
             return self[(item,)]
-        elif isinstance(item, list):
+        if isinstance(item, list):
             if all([isinstance(i, int) for i in item]):
                 return self[(list,)]
             else:
                 raise IndexError('Cannot process list of indices %s'%item)
-        elif isinstance(item, tuple):
+        if isinstance(item, tuple):
             new_grid = self.grid[item]
             if len(new_grid) == 0:
                 # then we have a single element
                 return np.ma.asarray(self)[item]
             return pn.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
-    def __setitem__(self, var, val):
+    def __setitem__(self, item, val):
         # ToDo: a[[1,3,5]] *= x does not assign
-        if np.isscalar(self[var]):
-            self.data[var] = val
+        #print(item, val)
+        if np.isscalar(self[item]):
+            self.data[item] = val
             return
-        if isinstance(self[var]._data, np.ma.masked_array):
-            mask = ~self[var]._data.mask
+        if isinstance(item, list) and all([isinstance(i, int) for i in item]):
+            print('list')
+            self.data[item] = val
+            print(self.data)
+            return
+        if isinstance(self[item].data, np.ma.masked_array):
+            mask = ~self[item].data.mask
         else:
             mask = slice(None)
         if np.isscalar(val):
-            self[var]._data[mask] = val
+            self[item].data[mask] = val
         else:
-            self[var]._data[mask] = val._data[mask]
+            self[item].data[mask] = val.data[mask]
 
     @property
     def T(self):
