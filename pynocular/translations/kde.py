@@ -49,7 +49,7 @@ class KDE(Translation):
 
 
     def setup(self):
-        self.prepare_source_sample(array=False)
+        self.prepare_source_sample(stacked=False)
         # every point must be inside output grid (requirement of KDEpy)
         masks = [np.logical_and(self.source_sample[i] > dim.points[0], self.source_sample[i] < dim.points[-1]) for i, dim in enumerate(self.dest.grid)]
         self.mask = np.all(masks, axis=0)
@@ -60,8 +60,7 @@ class KDE(Translation):
         self.source_sample = np.stack(sample).T
 
         self.kde = FFTKDE(bw=self.bw, kernel=self.kernel)
-        self.prepare_dest_sample()
-        self.dest_sample = self.dest_sample.T
+        self.prepare_dest_sample(transposed=True)
 
     def eval(self, source_data):
 

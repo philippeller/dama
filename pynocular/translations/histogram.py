@@ -36,7 +36,7 @@ class Histogram(Translation):
         self.density = density
 
     def setup(self):
-        self.prepare_source_sample(array=False)
+        self.prepare_source_sample(stacked=False)
 
     def eval(self, source_data):
         source_data = source_data.flat()

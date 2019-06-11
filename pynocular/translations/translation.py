@@ -91,15 +91,21 @@ class Translation():
 
         return pn.GridData(grid)
 
-    def prepare_source_sample(self, flat=True, array=True):
+    def prepare_source_sample(self, flat=True, stacked=True, transposed=False):
+        if transposed: assert stacked
         self.source_sample = [self.source.get_array(var, flat=flat) for var in self.wrt]
-        if array:
+        if stacked:
             self.source_sample = np.stack(self.source_sample)
+        if transposed:
+            self.source_sample = self.source_sample.T
 
-    def prepare_dest_sample(self, flat=True, array=True):
+    def prepare_dest_sample(self, flat=True, stacked=True, transposed=False):
+        if transposed: assert stacked
         self.dest_sample = [self.dest.get_array(var, flat=flat) for var in self.wrt]
-        if array:
+        if stacked:
             self.dest_sample = np.stack(self.dest_sample)
+        if transposed:
+            self.dest_sample = self.dest_sample.T
 
     def setup(self):
         pass
@@ -117,7 +123,7 @@ class Translation():
         return self.dest
 
     def eval(self, data):
-        raise NotImplementedError()
+        raise NotImplementedError('Translation method must implement this')
 
     def get_empty_output_array(self, element_shape=tuple(), fill_value=np.nan, flat=False):
         '''make empty array in shape of destinaion
