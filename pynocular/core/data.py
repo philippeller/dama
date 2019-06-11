@@ -42,7 +42,7 @@ def generate_destination(source, *args, **kwargs):
             grid = dest.grid
             grid.initialize(source)
             return pn.GridData(grid)
-        if isinstance(dest, pn.grid.Grid):
+        if isinstance(dest, pn.Grid):
             grid = dest
             grid.initialize(source)
             return pn.GridData(grid)
@@ -62,115 +62,11 @@ def generate_destination(source, *args, **kwargs):
         args = dims
 
     # instantiate
-    grid = pn.grid.Grid(*args, **kwargs)
+    grid = pn.Grid(*args, **kwargs)
     grid.initialize(source)
 
     return pn.GridData(grid)
 
-
-
-def interp(source, *args, method=None, fill_value=np.nan, **kwargs):
-    '''interpolation from any data to another
-
-    Parameters:
-    -----------
-    method : string
-        "nearest" = nearest neightbour interpolation
-        "linear" = linear interpolation
-        "cubic" = cubic interpolation (only for ndim < 3)
-    fill_value : Number (optional)
-        value for invalid points
-    '''
-    assert method in [None, 'nearest', 'linear', 'cubic'], 'Illegal method %s'%method
-
-    dest = generate_destination(source, *args, **kwargs)
-
-    if isinstance(dest, pn.PointData):
-        xi_vars = dest.vars
-
-        if not set(xi_vars) <= set(source.vars):
-            raise TypeError('the following variable are not present in the source: %s'%', '.join(set(xi_vars) - (set(xi_vars) & set(source.vars))))
-
-        if method is None:
-            if len(xi_vars) > 2:
-                method = 'linear'
-            else:
-                method = 'cubic'
-
-        if method == 'cubic' and len(xi_vars) > 2:
-            raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-
-        for source_var in source.vars:
-            if source_var in xi_vars:
-                continue
-
-            if len(xi_vars) == 1:
-                f = interpolate.interp1d(source[xi_vars[0]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                output_array = f(dest[xi_vars[0]])
-
-            elif len(xi_vars) == 2:
-                f = interpolate.interp2d(source[xi_vars[0]], source[xi_vars[1]], source[source_var], kind=method, fill_value=fill_value, bounds_error=False)
-                output_array = np.array([f(x, y)[0] for x, y in zip(np.array(dest[xi_vars[0]]), np.array(dest[xi_vars[1]]))])
-
-            else:
-                sample = [source.get_array(var, flat=True) for var in xi_vars]
-                sample = np.vstack(sample).T
-                if method == 'nearest':
-                    f = interpolate.NearestNDInterpolator(sample, source[source_var])
-                else:
-                    f = interpolate.LinearNDInterpolator(sample, source[source_var], fill_value=fill_value)
-                out_sample = [dest.get_array(var, flat=True) for var in xi_vars]
-                out_sample = np.vstack(out_sample).T
-                output_array = f(out_sample)
-
-            dest[source_var] = output_array
-
-        return dest
-
-    if method is None:
-        if dest.grid.nax > 2:
-            method = 'linear'
-        else:
-            method = 'cubic'
-
-    if method == 'cubic' and dest.grid.nax > 2:
-        raise NotImplementedError('cubic interpolation only supported for 1 or 2 dimensions')
-
-
-    # check source has grid variables
-    for var in dest.grid.vars:
-        assert(var in source.vars), '%s not in %s'%(var, source.vars)
-
-
-    xi = dest.grid.point_meshgrid
-
-    for source_var in source.vars:
-        if source_var in dest.grid.vars:
-            continue
-
-        source_data = source.get_array(source_var, flat=True)
-
-        mask = np.isfinite(source_data)
-        if mask.ndim > 1:
-            dim_mask = np.all(mask, axis=1)
-        else:
-            dim_mask = mask
-
-        # prepare arrays
-        sample = [source.get_array(var, flat=True)[dim_mask] for var in dest.grid.vars]
-        sample = np.vstack(sample)
-
-        if source_data.ndim > 1:
-            dest_map = np.full(shape=(*dest.grid.shape, *source_data.shape[1:]), fill_value=np.nan)
-            for idx in np.ndindex(*source_data.shape[1:]):
-
-                dest_map[(Ellipsis,) + idx] = interpolate.griddata(points=sample.T, values=source_data[(Ellipsis,) + idx][dim_mask], xi=tuple(xi), method=method, fill_value=fill_value)
-        else:
-            dest_map = interpolate.griddata(points=sample.T, values=source_data[mask], xi=tuple(xi), method=method, fill_value=fill_value)
-
-        dest[source_var] = dest_map
-
-    return dest
 
 def binwise(source, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
     '''translation from array data into binned form
@@ -274,60 +170,6 @@ def binwise(source, *args, method=None, function=None, fill_value=np.nan, densit
         raise ValueError('need at least a method or a function specified')
 
 
-def lookup(source, *args, **kwargs):
-    '''lookup the bin content at given points
-
-    Parameters:
-    -----------
-
-    ToDo: use ndimage.map_coordinates for regular grids
-
-    '''
-    if not hasattr(source, 'grid'):
-        raise TypeError('source must have a grid defined')
-
-    dest = generate_destination(source, *args, **kwargs)
-
-    # check dest has grid variables
-    for var in source.grid.vars:
-        assert(var in dest.vars), '%s not in %s'%(var, dest.vars)
-
-    # prepare arrays
-    sample = [dest.get_array(var, flat=True) for var in source.grid.vars]
-
-    indices = source.grid.compute_indices(sample)
-    #g = npi.group_by(idx)
-
-    for source_var in source.vars:
-        if source_var in dest.vars:
-            continue
-
-        source_data = source.get_array(source_var)
-
-        if source_data.ndim > source.grid.nax:
-            output_array = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.nax:], np.nan)
-        else:
-            output_array = np.full(np.product(dest.array_shape), np.nan)
-
-        # testing this new thing
-        #for idx, data in g.split_iterable_as_unordered_iterable(
-
-
-        #TODO: make this better
-        for i in range(len(output_array)):
-            # check we're inside grid:
-            ind = np.unravel_index(indices[i], [d+2 for d in source.grid.shape])
-            ind = tuple([idx - 1 for idx in ind])
-            inside = True
-            for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= source.grid.shape[j]
-            if inside:
-                idx = tuple(ind)
-                output_array[i] = source_data[idx]
-
-        dest[source_var] = output_array
-    return dest
-
 
 def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
     '''run KDE on regular grid
@@ -380,10 +222,8 @@ def kde(source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs
 
         source_data = source.get_array(source_var, flat=True)
 
-        #print(source_var, source_data.ndim)
         if source_data.ndim > 1:
             out = np.empty(shape=(dest.grid.size, *source_data.shape[1:]))
-            #out = np.full((np.product(dest.array_shape),)+source_data.shape[source.grid.ndim:], np.nan)
             for idx in np.ndindex(*source_data.shape[1:]):
                 out[(Ellipsis,) + idx] = kde.fit(sample, weights=source_data[(Ellipsis,) + idx][mask]).evaluate(eval_grid)
                 if not density:
@@ -471,7 +311,8 @@ class Data(object):
         fill_value : optional
             value for invalid points
         '''
-        return interp(self, *args, method=method, fill_value=fill_value, **kwargs)
+        translator = pn.translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs)
+        return translator.run()
 
     def histogram(self, *args, density=False, **kwargs):
         '''Convenience method for histograms'''
@@ -499,7 +340,8 @@ class Data(object):
         Parameters:
         -----------
         '''
-        return lookup(self, *args, **kwargs)
+        translator = pn.translations.Lookup(self, *args, **kwargs)
+        return translator.run()
 
     def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
         '''run KDE on regular grid

@@ -2,10 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 import pandas
 import pynocular as pn
-import pynocular.plotting
-from pynocular.data import Data
 from pynocular.utils.formatter import format_html
-import tabulate
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -38,4 +35,7 @@ class PointArray(np.ndarray):
             return obj[()] # if ufunc output is scalar, return it
         else:
             return np.ndarray.__array_wrap__(self, obj)
+
+    def flat(self):
+        return self
 

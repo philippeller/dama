@@ -3,7 +3,6 @@ import numpy as np
 import pandas
 import pynocular as pn
 import pynocular.plotting
-from pynocular.data import Data
 from pynocular.utils.formatter import format_html
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -21,7 +20,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class PointData(Data):
+class PointData(pn.Data):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
@@ -36,7 +35,7 @@ class PointData(Data):
             elif isinstance(args[0], pandas.core.frame.DataFrame):
                 self.data = args[0]
             elif isinstance(args[0], dict):
-                args = args[0]
+                kwargs = args[0]
             else:
                 raise ValueError("Did not understand input arguments")
         if len(kwargs) > 0:
@@ -148,7 +147,7 @@ class PointData(Data):
         else:
             for n,d in self.items():
                 new_data[n] = d[var]
-        return PointData(new_data)
+        return pn.PointData(new_data)
         
     def get_array(self, var, flat=False):
         return np.asarray(self[var])

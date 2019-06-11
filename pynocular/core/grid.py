@@ -250,7 +250,7 @@ class Grid(object):
         elif isinstance(item, tuple):
             if all([isinstance(i, str) for i in item]):
                 return self[list(item)]
-            new_obj = pn.grid.Grid()
+            new_obj = pn.Grid()
             for i in range(len(self)): 
                 if i < len(item):
                     assert item[i] is not Ellipsis

@@ -37,7 +37,7 @@ class GridData(pn.Data):
         if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
             for n,d in kwargs.items():
                 self.add_data(n, d)
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], (pn.grid.Grid, pn.Grid)):
+        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
             self.grid = args[0]
         else:
             self.grid = pn.Grid(*args, **kwargs)

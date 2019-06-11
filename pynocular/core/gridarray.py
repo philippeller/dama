@@ -273,6 +273,12 @@ class GridArray(np.ma.MaskedArray):
         obj.grid = self.grid
         return obj
 
+    def flat(self):
+        '''return values as flattened array'''
+        if self.ndim == self.nax:
+            return np.ma.asarray(self).ravel()
+        return np.ma.asarray(self).reshape(self.grid.size, -1)
+
 
     def plot(self, **kwargs):
         if self.nax == 1:
