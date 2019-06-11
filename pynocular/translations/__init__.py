@@ -4,3 +4,4 @@ from .interpolation import Interpolation
 from .histogram import Histogram
 from .binwise import Binwise
 from .kde import KDE
+from .resample import Resample

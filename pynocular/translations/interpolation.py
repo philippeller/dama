@@ -67,7 +67,7 @@ class Interpolation(Translation):
             else:
                 output_array = interpolate.griddata(points=sample.T, values=source_data[mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
 
-            return output_array
+            return output_array.T
 
         else:
             if len(self.wrt) == 1:
