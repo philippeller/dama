@@ -86,7 +86,7 @@ class Translation():
             args = dims
 
         # instantiate
-        grid = pn.grid.Grid(*args, **kwargs)
+        grid = pn.Grid(*args, **kwargs)
         grid.initialize(self.source)
 
         return pn.GridData(grid)
@@ -119,16 +119,23 @@ class Translation():
     def eval(self, data):
         raise NotImplementedError()
 
-    def get_empty_output_array(self, element_shape=tuple(), fill_value=np.nan):
+    def get_empty_output_array(self, element_shape=tuple(), fill_value=np.nan, flat=False):
         '''make empty array in shape of destinaion
     
         element_shape : tuple
             additional dimensions of the output
         fill_value : value
             fill value
+        flat : bool
+            if True, make flat in array dimensions
         '''
+        array_shape = self.dest.array_shape
+        if flat:
+            array_shape = tuple(np.product(array_shape))
+        array_shape += element_shape
+
         if fill_value is None:
-            return np.empty(self.dest.array_shape + element_shape)
-        return np.full(self.dest.array_shape + element_shape, fill_value)
+            return np.empty(array_shape)
+        return np.full(array_shape, fill_value)
 
 

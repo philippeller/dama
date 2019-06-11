@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data base class for translation methods'''
 import numpy as np
-import pynocular as pn
+from pynocular.translations import Translation
 from scipy import interpolate
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -19,7 +19,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class Interpolation(pn.translations.Translation):
+class Interpolation(Translation):
     def __init__(self, source, *args, method=None, fill_value=np.nan, **kwargs):
         '''interpolation from any data to another
 
