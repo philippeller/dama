@@ -29,7 +29,11 @@ One of the stregth are the avilable translation methods, e.g.
 
 ```python
 
-p = pn.PointData(x = [1, 2, 6, 7.33, ...], a = [55, 1e6, 3, 3.3, ...]
-
+p = pn.PointData(x = [1, 2, 6, 7.33, ...], a = [55, 1e6, 3, 3.3, ...])
 h = p.histogram(x = 10)
 ```
+or
+```python
+g = p.interp(x = np.linspace(0,10,1000))
+```
+etc.
