@@ -15,13 +15,13 @@ Convenience `pyplot` plotting functions are also defined, in order to produce st
 
 # Intro
 
-Different data representations are available, one being the GridArray:
+Different data representations are available, one being the `GridArray`:
 ```python
 import pynocular as pn
 
 a = pn.GridArray(np.random.rand(200).reshape(20,10))
 ```
-that supports many numpy features. it's `grid` attribute is another class, here it was just instantiated with default values, but it can be used to specify the axes.
+that supports many numpy features. 
 
 ```
 np.sum(a, axis='x')
@@ -30,6 +30,8 @@ a[a > 0.5] = 0.5
 a.T
 a[::-2, [1,3,5]]
 ```
+Its `grid` attribute is another object, here it was just instantiated with default values (i.e. axis "x" and "y" with points `[0, 1, 2, ...]`), but one can explicitly specify the axes with points and/or edges etc to be used.
+
 The various objects include:
 * `GridArray` : holds a single gridded array with corresponding axes
 * `GridData` : a collection (container class) of `GridArray`s that share a common grid
