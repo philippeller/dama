@@ -122,6 +122,7 @@ class Grid(object):
         '''true is all axisensions are reguallarly spaced'''
         return all([d.regular for d in self])
 
+    @property
     def consecutive(self):
         '''true is all edges are consecutive'''
         return all([d.edges.consecutive for d in self])
@@ -239,7 +240,7 @@ class Grid(object):
             return self[(item,)]
         elif isinstance(item, list):
             if all([isinstance(i, str) for i in item]):
-                new_obj = pn.grid.Grid()
+                new_obj = pn.Grid()
                 for var in item:
                     new_obj.axes.append(self[var])
                 return new_obj

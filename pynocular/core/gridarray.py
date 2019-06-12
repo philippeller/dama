@@ -27,13 +27,19 @@ def wrap(func):
         # find first instance of GridArray:
         first = None
         inputs = []
+        grid = None
         for arg in args:
             if isinstance(arg, pn.GridArray):
                 inputs.append(np.ma.asarray(arg))
                 if first is None:
                     first = arg
+                    grid = arg.grid
+                else:
+                    # make sure all grids are compatible
+                    assert arg.grid == grid, 'Incompatible grids'
             else:
                 inputs.append(arg)
+
 
         if first is None:
             raise ValueError()
@@ -96,8 +102,18 @@ class GridArray(np.ma.MaskedArray):
         obj = np.ma.asarray(input_array).view(cls)
         if grid is not None:
             obj.grid = grid
+        elif not len(args) == 0 and not len(kwargs) == 0:
+            obj.grid = pn.Grid(*args, **kwargs)
         else:
-            obj.grid = pn.grid.Grid(*args, **kwargs)
+            # make a default grid:
+            if input_array.ndim <= 3:
+                axes_names = ['x', 'y', 'z']
+            else:
+                axes_names = ['x%i' for i in range(input_array.ndim)]
+            axes = {}
+            for d, n in zip(axes_names, input_array.shape):
+                axes[d] = np.arange(n)
+            obj.grid = pn.Grid(**axes)
         return obj
 
     def __array_finalize__(self, obj, *args, **kwargs):
@@ -148,18 +164,21 @@ class GridArray(np.ma.MaskedArray):
     def __setitem__(self, item, val):
         # ToDo: a[[1,3,5]] *= x does not assign
         #print(item, val)
+        if isinstance(item, pn.GridArray):
+            if item.dtype == np.bool:
+                mask = np.logical_and(~self.mask, ~np.asarray(item))
+                if np.isscalar(val):
+                    self[item].data[mask] = val
+                else:
+                    self[item].data[mask] = val.data[mask]
+                return
         if np.isscalar(self[item]):
             self.data[item] = val
             return
         if isinstance(item, list) and all([isinstance(i, int) for i in item]):
-            print('list')
             self.data[item] = val
-            print(self.data)
             return
-        if isinstance(self[item].data, np.ma.masked_array):
-            mask = ~self[item].data.mask
-        else:
-            mask = slice(None)
+        mask = ~self[item].data.mask
         if np.isscalar(val):
             self[item].data[mask] = val
         else:
