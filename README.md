@@ -53,6 +53,17 @@ or
 g = p.interp(x = np.linspace(0,10,1000))
 ```
 etc.
+
+currently there are the follwoing translations methods:
+* histogram
+* binswise
+* interp
+* kde
+* lookup
+* resample
+
+## Other things
+
 Objects provide matplotlib plotting methods and jupyterlab HTML output for convenience.
 
 ```python
