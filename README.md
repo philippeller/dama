@@ -31,13 +31,13 @@ a.T
 a[::-2, [1,3,5]]
 ```
 The various objects include:
-* GridArray : holds a single gridded array with corresponding axes
-* GridData : a collection (container class) of GridArrays that share a common grid
-* PointArray : a single point-like array (like any old np.ndarray)
-* PointData : collection of same length PointArrays (similar to a pandas DataFrame)
-* Grid : a grid holding several axes
-* Axis : a 1-d axis of a grid
-* Edges : binning edges
+* `GridArray` : holds a single gridded array with corresponding axes
+* `GridData` : a collection (container class) of `GridArray`s that share a common grid
+* `PointArray` : a single point-like array (like any old np.ndarray)
+* `PointData` : collection of same length `PointArray`s (similar to a pandas DataFrame)
+* `Grid` : a grid holding several `Axis`
+* `Axis` : a 1-d axis of a grid
+* `Edges` : binning edges
 
 ## Translation methods
 
