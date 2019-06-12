@@ -19,9 +19,17 @@ Different data representations are available, one being the GridArray:
 ```python
 import pynocular as pn
 
-a = pn.GridArray(np.random.rand(200).reshape(20,10))```
+a = pn.GridArray(np.random.rand(200).reshape(20,10))
 ```
 that supports many numpy features. it's `grid` attribute is another class, here it was just instantiated with default values, but it can be used to specify the axes.
+
+```
+np.sum(a, axis='x')
+np.ones_like(a)
+a[a > 0.5] = 0.5
+a.T
+a[::-2, [1,3,5]]
+```
 
 ## Translation methods
 
@@ -37,3 +45,8 @@ or
 g = p.interp(x = np.linspace(0,10,1000))
 ```
 etc.
+Objects provide matplotlib plotting methods and jupyterlab HTML output for convenience.
+
+```python
+a.plot()
+```
