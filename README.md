@@ -10,8 +10,7 @@ Convenience `pyplot` plotting functions are also defined, in order to produce st
 ## Installation
 
 * `git clone git@github.com:philippeller/pynocular.git`
-* `cd pynocular`
-* `pip install .`
+* `pip install pynocular`
 
 # Intro
 
