@@ -58,11 +58,13 @@ class Binwise(Translation):
                 output_map[out_idx] = result
         
         else:
-            for idx, data in self.group.split_iterable_as_unordered_iterable(source_data):
-                result = self.function(data) 
-                out_idx = np.unravel_index(idx, [d+2 for d in self.dest.grid.shape])
-                out_idx = tuple([idx - 1 for idx in out_idx])
-                output_map[out_idx] = result
+            for i in range(np.prod([d+2 for d in self.dest.grid.shape])):
+                bin_source_data = source_data[self.indices == i]
+                if len(bin_source_data) > 0:
+                    result = self.function(bin_source_data) 
+                    out_idx = np.unravel_index(i, [d+2 for d in self.dest.grid.shape])
+                    out_idx = tuple([idx - 1 for idx in out_idx])
+                    output_map[out_idx] = result
     
     def eval(self, source_data):
         source_data = source_data.flat()

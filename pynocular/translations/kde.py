@@ -45,6 +45,11 @@ class KDE(Translation):
         self.kernel = kernel
         self.density = density
 
+        if density:
+            self.additional_runs = {'density' : None}
+        else:
+            self.additional_runs = {'counts' : None}
+
         if not self.dest.grid.regular:
             raise TypeError('dest must have regular grid')
 

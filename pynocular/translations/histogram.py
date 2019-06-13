@@ -35,6 +35,11 @@ class Histogram(Translation):
 
         self.density = density
 
+        if density:
+            self.additional_runs = {'density' : None}
+        else:
+            self.additional_runs = {'counts' : None}
+
     def setup(self):
         self.prepare_source_sample(stacked=False)
 
@@ -54,4 +59,4 @@ class Histogram(Translation):
             else:
                 output_array, _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, weights=source_data, density=self.density)
             
-            return output_array
+        return output_array

@@ -59,7 +59,7 @@ class Interpolation(Translation):
             else:
                 dim_mask = mask
 
-            sample = self.source_sample[:,dim_mask] 
+            sample = self.source_sample[...,dim_mask] 
             if source_data.ndim > 1:
                 output_array = self.get_empty_output_array(source_data.shape[1:])
                 for idx in np.ndindex(*source_data.shape[1:]):
@@ -67,7 +67,7 @@ class Interpolation(Translation):
             else:
                 output_array = interpolate.griddata(points=sample.T, values=source_data[mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
 
-            return output_array
+            return np.squeeze(output_array)
 
         else:
             if len(self.wrt) == 1:

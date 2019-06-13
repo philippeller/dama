@@ -41,17 +41,10 @@ class Grid(object):
         for d in args:
             self.add_axis(d)
 
-        for d, x in kwargs.items():
-            if isinstance(x, Number):
-                self.add_axis(pn.Axis(var=d, nbins=x))
-            elif isinstance(x, (list, np.ndarray)):
-                self.add_axis(pn.Axis(var=d, points=np.asanyarray(x)))
-            elif isinstance(x, pn.Edges):
-                self.add_axis(pn.Axis(var=d, edges=x))
-            else:
-                raise ValueError('Did not understand %s : %s'%(d, x))
+        for k, v in kwargs.items():
+            self[k] = v
 
-    def initialize(self, source):
+    def initialize(self, source=None):
         '''Method to initialize the grid if grid is not fully set up
         it derive information from source
         
@@ -63,6 +56,10 @@ class Grid(object):
         # check dest grid is set up, otherwise do so
         for var in self.vars:
             if not self[var].initialized:
+                if source is None:
+                    if isinstance(self[var].nbins, int):
+                        self[var].points = np.arange(self[var].nbins)
+                        continue
                 # check if it might be from a grid
                 if isinstance(source, pn.GridData):
                     if var in source.grid.vars:
@@ -276,7 +273,7 @@ class Grid(object):
             raise KeyError('Cannot get key from %s'%type(item))
 
     def __setitem__(self, item, val):
-        self.add_axis(item, val)
+        self.add_axis({item:val})
         #raise AttributeError("to set a grid axisension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
 
     def compute_indices(self, sample):

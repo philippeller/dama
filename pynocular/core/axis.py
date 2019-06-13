@@ -26,8 +26,19 @@ class Axis(object):
     Class to hold a single Axis of a Grid
     which can have points and/or edges
     '''
-    def __init__(self, var=None, edges=None, points=None, nbins=10):
+    def __init__(self, var=None, edges=None, points=None, nbins=None, **kwargs):
 
+        if len(kwargs) == 1:
+            assert var is None and edges is None and points is None
+            var, val = list(kwargs.items())[0]
+            if isinstance(val, (list, np.ndarray)):
+                points=np.asanyarray(val)
+            elif isinstance(val, pn.Edges):
+                edges = val
+            elif isinstance(val, Number):
+                nbins = val
+            else:
+                raise ValueError()
         self.var = var
         self._edges = pn.Edges(edges)
         self._points = points

@@ -51,6 +51,10 @@ class Translation():
         self.source_sample = None
         self.dest_sample = None
 
+        # if there are any special, additional runs to be performed, 
+        # for example for histograms and KDE without source_data
+        self.additional_runs = {}
+
     def generate_destination(self, *args, **kwargs):
         '''Correctly set up a destination data format
         depending on the supplied input
@@ -124,6 +128,10 @@ class Translation():
             source_data = self.source[var]
             result = self.eval(source_data)
             self.dest[var] = result
+        
+        for var, data in self.additional_runs.items():
+            self.dest[var] = self.eval(data)
+
         return self.dest
 
     def eval(self, data):
