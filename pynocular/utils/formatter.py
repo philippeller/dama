@@ -73,11 +73,11 @@ def make_table_labels(axis, bold, brk):
             return labels
     else:
         if len(axis) <= N_MAX:
-            return [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis))]
+            return [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(len(axis))]
         else:
-            labels = [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(N_MAX//2)]
+            labels = [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(N_MAX//2)]
             labels += ['...']
-            labels += [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis)-N_MAX//2, len(axis))]
+            labels += [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
 
 
