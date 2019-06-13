@@ -21,7 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class edges(object):
+class Edges(object):
     '''Holding binning edges'''
     
     def __init__(self, *args, delta=None, points=None, **kwargs):
@@ -39,7 +39,7 @@ class edges(object):
         self._edges = None
         if points is not None:
             self._add_edges(self.edges_from_points(points))
-        elif len(args) == 1 and isinstance(args[0], pn.edges):
+        elif len(args) == 1 and isinstance(args[0], pn.Edges):
             self._add_edges(args[0].edges)
         elif len(args) == 1 and isinstance(args[0], np.ndarray):
             self._add_edges(args[0])
@@ -148,7 +148,7 @@ class edges(object):
         new_edges = self._edges[idx]
         if np.isscalar(new_edges):
             return new_edges
-        return pn.edges(new_edges)
+        return pn.Edges(new_edges)
 
     def __eq__(self, other):
         return np.all(np.equal(self._edges, other._edges))

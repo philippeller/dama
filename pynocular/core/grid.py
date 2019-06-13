@@ -46,7 +46,7 @@ class Grid(object):
                 self.add_axis(pn.Axis(var=d, nbins=x))
             elif isinstance(x, (list, np.ndarray)):
                 self.add_axis(pn.Axis(var=d, points=np.asanyarray(x)))
-            elif isinstance(x, pn.edges):
+            elif isinstance(x, pn.Edges):
                 self.add_axis(pn.Axis(var=d, edges=x))
             else:
                 raise ValueError('Did not understand %s : %s'%(d, x))
@@ -87,8 +87,10 @@ class Grid(object):
         in case of a basestring, a new empty axisension gets added
         '''
         if isinstance(axis, pn.Axis):
-            assert axis.var not in self.vars
-            self.axes.append(axis)
+            if axis.var in self.vars:
+                self.axes[self.vars.index(axis.var)] = axis
+            else:
+                self.axes.append(axis)
         elif isinstance(axis, dict):
             axis = pn.Axis(**axis)
             self.add_axis(axis)
@@ -266,19 +268,16 @@ class Grid(object):
 
 
         elif isinstance(item, Iterable):
-            # todo
             new_axes = []
             for it in item:
                 new_axes.append(self[it])
             return pn.Grid(*new_axes)
-        #elif isinstance(item, slice):
-        #    new_names = list(self.axes.keys())[item]
-        #    return pn.Grid(*new_names)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 
     def __setitem__(self, item, val):
-        raise AttributeError("to set a grid axisension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
+        self.add_axis(item, val)
+        #raise AttributeError("to set a grid axisension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
 
     def compute_indices(self, sample):
         '''

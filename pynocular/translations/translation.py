@@ -141,7 +141,7 @@ class Translation():
         '''
         array_shape = self.dest.array_shape
         if flat:
-            array_shape = tuple(np.product(array_shape))
+            array_shape = tuple([np.product(array_shape)])
         array_shape += element_shape
 
         if fill_value is None:

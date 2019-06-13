@@ -29,7 +29,7 @@ class Axis(object):
     def __init__(self, var=None, edges=None, points=None, nbins=10):
 
         self.var = var
-        self._edges = pn.edges(edges)
+        self._edges = pn.Edges(edges)
         self._points = points
         self._nbins = nbins
 
@@ -104,12 +104,12 @@ class Axis(object):
         if self._edges._edges is not None:
             return self._edges
         elif self._points is not None:
-            return pn.edges(points=self._points)
+            return pn.Edges(points=self._points)
         return None
 
     @edges.setter
     def edges(self, edges):
-        edges = pn.edges(edges)
+        edges = pn.Edges(edges)
         if self.has_data:
             if not len(edges) == len(self):
                 raise IndexError('incompatible length of edges')
