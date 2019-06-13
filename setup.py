@@ -20,5 +20,6 @@ setup(
         'matplotlib>=2.0',
         'KDEpy',
         'tabulate',
+        'numpy_indexed',
     ],
 )

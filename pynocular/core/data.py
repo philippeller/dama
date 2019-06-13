@@ -49,7 +49,8 @@ class Data(object):
 
         Parameters:
         -----------
-        function : callable
+        function : callable or str
+            if str, choice of ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']
         fill_value : optional
             value for invalid points
         '''

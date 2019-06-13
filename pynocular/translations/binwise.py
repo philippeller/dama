@@ -2,6 +2,7 @@ from __future__ import absolute_import
 '''Module providing a data translation methods'''
 import numpy as np
 from pynocular.translations import Translation
+import numpy_indexed as npi
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -24,7 +25,8 @@ class Binwise(Translation):
 
         Parameters:
         -----------
-        function : callable
+        function : callable or str
+            if str, choice of ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']
         fill_value : optional
             value for invalid points
         '''
@@ -33,6 +35,7 @@ class Binwise(Translation):
                          dest_needs_grid=True,
                          **kwargs)
 
+        assert function is not None, 'Need to specify function'
         self.function = function
         self.fill_value = fill_value
 
@@ -40,32 +43,43 @@ class Binwise(Translation):
     def setup(self):
         self.prepare_source_sample()
         self.indices = self.dest.grid.compute_indices(self.source_sample)
+        self.group = npi.group_by(self.indices)
 
 
     def fill_single_map(self, output_map, source_data, return_len):
         '''fill a single map with a function applied to values according to indices
         '''
-        for i in range(np.prod([d+2 for d in self.dest.grid.shape])):
-            bin_source_data = source_data[self.indices == i]
-            if len(bin_source_data) > 0:
-                result = self.function(bin_source_data) 
-                out_idx = np.unravel_index(i, [d+2 for d in self.dest.grid.shape])
+
+        if self.function in ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']:
+            indices, out =  self.group.__getattribute__(self.function)(source_data)
+            for idx, result in zip(indices, out):
+                out_idx = np.unravel_index(idx, [d+2 for d in self.dest.grid.shape])
                 out_idx = tuple([idx - 1 for idx in out_idx])
                 output_map[out_idx] = result
-
+        
+        else:
+            for idx, data in self.group.split_iterable_as_unordered_iterable(source_data):
+                result = self.function(data) 
+                out_idx = np.unravel_index(idx, [d+2 for d in self.dest.grid.shape])
+                out_idx = tuple([idx - 1 for idx in out_idx])
+                output_map[out_idx] = result
     
     def eval(self, source_data):
         source_data = source_data.flat()
 
-        # find out what does the function return:
-        if source_data.ndim > 1:
-            test_value = self.function(source_data[:3, [0]*(source_data.ndim-1)])
-        else:
-            test_value = self.function(source_data[:3])
-        if np.isscalar(test_value):
+        if isinstance(self.function, str):
             return_len = 1
         else:
-            return_len = len(test_value)
+            # find out what does the function return:
+
+            if source_data.ndim > 1:
+                test_value = self.function(source_data[:3, [0]*(source_data.ndim-1)])
+            else:
+                test_value = self.function(source_data[:3])
+            if np.isscalar(test_value):
+                return_len = 1
+            else:
+                return_len = len(test_value)
 
         if source_data.ndim > 1:
             if return_len > 1:
