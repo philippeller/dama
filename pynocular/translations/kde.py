@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-'''Module providing a data base class for translation methods'''
+'''Module providing a data translation methods'''
 from KDEpy import FFTKDE
 import numpy as np
 from pynocular.translations import Translation
@@ -32,6 +32,7 @@ class KDE(Translation):
             coices of 'silverman', 'scott', 'ISJ' for 1d data
             float specifies fixed bandwidth
         kernel : str
+            choices of 'gaussian', 'exponential', 'box', 'tri', 'epa', 'biweight', 'triweight', 'tricube', 'cosine'
         density : bool (optional)
             if false, multiply output by sum of data
         '''
@@ -64,20 +65,27 @@ class KDE(Translation):
 
     def eval(self, source_data):
 
-        source_data = source_data.flat()
-
-        if source_data.ndim > 1:
-            out_array = self.get_empty_output_array(source_data.shape[1:], flat=True)
-            for idx in np.ndindex(*source_data.shape[1:]):
-                out_array[(Ellipsis,) + idx] = self.kde.fit(self.source_sample, weights=source_data[(Ellipsis,) + idx][self.mask]).evaluate(self.dest_sample)
-                if not self.density:
-                    out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask])
-            out_shape = (self.dest.shape) + (-1,)
-
-        else:
-            out_array = self.kde.fit(self.source_sample, weights=source_data[self.mask]).evaluate(self.dest_sample)
+        if source_data is None:
+            out_array = self.kde.fit(self.source_sample).evaluate(self.dest_sample)
             out_shape = self.dest.shape
             if not self.density:
-                out_array *= np.sum(source_data[self.mask])
+                out_array *= self.source_sample.size
+
+        else:
+            source_data = source_data.flat()
+
+            if source_data.ndim > 1:
+                out_array = self.get_empty_output_array(source_data.shape[1:], flat=True)
+                for idx in np.ndindex(*source_data.shape[1:]):
+                    out_array[(Ellipsis,) + idx] = self.kde.fit(self.source_sample, weights=source_data[(Ellipsis,) + idx][self.mask]).evaluate(self.dest_sample)
+                    if not self.density:
+                        out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask])
+                out_shape = (self.dest.shape) + (-1,)
+
+            else:
+                out_array = self.kde.fit(self.source_sample, weights=source_data[self.mask]).evaluate(self.dest_sample)
+                out_shape = self.dest.shape
+                if not self.density:
+                    out_array *= np.sum(source_data[self.mask])
 
         return out_array.reshape(out_shape)

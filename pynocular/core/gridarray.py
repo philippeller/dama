@@ -3,7 +3,7 @@ from collections.abc import Iterable
 import copy
 import numpy as np
 import pynocular as pn
-from pynocular.utils.formatter import format_html
+from pynocular.utils.formatter import format_table
 import pynocular.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -126,14 +126,14 @@ class GridArray(np.ma.MaskedArray):
         return self
 
     def __repr__(self):
-        return 'GridArray(%s)'%(np.ma.asarray(self))
+        return format_table(self, tablefmt='grid')
 
     def _repr_html_(self):
         '''for jupyter'''
-        return format_html(self)
+        return format_table(self, tablefmt='html')
     
     def __str__(self):
-        return '%s'%(np.ma.asarray(self))
+        return format_table(self, tablefmt='grid')
 
     @property
     def nax(self):

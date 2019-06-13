@@ -2,7 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 import pandas
 import pynocular as pn
-from pynocular.utils.formatter import format_html
+from pynocular.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -28,7 +28,13 @@ class PointArray(np.ndarray):
 
     def _repr_html_(self):
         '''for jupyter'''
-        return format_html(self)
+        return format_table(self, tablefmt='html')
+
+    def __repr__(self):
+        return format_table(self, tablefmt='grid')
+
+    def __str__(self):
+        return format_table(self, tablefmt='grid')
 
     def __array_wrap__(self, obj):
         if obj.shape == ():

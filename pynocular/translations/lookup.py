@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-'''Module providing a data base class for translation methods'''
+'''Module providing a data translation methods'''
 import numpy as np
 import pynocular as pn
 from pynocular.translations import Translation

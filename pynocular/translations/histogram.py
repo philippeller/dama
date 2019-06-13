@@ -38,14 +38,20 @@ class Histogram(Translation):
     def setup(self):
         self.prepare_source_sample(stacked=False)
 
-    def eval(self, source_data):
-        source_data = source_data.flat()
 
-        if source_data.ndim > 1:
-            output_array = self.get_empty_output_array(source_data.shape[1:])
-            for idx in np.ndindex(*source_data.shape[1:]):
-                output_array[(Ellipsis,) + idx], _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, weights=source_data[(Ellipsis,) + idx], density=self.density)
-        else:
-            output_array, _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, weights=source_data, density=self.density)
+    def eval(self, source_data):
         
-        return output_array
+        if source_data is None:
+            output_array, _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, density=self.density)
+        
+        else:
+            source_data = source_data.flat()
+
+            if source_data.ndim > 1:
+                output_array = self.get_empty_output_array(source_data.shape[1:])
+                for idx in np.ndindex(*source_data.shape[1:]):
+                    output_array[(Ellipsis,) + idx], _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, weights=source_data[(Ellipsis,) + idx], density=self.density)
+            else:
+                output_array, _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, weights=source_data, density=self.density)
+            
+            return output_array

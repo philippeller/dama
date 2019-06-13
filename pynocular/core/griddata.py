@@ -4,7 +4,7 @@ from collections.abc import Iterable
 import copy
 import numpy as np
 import pynocular as pn
-from pynocular.utils.formatter import format_html
+from pynocular.utils.formatter import format_table
 import pynocular.plotting
 import tabulate
 
@@ -43,20 +43,14 @@ class GridData(pn.Data):
             self.grid = pn.Grid(*args, **kwargs)
 
     def __repr__(self):
-        strs = []
-        strs.append('GridData(%s'%self.grid.__repr__())
-        strs.append(self.data.__repr__() + ')')
-        return '\n'.join(strs)
+        return format_table(self, tablefmt='grid')
 
     def __str__(self):
-        strs = []
-        strs.append(self.grid.__str__())
-        strs.append(self.data.__str__())
-        return '\n'.join(strs)
+        return format_table(self, tablefmt='grid')
 
     def _repr_html_(self):
         '''for jupyter'''
-        return format_html(self)
+        return format_table(self, tablefmt='html')
 
     def __setitem__(self, var, val):
         self.add_data(var, val)

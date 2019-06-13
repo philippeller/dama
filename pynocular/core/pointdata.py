@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 import pynocular as pn
 import pynocular.plotting
-from pynocular.utils.formatter import format_html
+from pynocular.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -45,17 +45,17 @@ class PointData(pn.Data):
         #    raise ValueError("Did not understand input arguments")
 
     def __repr__(self):
-        return 'PointData(%s)'%self.data.__repr__()
+        return format_table(self, tablefmt='grid')
 
     def __str__(self):
-        return self.data.__str__()
+        return format_table(self, tablefmt='grid')
 
     def _repr_html_(self):
         '''for jupyter'''
         if self.type == 'df':
             return self.data._repr_html_()
         else:
-            return format_html(self)
+            return format_table(self, tablefmt='html')
 
 
     @property

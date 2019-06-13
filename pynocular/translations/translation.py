@@ -71,7 +71,11 @@ class Translation():
                 grid.initialize(self.source)
                 return pn.GridData(grid)
             if isinstance(dest, pn.PointData):
-                return dest
+                # check which vars we need:
+                if self.source_has_grid:
+                    return dest[self.source.grid.vars]
+                else:
+                    return dest
 
         # check if source has a grid and if any args are in there
         if isinstance(self.source, pn.GridData):

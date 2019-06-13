@@ -43,7 +43,7 @@ def as_str(a):
     return np.array2string(np.ma.asarray(a), precision=PRECISION, threshold=2, edgeitems=2)
 
 
-def make_table_labels(axis):
+def make_table_labels(axis, bold, brk):
     '''generate gird labels
 
     Parameters
@@ -56,36 +56,36 @@ def make_table_labels(axis):
     '''
     if axis._points is None:
         if len(axis) <= N_MAX:
-            return ['<b>%s</b>'%as_str(axis.edges[i]) for i in range(len(axis))]
+            return [bold%as_str(axis.edges[i]) for i in range(len(axis))]
         else:
-            labels = ['<b>%s</b>'%as_str(axis.edges[i]) for i in range(N_MAX//2)]
+            labels = [bold%as_str(axis.edges[i]) for i in range(N_MAX//2)]
             labels += ['...']
-            labels += ['<b>%s</b>'%as_str(axis.edges[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
+            labels += [bold%as_str(axis.edges[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
     # ToDo: a bit too much copy-paste going on here...
     elif axis._edges._edges is None:
         if len(axis) <= N_MAX:
-            return ['<b>%s</b>'%as_str(axis.points[i]) for i in range(len(axis))]
+            return [bold%as_str(axis.points[i]) for i in range(len(axis))]
         else:
-            labels = ['<b>%s</b>'%as_str(axis.points[i]) for i in range(N_MAX//2)]
+            labels = [bold%as_str(axis.points[i]) for i in range(N_MAX//2)]
             labels += ['...']
-            labels += ['<b>%s</b>'%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
+            labels += [bold%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
     else:
         if len(axis) <= N_MAX:
-            return ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis))]
+            return [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis))]
         else:
-            labels = ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(N_MAX//2)]
+            labels = [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(N_MAX//2)]
             labels += ['...']
-            labels += ['<b>[%s | %s | %s]</b>'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis)-N_MAX//2, len(axis))]
+            labels += [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0])), as_str(axis.points[i]), as_str(axis.edges[i,1])) for i in range(len(axis)-N_MAX//2, len(axis))]
             return labels
 
 
 
-def make_table_row(name, array):
+def make_table_row(name, array, bold, brk):
     '''forma a simgle table row'''
     if name is not None:
-        row = ['<b>%s</b>'%name]
+        row = [bold%name]
     else:
         row = []
     array = np.ma.asarray(array)
@@ -100,13 +100,13 @@ def make_table_row(name, array):
 
     return row
 
-def make_2d_table(data):
+def make_2d_table(data, bold, brk):
 
-    x_labels = make_table_labels(data.grid.axes[0])
-    y_labels = make_table_labels(data.grid.axes[1])
+    x_labels = make_table_labels(data.grid.axes[0], bold, brk)
+    y_labels = make_table_labels(data.grid.axes[1], bold, brk)
 
     table = []
-    table.append(['<b>%s \\ %s</b>'%(data.grid.vars[1], data.grid.vars[0])] + x_labels)
+    table.append([bold%('%s \\ %s'%(data.grid.vars[1], data.grid.vars[0]))] + x_labels)
     for i in range(len(y_labels)):
         table.append([y_labels[i]] + [0] * (len(x_labels)))
 
@@ -132,12 +132,12 @@ def make_2d_table(data):
 
     for i, r_idx in zip(table_row_idices, data_row_idices):
         for j, c_idx in zip(table_col_idices, data_col_idices):
-            table[i+1][j+1] = get_item(data, (c_idx, r_idx))
+            table[i+1][j+1] = get_item(data, (c_idx, r_idx), bold, brk)
             
     return table
 
 
-def get_item(data, idx):
+def get_item(data, idx, bold, brk):
     '''Get a string formatted item from a GridArray or gridData object at index idx'''
     if isinstance(data, pn.GridArray):
         return as_str(data[idx])
@@ -146,43 +146,51 @@ def get_item(data, idx):
         all_data = []
         for n, d in data.items():
             all_data.append('%s = %s'%(n, as_str(d[idx])))
-        return '<br>'.join(all_data)
+        return brk.join(all_data)
 
 
-def format_html(data):
+def format_table(data, tablefmt='html'):
+
+    if tablefmt == 'html':
+        bold = '<b>%s</b>'
+        brk = '<br>'
+    else:
+        bold = '%s'
+        brk = '\n'
+
     if isinstance(data, pn.PointData):
-        table = [make_table_row(n, d) for n, d in data.items()]
-        return tabulate.tabulate(table, tablefmt='html')
+        table = [make_table_row(n, d, bold, brk) for n, d in data.items()]
+        return tabulate.tabulate(table, tablefmt=tablefmt)
 
     if isinstance(data, pn.PointArray):
-        table = [make_table_row(None, data)]
-        return tabulate.tabulate(table, tablefmt='html')
+        table = [make_table_row(None, data, bold, brk)]
+        return tabulate.tabulate(table, tablefmt=tablefmt)
 
     if isinstance(data, pn.GridArray):
         if data.nax == 2:
-            table = make_2d_table(data)
+            table = make_2d_table(data, bold, brk)
         
         elif data.nax == 1:
             table = []
-            table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
-            table.append(make_table_row('', data))
+            table.append([bold%data.grid.vars[0]] + make_table_labels(data.grid.axes[0], bold, brk))
+            table.append(make_table_row('', data, bold, brk))
 
         else:
             return None
 
-        return tabulate.tabulate(table, tablefmt='html')
+        return tabulate.tabulate(table, tablefmt=tablefmt)
 
 
     if isinstance(data, pn.GridData):
         if data.grid.nax == 2:
-            table = make_2d_table(data)
+            table = make_2d_table(data, bold, brk)
         
         elif data.ndim == 1:
             table = []
-            table.append(['<b>%s</b>'%data.grid.vars[0]] + make_table_labels(data.grid.axes[0]))
+            table.append([bold%data.grid.vars[0]] + make_table_labels(data.grid.axes[0], bold, brk))
             for d in data.items():
-                table.append(make_table_row(*d))
+                table.append(make_table_row(*d, bold, brk))
 
-        return tabulate.tabulate(table, tablefmt='html')
+        return tabulate.tabulate(table, tablefmt=tablefmt)
 
     return data.__repr__()
