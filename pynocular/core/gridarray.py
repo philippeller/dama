@@ -178,7 +178,7 @@ class GridArray(np.ma.MaskedArray):
         if isinstance(item, list) and all([isinstance(i, int) for i in item]):
             self.data[item] = val
             return
-        mask = ~self[item].data.mask
+        mask = ~self[item].mask
         if np.isscalar(val):
             self[item].data[mask] = val
         else:
