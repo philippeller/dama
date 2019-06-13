@@ -70,11 +70,11 @@ etc.
 
 currently there are the follwoing translations methods:
 * histogram : Nd (weighted) histograms supporting multi-dimensional elements
-* binswise : binwise application of arbitrary functions
+* binswise : Nd binwise application of arbitrary functions
 * interp : Nd interpolation
 * kde : Nd kernel density estimates for regular grids (variable bandwidth for 1d)
-* lookup : lookup of values on grids
-* resample : resampling between diferent grids
+* lookup : Nd lookup of values on grids
+* resample : Nd resampling between diferent grids
 
 ## Other things
 
