@@ -26,15 +26,16 @@ a
 
 that supports many numpy features, for example: 
 
-```
+```python
 np.sum(a, axis='x')
 ```
 <table>
-  <tbody>\
+  <tbody>
     <tr><td><b>y</b></td><td><b>0</b></td><td><b>1</b></td><td><b>2</b></td><td><b>3</b></td><td><b>4</b></td></tr>
     <tr><td><b></b> </td><td>9.22    </td><td>11.3    </td><td>13.7    </td><td>10.9    </td><td>9.2     </td></tr>
   </tbody>
 </table>
+
 ```python
 np.ones_like(a)
 a[a > 0.5] = 0.5
