@@ -53,9 +53,12 @@ class Grid(object):
         source : pn.GridData, pn.PointData
         
         '''
+        # ToDo: maybe do something smarter with default nbins?
         # check dest grid is set up, otherwise do so
         for var in self.vars:
             if not self[var].initialized:
+                if self[var].nbins is None:
+                    self[var].nbins = 10
                 if source is None:
                     if isinstance(self[var].nbins, int):
                         self[var].points = np.arange(self[var].nbins)

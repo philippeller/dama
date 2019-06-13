@@ -154,7 +154,7 @@ class Axis(object):
 
     @nbins.setter
     def nbins(self, nbins):
-        if self._points is None and self._edges is None:
+        if not self.initialized:
             self._nbins = nbins
         else:
             raise ValueError('Cannot set n since bins are already defined')
