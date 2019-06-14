@@ -162,9 +162,35 @@ class GridArray(np.ma.MaskedArray):
                 return np.ma.asarray(self)[item]
             return pn.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
+    def get_array(self, var, flat=False):
+        '''
+        return bare array of data
+
+        Parameters:
+        -----------
+
+        var : string
+            variable to return of grid vars
+        flat : bool (optional)
+            if true return flattened (1d) array
+        '''
+        assert var in self.grid.vars
+        array = self.grid.point_meshgrid[self.grid.vars.index(var)]
+        if flat:
+            if array.ndim == self.grid.nax:
+                return array.ravel()
+            return array.reshape(self.grid.size, -1)
+
+        return array
+
+    @property
+    def array_shape(self):
+        '''
+        shape of array
+        '''
+        return self.shape
+
     def __setitem__(self, item, val):
-        # ToDo: a[[1,3,5]] *= x does not assign
-        #print(item, val)
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))

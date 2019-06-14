@@ -46,6 +46,8 @@ class Lookup(Translation):
             ind = tuple([idx - 1 for idx in ind])
             if np.all(np.greater_equal(ind, 0)) and np.all(np.less(ind, self.source.grid.shape[:len(ind)])):
                 output_array[i] = source_data[ind]
-        return output_array.reshape((self.dest.array_shape) + (-1,))
+        if output_array.size > self.dest.size:
+            return output_array.reshape((self.dest.array_shape) + (-1,))
+        return output_array.reshape(self.dest.array_shape)
 
 
