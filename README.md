@@ -41,6 +41,7 @@ np.ones_like(a)
 a[a > 0.5] = 0.5
 a.T
 a[::-2, [1,3,5]]
+np.sin(a) / np.abs(2.3 + a**2)
 ```
 Its `grid` attribute is another object, here it was just instantiated with default values (i.e. axis "x" and "y" with points `[0, 1, 2, ...]`), but one can explicitly specify the axes with points and/or edges etc to be used.
 
@@ -69,12 +70,12 @@ g = p.interp(x = np.linspace(0,10,1000))
 etc.
 
 currently there are the follwoing translations methods:
-* histogram
-* binswise
-* interp
-* kde
-* lookup
-* resample
+* histogram : Nd (weighted) histograms supporting multi-dimensional elements
+* binswise : Nd binwise application of arbitrary functions
+* interp : Nd interpolation
+* kde : Nd kernel density estimates evaluated on regular grids (variable bandwidth for 1d)
+* lookup : Nd lookup of values on grids
+* resample : Nd resampling between different grids
 
 ## Other things
 
