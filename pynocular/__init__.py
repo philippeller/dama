@@ -1,4 +1,3 @@
-from .core.data import Data
 from .core.grid import Grid
 from .core.edges import Edges
 from .core.axis import Axis

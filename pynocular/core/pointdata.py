@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import numpy as np
 import pandas
 import pynocular as pn
+from pynocular import translations
 import pynocular.plotting
 from pynocular.utils.formatter import format_table
 
@@ -20,7 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class PointData(pn.Data):
+class PointData:
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
@@ -45,10 +46,10 @@ class PointData(pn.Data):
         #    raise ValueError("Did not understand input arguments")
 
     def __repr__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def __str__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def _repr_html_(self):
         '''for jupyter'''
@@ -165,6 +166,24 @@ class PointData(pn.Data):
 
     def items(self):
         return self.data.items()
+
+    # --- Tranlsation methods ---
+
+    def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
+        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+    interp.__doc__ = translations.Interpolation.__init__.__doc__
+
+    def histogram(self, *args, density=False, **kwargs):
+        return translations.Histogram(self, *args, density=density, **kwargs).run()
+    histogram.__doc__ = translations.Histogram.__init__.__doc__
+
+    def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
+        return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
+    binwise.__doc__ = translations.Binwise.__init__.__doc__
+
+    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
+        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    kde.__doc__ = translations.KDE.__init__.__doc__
 
 
     # --- Plotting functions ---

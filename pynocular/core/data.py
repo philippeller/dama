@@ -19,72 +19,30 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class Data(object):
-    '''
-    Data base class
+class Data:
+    '''Data base class
     '''
 
     def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
-        '''interpolation from any data fromat to another
-
-        Parameters:
-        -----------
-        method : string
-            "nearest" = nearest neightbour interpolation
-            "linear" = linear interpolation
-            "cubic" = cubic interpolation (only for ndim < 3)
-        fill_value : optional
-            value for invalid points
-        '''
-        translator = translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs)
-        return translator.run()
+        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+    interp.__doc__ = translations.Interpolation.__init__.__doc__
 
     def histogram(self, *args, density=False, **kwargs):
-        '''Method for histograms'''
-        translator = translations.Histogram(self, *args, density=density, **kwargs)
-        return translator.run()
+        return translations.Histogram(self, *args, density=density, **kwargs).run()
+    histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
-        '''translation from array data into binned form
-
-        Parameters:
-        -----------
-        function : callable or str
-            if str, choice of ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']
-        fill_value : optional
-            value for invalid points
-        '''
-        translator = translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs)
-        return translator.run()
+        return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
+    binwise.__doc__ = translations.Binwise.__init__.__doc__
 
     def lookup(self, *args, **kwargs):
-        '''lookup the bin content at given points
-
-        Parameters:
-        -----------
-        '''
-        translator = translations.Lookup(self, *args, **kwargs)
-        return translator.run()
+        return translations.Lookup(self, *args, **kwargs).run()
+    lookup.__doc__ = translations.Lookup.__init__.__doc__
 
     def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
-        '''run KDE on regular grid
-
-        Parameters:
-        -----------
-
-        bw : str or float
-            coices of 'silverman', 'scott', 'ISJ' for 1d data
-            float specifies fixed bandwidth
-        kernel : str
-        density : bool (optional)
-            if false, multiply output by sum of data
-        '''
-        translator = translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs)
-        return translator.run()
+        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    kde.__doc__ = translations.KDE.__init__.__doc__
 
     def resample(self, *args, **kwargs):
-        '''resample from binned data into other binned data
-        ToDo: this is super inefficient
-        '''
-        translator = translations.Resample(self, *args, **kwargs)
-        return translator.run()
+        return translations.Resample(self, *args, **kwargs).run()
+    resample.__doc__ = translations.Resample.__init__.__doc__

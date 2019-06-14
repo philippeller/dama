@@ -45,8 +45,9 @@ class Translation():
             self.wrt = self.dest.vars
 
         # checks
-        if not set(self.wrt) <= set(source.vars):
-            raise TypeError('the following variables are missing in the source: %s'%', '.join(set(self.vars) - (set(self.vars) & set(source.vars))))
+        if not isinstance(self.source, pn.GridArray):
+            if not set(self.wrt) <= set(source.vars):
+                raise TypeError('the following variables are missing in the source: %s'%', '.join(set(self.vars) - (set(self.vars) & set(source.vars))))
 
         self.source_sample = None
         self.dest_sample = None
@@ -74,6 +75,10 @@ class Translation():
                 grid = dest
                 grid.initialize(self.source)
                 return pn.GridData(grid)
+            if isinstance(dest, pn.GridArray):
+                grid = dest.grid
+                grid.initialize(self.source)
+                return pn.GridArray(np.empty(grid.shape), grid=grid)
             if isinstance(dest, pn.PointData):
                 # check which vars we need:
                 if self.source_has_grid:
@@ -82,10 +87,10 @@ class Translation():
                     return dest
 
         # check if source has a grid and if any args are in there
-        if isinstance(self.source, pn.GridData):
+        if isinstance(self.source, (pn.GridData, pn.GridArray)):
             dims = []
             for arg in args:
-                # in thsio case the source may have a grid, get those edges
+                # in this case the source may have a grid, get those edges
                 if isinstance(arg, str):
                     if arg in self.source.grid.vars:
                         dims.append(self.source.grid[arg])
@@ -97,7 +102,12 @@ class Translation():
         grid = pn.Grid(*args, **kwargs)
         grid.initialize(self.source)
 
+        if isinstance(self.source, pn.GridArray):
+            return pn.GridArray(np.empty(grid.shape), grid=grid)
+
+
         return pn.GridData(grid)
+
 
     def prepare_source_sample(self, flat=True, stacked=True, transposed=False):
         if transposed: assert stacked
@@ -121,6 +131,21 @@ class Translation():
     def run(self):
 
         self.setup()
+
+        if isinstance(self.dest, pn.GridArray):
+            # in this case it is a single array, no vars
+            if isinstance(self.source, (pn.GridData, pn.PointData)):
+                assert len(self.source.vars) - len(self.wrt) == 1
+                for var in self.source.vars:
+                    if var in self.wrt:
+                        continue
+                    source_data = self.source[var]
+            else:
+                source_data = self.source
+
+            result = self.eval(source_data)
+            self.dest = pn.GridArray(result, grid=self.dest.grid)
+            return self.dest
 
         for var in self.source.vars:
             if var in self.wrt:

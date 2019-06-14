@@ -31,10 +31,10 @@ class PointArray(np.ndarray):
         return format_table(self, tablefmt='html')
 
     def __repr__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def __str__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def __array_wrap__(self, obj):
         if obj.shape == ():

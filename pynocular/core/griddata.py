@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 from collections import OrderedDict
 from collections.abc import Iterable
-import copy
 import numpy as np
 import pynocular as pn
+from pynocular import translations
 from pynocular.utils.formatter import format_table
 import pynocular.plotting
-import tabulate
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -23,7 +22,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class GridData(pn.Data):
+class GridData:
     '''
     Class to hold grid data
     '''
@@ -43,10 +42,10 @@ class GridData(pn.Data):
             self.grid = pn.Grid(*args, **kwargs)
 
     def __repr__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def __str__(self):
-        return format_table(self, tablefmt='grid')
+        return format_table(self, tablefmt='plain')
 
     def _repr_html_(self):
         '''for jupyter'''
@@ -234,6 +233,32 @@ class GridData(pn.Data):
 
     def items(self):
         return [(n, pn.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
+
+    # --- Tranlsation methods ---
+
+    def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
+        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+    interp.__doc__ = translations.Interpolation.__init__.__doc__
+
+    def histogram(self, *args, density=False, **kwargs):
+        return translations.Histogram(self, *args, density=density, **kwargs).run()
+    histogram.__doc__ = translations.Histogram.__init__.__doc__
+
+    def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
+        return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
+    binwise.__doc__ = translations.Binwise.__init__.__doc__
+
+    def lookup(self, *args, **kwargs):
+        return translations.Lookup(self, *args, **kwargs).run()
+    lookup.__doc__ = translations.Lookup.__init__.__doc__
+
+    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
+        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    kde.__doc__ = translations.KDE.__init__.__doc__
+
+    def resample(self, *args, **kwargs):
+        return translations.Resample(self, *args, **kwargs).run()
+    resample.__doc__ = translations.Resample.__init__.__doc__
 
 
 

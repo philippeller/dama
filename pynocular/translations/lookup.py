@@ -38,19 +38,14 @@ class Lookup(Translation):
         self.indices = self.source.grid.compute_indices(self.dest_sample)
 
     def eval(self, source_data):
-        output_array = self.get_empty_output_array(source_data.shape[source_data.nax:])
+        output_array = self.get_empty_output_array(source_data.shape[source_data.nax:], flat=True)
 
-        #TODO: make this better
         for i in range(len(output_array)):
             # check we're inside grid:
             ind = np.unravel_index(self.indices[i], [d+2 for d in self.source.grid.shape])
             ind = tuple([idx - 1 for idx in ind])
-            inside = True
-            for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= self.source.grid.shape[j]
-            if inside:
-                idx = tuple(ind)
-                output_array[i] = source_data[idx]
-        return output_array
+            if np.all(np.greater_equal(ind, 0)) and np.all(np.less(ind, self.source.grid.shape[:len(ind)])):
+                output_array[i] = source_data[ind]
+        return output_array.reshape((self.dest.array_shape) + (-1,))
 
 

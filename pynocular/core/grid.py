@@ -64,14 +64,17 @@ class Grid(object):
                         self[var].points = np.arange(self[var].nbins)
                         continue
                 # check if it might be from a grid
-                if isinstance(source, pn.GridData):
+                if isinstance(source, (pn.GridData, pn.GridArray)):
                     if var in source.grid.vars:
                         if isinstance(self[var].nbins, float):
                             # this measn we want to multiply the old nbins
                             new_nbins = int(source.grid[var].nbins * self[var].nbins)
                         else:
                             new_nbins = self[var].nbins
-                        self[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
+                        if source.grid[var]._edges.edges is not None:
+                            self[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
+                        if source.grid[var]._points is not None:
+                            self[var].points = np.linspace(source.grid[var].points.min(), source.grid[var].points.max(), new_nbins)
                         continue
                 # in this case it's pointdata
                 self[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), self[var].nbins+1)
