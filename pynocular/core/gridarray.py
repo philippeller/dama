@@ -90,6 +90,13 @@ def wrap(func):
 
 class GridArray(np.ma.MaskedArray):
     '''Structure to hold a single GridArray
+
+    Parameters
+    ----------
+    input_array : ndarray
+    grid : pn.Grid (optional)
+        if not specified, *args and **kwargs will be used to constrcut grid
+        if those are also not specified, default grid is added
     '''
     def __new__(cls, input_array, *args, grid=None, **kwargs):
         # ToDo: sort out kwargs

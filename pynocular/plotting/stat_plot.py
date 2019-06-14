@@ -146,8 +146,9 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
                    color=colors[i],
                    **kwargs)
         else:
-            mask = np.isfinite(data[:, i])
-            ax.hist(source.grid.points[0][mask], bins=source.grid.squeezed_edges[0], weights=data[:, i][mask], histtype='step', color=colors[i], **kwargs)
+            band_data = np.ma.asarray(data[:, i])
+            band_data = np.ma.append(band_data, band_data[-1])
+            ax.step(source.grid.squeezed_edges[0], band_data, where='post',  color=colors[i], **kwargs)
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
