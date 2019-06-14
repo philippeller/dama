@@ -66,8 +66,8 @@ class Interpolation(Translation):
                     output_array[(Ellipsis,) + idx] = interpolate.griddata(points=sample.T, values=source_data[(Ellipsis,) + idx][dim_mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
             else:
                 output_array = interpolate.griddata(points=sample.T, values=source_data[mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
-
-            return np.squeeze(output_array)
+                output_array = np.squeeze(output_array)
+            return output_array
 
         else:
             if len(self.wrt) == 1:

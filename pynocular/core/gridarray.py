@@ -141,6 +141,12 @@ class GridArray(np.ma.MaskedArray):
         return self.grid.nax
 
     def __getitem__(self, item, *args):
+        if isinstance(item, str):
+            if item in self.grid.vars:
+                data = self.get_array(item)
+                new_data = pn.GridArray(data, grid=self.grid)
+                return new_data
+
         if isinstance(item, pn.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))

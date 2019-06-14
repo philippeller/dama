@@ -94,6 +94,10 @@ class PointData:
         return len(self.data)
 
     @property
+    def size(self):
+        return self.array_shape[0]
+
+    @property
     def array_shape(self):
         '''the shape (first dimesnion only) of a single variable
 
