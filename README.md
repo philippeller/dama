@@ -41,6 +41,7 @@ np.ones_like(a)
 a[a > 0.5] = 0.5
 a.T
 a[::-2, [1,3,5]]
+np.sin(a) / np.abs(2.3 + a**2)
 ```
 Its `grid` attribute is another object, here it was just instantiated with default values (i.e. axis "x" and "y" with points `[0, 1, 2, ...]`), but one can explicitly specify the axes with points and/or edges etc to be used.
 
