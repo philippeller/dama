@@ -169,6 +169,9 @@ class GridArray(np.ma.MaskedArray):
             else:
                 raise IndexError('Cannot process list of indices %s'%item)
         if isinstance(item, tuple):
+
+            item = self.grid.convert_slice(item)
+
             new_grid = self.grid[item]
             if len(new_grid) == 0:
                 # then we have a single element

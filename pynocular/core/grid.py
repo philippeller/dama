@@ -249,18 +249,21 @@ class Grid(object):
                 for var in item:
                     new_obj.axes.append(self[var])
                 return new_obj
-            elif all([isinstance(i, int) for i in item]):
+            elif all([isinstance(i, (np.integer, int)) for i in item]):
                 return self[(item,)]
             else:
                 raise IndexError('Cannot process list of indices %s'%item)
         elif isinstance(item, tuple):
             if all([isinstance(i, str) for i in item]):
                 return self[list(item)]
+            
+            item = self.convert_slice(item)
+
             new_obj = pn.Grid()
             for i in range(len(self)): 
                 if i < len(item):
                     assert item[i] is not Ellipsis
-                    if isinstance(item[i], int):
+                    if isinstance(item[i], (np.integer, int)):
                         # we can skip this axisesnion, as it is one element
                         continue
                     new_obj.axes.append(self.axes[i][item[i]])
@@ -277,6 +280,23 @@ class Grid(object):
             return pn.Grid(*new_axes)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
+
+    def convert_slice(self, idx):
+        ''' convert indices/slices
+
+        Parameters
+        ----------
+        idx : tuple
+        '''
+        new_idx = []
+        for i in range(len(idx)):
+            if i < self.nax:
+                new_idx.append(self.axes[i].convert_slice(idx[i]))
+            else:
+                new_idx.append(idx[i])
+
+        return tuple(new_idx)
+
 
     def __setitem__(self, item, val):
         self.add_axis({item:val})

@@ -67,6 +67,9 @@ class Axis(object):
         return '\n'.join(strs)
 
     def __getitem__(self, idx):
+
+        idx = self.convert_slice(idx)
+
         if idx is Ellipsis:
             return self
 
@@ -78,6 +81,44 @@ class Axis(object):
             new_obj._points = self._points[idx]
         new_obj._nbins = self._nbins
         return new_obj
+
+    def convert_slice(self, idx):
+        '''Convert slice
+
+        idx : int, float, slice, Ellipsis
+        '''
+        if isinstance(idx, (int, np.integer, type(Ellipsis))):
+            return idx
+        
+        if isinstance(idx, float):
+            return self.convert_index(idx)
+
+        if isinstance(idx, (list, np.ndarray)):
+            new_indices = []
+            for i in idx:
+                new_indices.append(self.convert_index(i))
+            return new_indices
+
+        if isinstance(idx, slice):
+            start = self.convert_index(idx.start)
+            stop = self.convert_index(idx.stop)
+
+            return slice(start, stop, idx.step)
+
+        raise IndexError(idx, type(idx))
+
+    def convert_index(self, idx):
+        if idx is None:
+            return None
+
+        if isinstance(idx, (int, np.integer)):
+            return idx
+        
+        idx = self.compute_indices(idx)
+        if idx >= 0:
+            return idx
+
+        raise IndexError('Index out of range')
 
 
     def compute_indices(self, sample):
