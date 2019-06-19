@@ -42,9 +42,9 @@ class Lookup(Translation):
 
         for i in range(len(output_array)):
             # check we're inside grid:
-            ind = np.unravel_index(self.indices[i], [d+2 for d in self.source.grid.shape])
-            ind = tuple([idx - 1 for idx in ind])
-            if np.all(np.greater_equal(ind, 0)) and np.all(np.less(ind, self.source.grid.shape[:len(ind)])):
+            idx = self.indices[i]
+            if idx >= 0:
+                ind = np.unravel_index(idx, self.source.grid.shape)
                 output_array[i] = source_data[ind]
         if output_array.size > self.dest.size:
             return output_array.reshape((self.dest.array_shape) + (-1,))

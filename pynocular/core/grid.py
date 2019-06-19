@@ -284,7 +284,8 @@ class Grid(object):
 
     def compute_indices(self, sample):
         '''
-        calculate the bin indices for a a given sample
+        calculate the bin indices for a a given sample as a raveled multi-index
+        when values are outside any of the axes' binning, returns -1 as index
         '''
         if isinstance(sample, np.ndarray):
             assert sample.shape[0] == self.nax
@@ -295,13 +296,16 @@ class Grid(object):
             raise NotImplementedError()
 
         # array holding raveld indices
-        multi_index = [digitize_inclusive(sample[i], self.edges[i].squeezed_edges) for i in range(self.nax)]
-        return np.ravel_multi_index(multi_index, [d + 2 for d in self.shape])
-
-def digitize_inclusive(x, bins):
-    idx = np.digitize(x, bins)
-    idx[x == bins[-1]] -= 1
-    return idx
+        multi_index = [self.axes[i].compute_indices(sample[i]) for i in range(self.nax)]
+        # mask where any index is outside binning (= -1)
+        mask = np.all([idx >= 0 for idx in multi_index], axis=0)
+        if np.isscalar(mask):
+            if not mask:
+                return -1
+            return np.ravel_multi_index(multi_index, self.shape)
+        raveled_indices = np.full_like(multi_index[0], fill_value=-1)
+        raveled_indices[mask] = np.ravel_multi_index([idx[mask] for idx in multi_index], self.shape)
+        return raveled_indices
 
 
 def test():

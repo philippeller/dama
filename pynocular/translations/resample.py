@@ -47,13 +47,9 @@ class Resample(Translation):
         lookup_array = np.full(self.lookup_sample[0].shape[0], np.nan)
         for i in range(len(lookup_array)):
             # check we're inside grid:
-            ind = np.unravel_index(self.indices[i], [d+2 for d in self.source.grid.shape])
-            ind = tuple([idx - 1 for idx in ind])
-            inside = True
-            for j in range(len(ind)):
-                inside = inside and not ind[j] < 0 and not ind[j] >= self.source.grid.shape[j]
-            if inside:
-                idx = tuple(ind)
+            idx = self.indices[i]
+            if idx >= 0:
+                ind = np.unravel_index(idx, self.source.grid.shape)
                 lookup_array[i] = source_data[idx]
 
         # now bin both these points into destination

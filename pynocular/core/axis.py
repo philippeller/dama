@@ -79,6 +79,39 @@ class Axis(object):
         new_obj._nbins = self._nbins
         return new_obj
 
+
+    def compute_indices(self, sample):
+        '''compute bin indices for a sample, return -1 if outise of bins
+
+        Parameters
+        ----------
+        sample : array, float
+
+        Returns
+        -------
+
+        indices : array, int
+        '''
+        if not self.edges.consecutive:
+            raise NotImplementedError()
+        
+        bins = self.edges.squeezed_edges
+        if np.isscalar(sample):
+            if sample == bins[-1]:
+                return  len(self)
+            elif sample < bins[0] or sample > bins[-1]:
+                return -1
+            else:
+                return np.digitize(sample, bins) - 1
+
+        idx = np.digitize(sample, bins) - 1
+        # make inclusive right edge
+        idx[sample == bins[-1]] -= 1
+        # set overflow bin to idx -1
+        idx[idx == len(self)] = -1
+        return idx
+
+
     @property
     def initialized(self):
         '''wether axis is initialized'''

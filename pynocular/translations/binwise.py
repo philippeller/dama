@@ -53,17 +53,16 @@ class Binwise(Translation):
         if self.function in ['count', 'sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']:
             indices, out =  self.group.__getattribute__(self.function)(source_data)
             for idx, result in zip(indices, out):
-                out_idx = np.unravel_index(idx, [d+2 for d in self.dest.grid.shape])
-                out_idx = tuple([idx - 1 for idx in out_idx])
-                output_map[out_idx] = result
+                if idx >= 0:
+                    out_idx = np.unravel_index(idx, self.dest.grid.shape)
+                    output_map[out_idx] = result
         
         else:
-            for i in range(np.prod([d+2 for d in self.dest.grid.shape])):
+            for i in range(self.dest.grid.size):
                 bin_source_data = source_data[self.indices == i]
                 if len(bin_source_data) > 0:
                     result = self.function(bin_source_data) 
-                    out_idx = np.unravel_index(i, [d+2 for d in self.dest.grid.shape])
-                    out_idx = tuple([idx - 1 for idx in out_idx])
+                    out_idx = np.unravel_index(i, self.dest.grid.shape)
                     output_map[out_idx] = result
     
     def eval(self, source_data):

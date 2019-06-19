@@ -147,6 +147,13 @@ class Translation():
             self.dest = pn.GridArray(result, grid=self.dest.grid)
             return self.dest
 
+        if isinstance(self.source, pn.GridArray):
+            source_data = self.source
+            result = self.eval(source_data)
+            self.dest['result'] = result
+            return self.dest
+
+
         for var in self.source.vars:
             if var in self.wrt:
                 continue
