@@ -12,7 +12,6 @@ setup(
         'python>=3.0',
         'pip>=1.8',
         'setuptools>18.5',
-        'numpy>=1.11'
     ],
 
     install_requires=[
@@ -21,5 +20,7 @@ setup(
         'KDEpy',
         'tabulate',
         'numpy_indexed',
+        'numpy>=1.11',
+        'pandas'
     ],
 )
