@@ -110,7 +110,7 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
     assert source.grid.nax == 2
     X, Y = source.grid.point_meshgrid
 
-    cs = ax.contour(X, Y, source[var].T, **kwargs)
+    cs = ax.contour(X, Y, source[var], **kwargs)
     return cs
 
 def plot_bands(source, var, fig=None, ax=None, **kwargs):
