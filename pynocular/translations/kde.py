@@ -29,9 +29,9 @@ class KDE(Translation):
         -----------
 
         source : GridData or PointData
-        bw : str or float
+        bw : str or float or iterable
             coices of 'silverman', 'scott', 'ISJ' for 1d data
-            float specifies fixed bandwidth
+            float specifies fixed bandwidth, in case of iterable a separate, fixed bandwith per dimension
         kernel : str
             choices of 'gaussian', 'exponential', 'box', 'tri', 'epa', 'biweight', 'triweight', 'tricube', 'cosine'
         density : bool (optional)
