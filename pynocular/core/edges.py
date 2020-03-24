@@ -153,3 +153,8 @@ class Edges(object):
     def __eq__(self, other):
         return np.all(np.equal(self._edges, other._edges))
 
+
+
+def test_edges():
+    edges = Edges(np.arange(10))
+    assert np.allclose(edges.points, np.linspace(0.5, 8.5, 9))
