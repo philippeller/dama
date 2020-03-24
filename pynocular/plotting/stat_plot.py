@@ -110,7 +110,18 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
     assert source.grid.nax == 2
     X, Y = source.grid.point_meshgrid
 
+    labels = kwargs.pop('labels', None)
+    inline = kwargs.pop('inline', True)
+
     cs = ax.contour(X, Y, source[var], **kwargs)
+
+    if labels is not None:
+        fmt = {}
+        for l, s in zip(cs.levels, labels):
+            fmt[l] = s
+
+        ax.clabel(cs, cs.levels, inline=inline, fmt=fmt)
+
     return cs
 
 def plot_bands(source, var, fig=None, ax=None, **kwargs):
