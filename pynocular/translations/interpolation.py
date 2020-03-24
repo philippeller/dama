@@ -79,7 +79,7 @@ class Interpolation(Translation):
                 return np.array([f(x, y)[0] for x, y in zip(self.dest_sample[0], self.dest_sample[1])])
 
             else:
-                if method == 'nearest':
+                if self.method == 'nearest':
                     f = interpolate.NearestNDInterpolator(self.source_sample.T, source_data)
                 else:
                     f = interpolate.LinearNDInterpolator(self.source_sample.T, source_data, fill_value=self.fill_value)
