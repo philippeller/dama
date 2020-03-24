@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data translation methods'''
 from KDEpy import FFTKDE
+from collections.abc import Iterable 
 import numpy as np
 from pynocular.translations import Translation
 
@@ -63,10 +64,20 @@ class KDE(Translation):
         #if n_masked > 0:
         #    warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
         sample = [s[self.mask] for s in self.source_sample]
-        self.source_sample = np.stack(sample).T
 
-        self.kde = FFTKDE(bw=self.bw, kernel=self.kernel)
+
+        self.source_sample = np.stack(sample).T
         self.prepare_dest_sample(transposed=True)
+
+        if isinstance(self.bw, (np.ndarray, list, tuple)):
+            for i in range(self.dest.grid.nax):
+                self.source_sample[:,i] /= self.bw[i]
+                self.dest_sample[:,i] /= self.bw[i]
+            bw = 1
+        else:
+            bw = self.bw
+
+        self.kde = FFTKDE(bw=bw, kernel=self.kernel)
 
     def eval(self, source_data):
 
@@ -92,5 +103,8 @@ class KDE(Translation):
                 out_shape = self.dest.shape
                 if not self.density:
                     out_array *= np.sum(source_data[self.mask])
+
+        #if isinstance(self.bw, (np.ndarray, list, tuple)):
+        #    out_array *= np.product(self.bw)
 
         return out_array.reshape(out_shape)
