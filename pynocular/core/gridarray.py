@@ -110,7 +110,7 @@ class GridArray(np.ma.MaskedArray):
         obj = np.ma.asarray(input_array).view(cls)
         if grid is not None:
             obj.grid = grid
-        elif not len(args) == 0 and not len(kwargs) == 0:
+        elif not len(args) == 0 or not len(kwargs) == 0:
             obj.grid = pn.Grid(*args, **kwargs)
         else:
             # make a default grid:
