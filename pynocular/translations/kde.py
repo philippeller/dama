@@ -44,7 +44,7 @@ class KDE(Translation):
                          **kwargs)
 
         if bw is None:
-            bw = 'silverman' if source_data.ndim == 1 else 1
+            bw = 'silverman' if self.dest.grid.nax == 1 else 1.
         self.bw = bw
         self.kernel = kernel
         self.density = density
