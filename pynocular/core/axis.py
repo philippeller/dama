@@ -44,6 +44,16 @@ class Axis(object):
         self._points = points
         self._nbins = nbins
 
+    @property
+    def has_points(self):
+        '''True if points are set'''
+        return self._points is not None
+
+    @property
+    def has_edges(self):
+        '''True if edges are set'''
+        return self._edges is not None
+
     def __len__(self):
         if self._points is not None:
             return len(self._points)

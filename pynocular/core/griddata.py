@@ -300,6 +300,7 @@ class GridData:
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
         return pn.plotting.plot_bands(self, var, fig=fig, ax=ax, **kwargs)
+    plot_bands.__doc__ = pn.plotting.plot_bands.__doc__
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:

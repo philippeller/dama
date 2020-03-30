@@ -151,27 +151,45 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
     n_bands = (n_points+1)//2
 
     colors = cmap(np.linspace(0, 1, n_bands+1))[1:]
-    
     colors = kwargs.pop('colors', colors)
+
+    assert source.grid.nax == 1
+    grid_axis = source.grid.axes[0]
 
     for i in range(n_bands):
         upper_idx = n_points - i - 1
 
-        if not upper_idx == i:
-            ax.bar(source.grid.edges[0].edges[:,0],
-                   data[:, upper_idx] - data[:, i],
-                   bottom=data[:, i],
-                   width=source.grid.edges[0].width,
-                   color=colors[i],
-                   align='edge',
-                   **kwargs)
+        if grid_axis.has_points:
+            if not upper_idx == i:
+                ax.fill_between(grid_axis.points,
+                       data[:, i], 
+                       data[:, upper_idx],
+                       color=colors[i],
+                       **kwargs)
+            else:
+                ax.plot(grid_axis.points, data[:, i], color=colors[i], **kwargs)
+
         else:
-            band_data = np.ma.asarray(data[:, i])
-            band_data = np.ma.append(band_data, band_data[-1])
-            ax.step(source.grid.squeezed_edges[0], band_data, where='post',  color=colors[i], **kwargs)
+            if not upper_idx == i:
+                ax.bar(grid_axis.edges[:,0],
+                       data[:, upper_idx] - data[:, i],
+                       bottom=data[:, i],
+                       width=grid_axis.width,
+                       color=colors[i],
+                       align='edge',
+                       **kwargs)
+            else:
+                band_data = np.ma.asarray(data[:, i])
+                band_data = np.ma.append(band_data, band_data[-1])
+                ax.step(grid_axis.squeezed_edges, band_data, where='post',  color=colors[i], **kwargs)
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
+
+    if grid_axis.has_points:
+        ax.set_xlim(grid_axis.points.min(), grid_axis.points.max())
+    else:
+        ax.set_xlim(grid_axis.edges.min(), grid_axis.edges.max())
 
 def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
     '''

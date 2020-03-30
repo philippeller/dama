@@ -22,7 +22,7 @@ limitations under the License.'''
 
 class KDE(Translation):
 
-    def __init__(self, source, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
+    def __init__(self, source, *args, bw=None, kernel='gaussian', density=True, **kwargs):
         '''run KDE on regular grid
 
         Parameters:
@@ -30,6 +30,7 @@ class KDE(Translation):
 
         source : GridData or PointData
         bw : str or float or iterable
+            Will default to 'silverman; for 1d data and 1 otherwise
             coices of 'silverman', 'scott', 'ISJ' for 1d data
             float specifies fixed bandwidth, in case of iterable a separate, fixed bandwith per dimension
         kernel : str
@@ -42,6 +43,8 @@ class KDE(Translation):
                          dest_needs_grid=True,
                          **kwargs)
 
+        if bw is None:
+            bw = 'silverman' if source_data.ndim == 1 else 1
         self.bw = bw
         self.kernel = kernel
         self.density = density
