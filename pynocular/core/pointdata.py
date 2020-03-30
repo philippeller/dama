@@ -196,10 +196,15 @@ class PointData:
         pn.plotting.plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
     def plot(self, *args, **kwargs):
-        if len(args) > 1:
-            pn.plotting.plot(self, args[0], args[1], *args[2:], **kwargs)
+        if len(args) == 1:
+            pn.plotting.plot1d(self, args[0], **kwargs)
+        elif len(args) > 0:
+            #pn.plotting.plot(self, args[0], args[1], *args[2:], **kwargs)
+            pn.plotting.plot(self, *args, **kwargs)
         elif len(self) == 2:
             pn.plotting.plot(self, *self.vars, *args, **kwargs)
+        #elif len(args) == 1:
+        #    pn.plotting.plot(self, args[0], **kwargs)
         else:
             raise ValueError('Need to specify variables to plot')
 

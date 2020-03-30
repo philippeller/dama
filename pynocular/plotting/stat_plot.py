@@ -69,6 +69,14 @@ def plot_step(garray, label=None, fig=None, ax=None, **kwargs):
 
 # --- to be fixed ---
 
+def plot1d(source, x, *args, **kwargs):
+    '''1d plot'''
+    fig = kwargs.pop('fig', plt.gcf())
+    ax = kwargs.pop('ax', plt.gca())
+    p = ax.plot(source[x], *args, **kwargs)
+    ax.set_ylabel(x)
+    return p
+
 def plot(source, x, y, *args, **kwargs):
     '''2d plot'''
     fig = kwargs.pop('fig', plt.gcf())
@@ -150,11 +158,12 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
         upper_idx = n_points - i - 1
 
         if not upper_idx == i:
-            ax.bar(source.grid.points[0],
+            ax.bar(source.grid.edges[0].edges[:,0],
                    data[:, upper_idx] - data[:, i],
                    bottom=data[:, i],
                    width=source.grid.edges[0].width,
                    color=colors[i],
+                   align='edge',
                    **kwargs)
         else:
             band_data = np.ma.asarray(data[:, i])
