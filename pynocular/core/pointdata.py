@@ -185,8 +185,8 @@ class PointData:
         return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
     binwise.__doc__ = translations.Binwise.__init__.__doc__
 
-    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
-        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    def kde(self, *args, **kwargs):
+        return translations.KDE(self, *args, **kwargs).run()
     kde.__doc__ = translations.KDE.__init__.__doc__
 
 

@@ -39,8 +39,8 @@ class Data:
         return translations.Lookup(self, *args, **kwargs).run()
     lookup.__doc__ = translations.Lookup.__init__.__doc__
 
-    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
-        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    def kde(self, *args, **kwargs):
+        return translations.KDE(self, *args, **kwargs).run()
     kde.__doc__ = translations.KDE.__init__.__doc__
 
     def resample(self, *args, **kwargs):
