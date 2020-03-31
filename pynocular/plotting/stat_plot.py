@@ -152,8 +152,8 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
     assert isinstance(source, (pn.GridData, pn.GridArray))
 
     if isinstance(source, pn.GridData):
-        if var is None and len(self.data_vars) == 1:
-            var = self.data_vars[0]
+        if var is None and len(source.data_vars) == 1:
+            var = source.data_vars[0]
         data = np.array(source[var])
 
     else:
