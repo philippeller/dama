@@ -132,7 +132,7 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
 
     return cs
 
-def plot_bands(source, var, fig=None, ax=None, **kwargs):
+def plot_bands(source, var, fig=None, ax=None, labels=None, **kwargs):
     '''
     plot band between the variables values (expect each bin to have a 1d array)
     '''
@@ -158,6 +158,12 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
 
     for i in range(n_bands):
         upper_idx = n_points - i - 1
+        if labels is not None and i < len(labels):
+            label = labels[i]
+        else:
+            label = None
+
+
 
         if grid_axis.has_points:
             if not upper_idx == i:
@@ -165,9 +171,14 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
                        data[:, i], 
                        data[:, upper_idx],
                        color=colors[i],
+                       label=label,
                        **kwargs)
             else:
-                ax.plot(grid_axis.points, data[:, i], color=colors[i], **kwargs)
+                ax.plot(grid_axis.points, data[:, i],
+                        color=colors[i], 
+                        label=label,
+                        **kwargs)
+
 
         else:
             if not upper_idx == i:
@@ -177,11 +188,15 @@ def plot_bands(source, var, fig=None, ax=None, **kwargs):
                        width=grid_axis.width,
                        color=colors[i],
                        align='edge',
+                       label=label,
                        **kwargs)
             else:
                 band_data = np.ma.asarray(data[:, i])
                 band_data = np.ma.append(band_data, band_data[-1])
-                ax.step(grid_axis.squeezed_edges, band_data, where='post',  color=colors[i], **kwargs)
+                ax.step(grid_axis.squeezed_edges, band_data,
+                        where='post', 
+                        label=label,
+                        color=colors[i], **kwargs)
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
