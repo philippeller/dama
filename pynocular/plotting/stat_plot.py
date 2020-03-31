@@ -21,50 +21,185 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-def plot_map(garray, label=None, cbar=False, fig=None, ax=None, **kwargs):
+# === Modernized ===
+
+def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
+    '''
+    plot band between the variable's values (expect each bin to have a 1d array)
+
+    Parameters:
+    -----------
+    var : str
+        Variable name ot be plotted (if source type is GridArry or GridData with
+        a single variable, then that one is used by default)
+    
+    fig, ax : matplotlib figure and axis (optional)
+
+    labels : iterable
+        lables to add for the bands
+    '''
+    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert source.grid.nax == 1
+
+    if isinstance(source, pn.GridData):
+        if var is None and len(source.data_vars) == 1:
+            var = source.data_vars[0]
+        data = np.array(source[var])
+
+    else:
+        data = np.array(source)
+
+    if fig is None:
+        fig = plt.gcf()
+    if ax is None:
+        ax = plt.gca()
+    
+    cmap = kwargs.pop('cmap', 'Blues')
+    cmap = plt.get_cmap(cmap)
+
+    n_points = data.shape[1]
+    
+    n_bands = (n_points+1)//2
+
+    colors = cmap(np.linspace(0, 1, n_bands+1))[1:]
+    colors = kwargs.pop('colors', colors)
+
+    grid_axis = source.grid.axes[0]
+
+    for i in range(n_bands):
+        upper_idx = n_points - i - 1
+        if labels is not None and i < len(labels):
+            label = labels[i]
+        else:
+            label = None
+
+        if grid_axis.has_points:
+            if not upper_idx == i:
+                ax.fill_between(grid_axis.points,
+                       data[:, i], 
+                       data[:, upper_idx],
+                       color=colors[i],
+                       label=label,
+                       **kwargs)
+            else:
+                ax.plot(grid_axis.points, data[:, i],
+                        color=colors[i], 
+                        label=label,
+                        **kwargs)
+
+
+        else:
+            if not upper_idx == i:
+                ax.bar(grid_axis.edges[:,0],
+                       data[:, upper_idx] - data[:, i],
+                       bottom=data[:, i],
+                       width=grid_axis.edges.width,
+                       color=colors[i],
+                       align='edge',
+                       label=label,
+                       **kwargs)
+            else:
+                band_data = np.ma.asarray(data[:, i])
+                band_data = np.ma.append(band_data, band_data[-1])
+                ax.step(grid_axis.squeezed_edges, band_data,
+                        where='post', 
+                        label=label,
+                        color=colors[i], **kwargs)
+
+    ax.set_xlabel(source.grid.vars[0])
+    ax.set_ylabel(var)
+
+    if grid_axis.has_points:
+        ax.set_xlim(grid_axis.points.min(), grid_axis.points.max())
+    else:
+        ax.set_xlim(grid_axis.edges.min(), grid_axis.edges.max())
+
+def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
     '''
     plot a 2d color map
+
+    Parameters:
+    -----------
+
+    var : str (optional)
+        Variable name ot be plotted (if source type is GridArry or GridData with
+        a single variable, then that one is used by default)
+    cbar : bool (optional)
+        Add colorbar to axis
+    fig, ax : matplotlib figure and axis (optional)
     '''
+    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert source.grid.nax == 2
+
+    if isinstance(source, pn.GridData):
+        if var is None and len(source.data_vars) == 1:
+            var = source.data_vars[0]
+        data = np.array(source[var])
+
+    else:
+        data = np.array(source)
     
     if fig is None:
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert garray.grid.nax == 2
 
-    data = np.ma.asarray(garray)
+    data = np.ma.asarray(data)
 
-    if data.ndim == garray.grid.nax + 1 and data.shape[-1] == 3:
+    if data.ndim == source.grid.nax + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :], extent=(garray.grid.edges[0].min(), garray.grid.edges[0].max(), garray.grid.edges[1].min(), garray.grid.edges[1].max()), **kwargs)
+        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :],
+                       extent=(source.grid.edges[0].min(), 
+                       source.grid.edges[0].max(),
+                       source.grid.edges[1].min(),
+                       source.grid.edges[1].max()),
+                       **kwargs)
     else:
-        X, Y = garray.grid.edge_meshgrid
-        pc = ax.pcolormesh(X, Y, data.T, linewidth=0, rasterized=True, **kwargs)
+        X, Y = source.grid.edge_meshgrid
+        pc = ax.pcolormesh(X, Y, data.T,
+                           linewidth=0,
+                           rasterized=True,
+                           **kwargs)
         if cbar:
-            fig.colorbar(pc, ax=ax, label=label)
+            fig.colorbar(pc, ax=ax, label=var)
 
-    ax.set_xlabel(garray.grid.vars[0])
-    ax.set_ylabel(garray.grid.vars[1])
-    ax.set_xlim(garray.grid.edges[0].min(), garray.grid.edges[0].max())
-    ax.set_ylim(garray.grid.edges[1].min(), garray.grid.edges[1].max())
+    ax.set_xlabel(source.grid.vars[0])
+    ax.set_ylabel(source.grid.vars[1])
+    ax.set_xlim(source.grid.edges[0].min(), source.grid.edges[0].max())
+    ax.set_ylim(source.grid.edges[1].min(), source.grid.edges[1].max())
     return pc
 
-def plot_step(garray, label=None, fig=None, ax=None, **kwargs):
+def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
     '''
     plot a step function, i.e. histogram
+    var : str
+        Variable name ot be plotted (if source type is GridArry or GridData with
+        a single variable, then that one is used by default)
+    label : str
+    fig, ax : matplotlib figure and axis (optional)
     '''
+    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert source.grid.nax == 1
+
+    if isinstance(source, pn.GridData):
+        if var is None and len(source.data_vars) == 1:
+            var = source.data_vars[0]
+        data = np.array(source[var])
+
+    else:
+        data = np.array(source)
+
     if fig is None:
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert garray.grid.nax == 1
 
-    data = np.ma.asarray(garray)
+    data = np.ma.asarray(data)
     data = np.ma.append(data, data[-1])
 
-    s = ax.step(garray.grid.squeezed_edges[0], data, where='post', **kwargs)
-    ax.set_xlabel(garray.grid.vars[0])
-    ax.set_ylabel(label)
+    s = ax.step(source.grid.squeezed_edges[0], data, where='post', label=label, **kwargs)
+    ax.set_xlabel(source.grid.vars[0])
+    ax.set_ylabel(var)
     return s
 
 
@@ -133,98 +268,6 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
 
     return cs
 
-def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
-    '''
-    plot band between the variable's values (expect each bin to have a 1d array)
-
-    Parameters:
-    -----------
-    var : str
-        Variable name ot be plotted (if source type is GridArry or GridData with
-        a single variable, then that one is used by default)
-    
-    fig, ax : matplotlib figure and axis (optional)
-
-    labels : iterable
-        lables to add for the bands
-    '''
-
-    assert isinstance(source, (pn.GridData, pn.GridArray))
-
-    if isinstance(source, pn.GridData):
-        if var is None and len(source.data_vars) == 1:
-            var = source.data_vars[0]
-        data = np.array(source[var])
-
-    else:
-        data = np.array(source)
-
-    if fig is None:
-        fig = plt.gcf()
-    if ax is None:
-        ax = plt.gca()
-    assert source.grid.nax == 1
-    
-    cmap = kwargs.pop('cmap', 'Blues')
-    cmap = plt.get_cmap(cmap)
-
-    n_points = data.shape[1]
-    
-    n_bands = (n_points+1)//2
-
-    colors = cmap(np.linspace(0, 1, n_bands+1))[1:]
-    colors = kwargs.pop('colors', colors)
-
-    assert source.grid.nax == 1
-    grid_axis = source.grid.axes[0]
-
-    for i in range(n_bands):
-        upper_idx = n_points - i - 1
-        if labels is not None and i < len(labels):
-            label = labels[i]
-        else:
-            label = None
-
-        if grid_axis.has_points:
-            if not upper_idx == i:
-                ax.fill_between(grid_axis.points,
-                       data[:, i], 
-                       data[:, upper_idx],
-                       color=colors[i],
-                       label=label,
-                       **kwargs)
-            else:
-                ax.plot(grid_axis.points, data[:, i],
-                        color=colors[i], 
-                        label=label,
-                        **kwargs)
-
-
-        else:
-            if not upper_idx == i:
-                ax.bar(grid_axis.edges[:,0],
-                       data[:, upper_idx] - data[:, i],
-                       bottom=data[:, i],
-                       width=grid_axis.edges.width,
-                       color=colors[i],
-                       align='edge',
-                       label=label,
-                       **kwargs)
-            else:
-                band_data = np.ma.asarray(data[:, i])
-                band_data = np.ma.append(band_data, band_data[-1])
-                ax.step(grid_axis.squeezed_edges, band_data,
-                        where='post', 
-                        label=label,
-                        color=colors[i], **kwargs)
-
-    ax.set_xlabel(source.grid.vars[0])
-    ax.set_ylabel(var)
-
-    if grid_axis.has_points:
-        ax.set_xlim(grid_axis.points.min(), grid_axis.points.max())
-    else:
-        ax.set_xlim(grid_axis.edges.min(), grid_axis.edges.max())
 
 def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
     '''

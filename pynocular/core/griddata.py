@@ -5,6 +5,7 @@ import numpy as np
 import pynocular as pn
 from pynocular import translations
 from pynocular.utils.formatter import format_table
+from pynocular.utils.bind import bind
 import pynocular.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -31,6 +32,8 @@ class GridData:
         Set the grid
         '''
         self.data = {}
+
+        # ToDo protect self.grid as private self._grid
         self.grid = None
 
         if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
@@ -40,6 +43,17 @@ class GridData:
             self.grid = args[0]
         else:
             self.grid = pn.Grid(*args, **kwargs)
+
+        self._setup_plotting_methods()
+
+    def _setup_plotting_methods(self):
+        '''dynamically set up plotting methods, 
+        depending on the number of axes'''
+
+        if self.grid.nax == 1:
+            self.plot = bind(self, pn.plotting.plot_step)
+        if self.grid.nax == 2:
+            self.plot = bind(self, pn.plotting.plot_map)
 
     def __repr__(self):
         return format_table(self, tablefmt='plain')
@@ -161,6 +175,7 @@ class GridData:
         if isinstance(data, (pn.GridArray, GridData)):
             if self.grid is None or not self.grid.initialized:
                 self.grid = data.grid
+                self._setup_plotting_methods()
             else:
                 assert self.grid == data.grid
 
@@ -264,13 +279,13 @@ class GridData:
 
     # --- Plotting methods ---
 
-    def plot(self, var=None, **kwargs):
-        if var is None and len(self.data_vars) == 1:
-            var = self.data_vars[0]
-        if self.ndim == 1:
-            return self.plot_step(var, **kwargs)
-        elif self.ndim == 2:
-            return self.plot_map(var, **kwargs)
+    #def plot(self, var=None, **kwargs):
+    #    if var is None and len(self.data_vars) == 1:
+    #        var = self.data_vars[0]
+    #    if self.ndim == 1:
+    #        return self.plot_step(var, **kwargs)
+    #    elif self.ndim == 2:
+    #        return self.plot_map(var, **kwargs)
 
     def plot_map(self, var=None, cbar=False, fig=None, ax=None, **kwargs):
         '''
