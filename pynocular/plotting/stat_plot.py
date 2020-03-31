@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
+import pynocular as pn
 from matplotlib import pyplot as plt
 
 '''Module to provide plotting convenience functions
@@ -132,10 +133,32 @@ def plot_contour(source, var, fig=None, ax=None, **kwargs):
 
     return cs
 
-def plot_bands(source, var, fig=None, ax=None, labels=None, **kwargs):
+def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
     '''
-    plot band between the variables values (expect each bin to have a 1d array)
+    plot band between the variable's values (expect each bin to have a 1d array)
+
+    Parameters:
+    -----------
+    var : str
+        Variable name ot be plotted (if source type is GridArry or GridData with
+        a single variable, then that one is used by default)
+    
+    fig, ax : matplotlib figure and axis (optional)
+
+    labels : iterable
+        lables to add for the bands
     '''
+
+    assert isinstance(source, (pn.GridData, pn.GridArray))
+
+    if isinstance(source, pn.GridData):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
+        data = np.array(source[var])
+
+    else:
+        data = np.array(source)
+
     if fig is None:
         fig = plt.gcf()
     if ax is None:
@@ -145,7 +168,6 @@ def plot_bands(source, var, fig=None, ax=None, labels=None, **kwargs):
     cmap = kwargs.pop('cmap', 'Blues')
     cmap = plt.get_cmap(cmap)
 
-    data = np.array(source[var])
     n_points = data.shape[1]
     
     n_bands = (n_points+1)//2
@@ -162,8 +184,6 @@ def plot_bands(source, var, fig=None, ax=None, labels=None, **kwargs):
             label = labels[i]
         else:
             label = None
-
-
 
         if grid_axis.has_points:
             if not upper_idx == i:
@@ -185,7 +205,7 @@ def plot_bands(source, var, fig=None, ax=None, labels=None, **kwargs):
                 ax.bar(grid_axis.edges[:,0],
                        data[:, upper_idx] - data[:, i],
                        bottom=data[:, i],
-                       width=grid_axis.width,
+                       width=grid_axis.edges.width,
                        color=colors[i],
                        align='edge',
                        label=label,

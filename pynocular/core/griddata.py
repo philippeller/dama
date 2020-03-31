@@ -296,11 +296,7 @@ class GridData:
             var = self.data_vars[0]
         return pn.plotting.plot_step(self[var], label=var, fig=fig, ax=ax, **kwargs)
 
-    def plot_bands(self, var=None, fig=None, ax=None, **kwargs):
-        if var is None and len(self.data_vars) == 1:
-            var = self.data_vars[0]
-        return pn.plotting.plot_bands(self, var, fig=fig, ax=ax, **kwargs)
-    plot_bands.__doc__ = pn.plotting.plot_bands.__doc__
+    plot_bands = pn.plotting.plot_bands
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:

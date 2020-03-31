@@ -391,3 +391,4 @@ class GridArray(np.ma.MaskedArray):
     def plot_step(self, label=None, fig=None, ax=None, **kwargs):
         return pn.plotting.plot_step(self, label=label, fig=fig, ax=ax, **kwargs)
 
+    plot_bands = pn.plotting.plot_bands
