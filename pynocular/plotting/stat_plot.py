@@ -90,7 +90,7 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
 
         else:
             if not upper_idx == i:
-                ax.bar(grid_axis.edges[:,0],
+                ax.bar(grid_axis.edges.edges[:,0],
                        data[:, upper_idx] - data[:, i],
                        bottom=data[:, i],
                        width=grid_axis.edges.width,
