@@ -181,9 +181,8 @@ class PointData:
         return translations.Histogram(self, *args, density=density, **kwargs).run()
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
-    def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
-        return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
-    binwise.__doc__ = translations.Binwise.__init__.__doc__
+    def binwise(self, *args, **kwargs):
+        return pn.BinnedData(data=self, *args, **kwargs)   
 
     def kde(self, *args, **kwargs):
         return translations.KDE(self, *args, **kwargs).run()

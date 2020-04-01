@@ -26,7 +26,10 @@ class BinnedData:
     '''
     Class to hold binned data
     '''
-    def __init__(self, data=None, *args, **kwargs):
+
+    # ToDo fill_value kwarg
+
+    def __init__(self, grid=None, data=None, *args, **kwargs):
         '''
         Set the grid
         '''
@@ -37,17 +40,17 @@ class BinnedData:
         self.indices = None
         self.group = None
         self.sample = None
+ 
+        self.grid = grid
 
-        # ToDo protect self.grid as private self._grid
-        self.grid = None
+        if grid is None:
+            if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
+                self.grid = args[0]
+            else:
+                self.grid = pn.Grid(*args, **kwargs)
 
-        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
-            for n,d in kwargs.items():
-                self.add_data(n, d)
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
-            self.grid = args[0]
-        else:
-            self.grid = pn.Grid(*args, **kwargs)
+        if not self.grid.initialized:
+            self.grid.initialize(self.data)
 
     def compute_indices(self):
         self.sample = [self.data.get_array(var, flat=True) for var in self.grid.vars]
@@ -58,31 +61,13 @@ class BinnedData:
         self.add_data(var, val)
 
     def __getitem__(self, item):
+
         if isinstance(item, str):
-            if item in self.vars:
-                if item in self.data_vars:
-                    data = self.data[item]
-                else:
-                    data = self.get_array(item)
-                new_data = pn.GridArray(data, grid=self.grid)
-                return new_data
+            item = [item]
+            
+        item += self.grid.vars
 
-        # create new instance with only those vars
-        if isinstance(item, Iterable) and all([isinstance(v, str) for v in item]):
-            new_data = pn.GridData(self.grid)
-            for v in item:
-                if v in self.data_vars:
-                    new_data[v] = self.data[v]
-            return new_data
-
-        # slice
-        new_grid = self.grid[item]
-        if len(new_grid) == 0:
-            return {n : d[item] for n,d in self.items()}
-        new_data = pn.GridData(new_grid)
-        for n,d in self.items():
-            new_data[n] = d[item]
-        return new_data
+        return pn.BinnedData(grid=self.grid, data=self.data[item])
         
     @property
     def vars(self):
@@ -128,7 +113,7 @@ class BinnedData:
 
         self.data[var] = data
 
-    def run_np_indexed(self, method, *args, **kwargs):
+    def run_np_indexed(self, method, fill_value=np.nan, **kwargs):
         '''run the numpy indexed methods
         Parameters:
         -----------
@@ -146,7 +131,11 @@ class BinnedData:
         for var in self.data.vars:
             if var in self.grid.vars:
                 continue
-            output_maps[var] = np.full(self.grid.shape, fill_value=np.nan)
+            source_data = self.data[var]
+            if source_data.ndim > 1: 
+                output_maps[var] = np.full(self.grid.shape + source_data.shape[1:], fill_value=fill_value, dtype=self.data[var].dtype)
+            else:
+                output_maps[var] = np.full(self.grid.shape, fill_value=fill_value, dtype=self.data[var].dtype)
             source_data = self.data[var]
             indices, outputs[var] =  self.group.__getattribute__(method)(source_data)
 
@@ -167,36 +156,102 @@ class BinnedData:
         return out_data
 
 
-    def sum(self, *args, **kwargs):
-        return self.run_np_indexed('sum', *args, **kwargs)
+    def apply_function(self, function, *args, fill_value=np.nan, return_len=None, **kwargs):
+        '''apply function per bin'''
 
-    def mean(self, *args, **kwargs):
-        return self.run_np_indexed('mean', *args, **kwargs)
+        if self.indices is None:
+            self.compute_indices()
 
-    def min(self, *args, **kwargs):
-        return self.run_np_indexed('min', *args, **kwargs)
+        outputs = {}
+        output_maps = {}
+        for var in self.data.vars:
+            if var in self.grid.vars:
+                continue
+            source_data = self.data[var]
 
-    def max(self, *args, **kwargs):
-        return self.run_np_indexed('max', *args, **kwargs)
+            if return_len is None:
+                # try to figure out return length of function
 
-    def std(self, *args, **kwargs):
-        return self.run_np_indexed('std', *args, **kwargs)
+                if source_data.ndim > 1:
+                    test_value = function(source_data[:3, [0]*(source_data.ndim-1)], *args, **kwargs)
+                else:
+                    test_value = function(source_data[:3], *args, **kwargs)
+                if np.isscalar(test_value):
+                    return_len = 1
+                else:
+                    return_len = len(test_value)
 
-    def var(self, *args, **kwargs):
-        return self.run_np_indexed('var', *args, **kwargs)
+            if source_data.ndim > 1:
+                if return_len > 1:
+                    output_maps[var] = np.full(self.grid.shape + source_data.shape[1:] + (return_len, ), fill_value=fill_value, dtype=source_data.dtype)
+                else:
+                    output_maps[var] = np.full(self.grid.shape + source_data.shape[1:], fill_value=fill_value, dtype=source_data.dtype)
+            else:
+                if return_len > 1:
+                    output_maps[var] = np.full(self.grid.shape + (return_len, ), fill_value=fill_value, dtype=source_data.dtype)
+                else:
+                    output_maps[var] = np.full(self.grid.shape, fill_value=fill_value, dtype=source_data.dtype)
 
-    def argmin(self, *args, **kwargs):
-        return self.run_np_indexed('argmin', *args, **kwargs)
+        for i in range(self.grid.size):
+            mask = self.indices == i
+            if np.any(mask):
+                out_idx = np.unravel_index(i, self.grid.shape)
+                for var in self.data.vars:
+                    if var in self.grid.vars:
+                        continue
+                    source_data = self.data[var]
+                    if source_data.ndim > 1:
+                        for idx in np.ndindex(*source_data.shape[1:]):
+                            bin_source_data = self.data[var][mask][:, idx]
+                            output_maps[var][out_idx + (idx,)] = function(bin_source_data, *args, **kwargs)
+                    else:
+                        bin_source_data = self.data[var][mask]
+                        output_maps[var][out_idx] = function(bin_source_data, *args, **kwargs)
 
-    def argmax(self, *args, **kwargs):
-        return self.run_np_indexed('argmax', *args, **kwargs)
+        # Pack into GridData
+        out_data = pn.GridData(self.grid)
+        for var, output_map in output_maps.items():
+            out_data[var] = output_map
 
-    def median(self, *args, **kwargs):
-        return self.run_np_indexed('median', *args, **kwargs)
+        return out_data
 
-    def mode(self, *args, **kwargs):
-        return self.run_np_indexed('mode', *args, **kwargs)
+    def sum(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('sum', fill_value=fill_value, **kwargs)
 
-    def prod(self, *args, **kwargs):
-        return self.run_np_indexed('prod', *args, **kwargs)
+    def mean(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('mean', fill_value=fill_value, **kwargs)
+
+    def min(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('min', fill_value=fill_value, **kwargs)
+
+    def max(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('max', fill_value=fill_value, **kwargs)
+
+    def std(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('std', fill_value=fill_value, **kwargs)
+
+    def var(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('var', fill_value=fill_value, **kwargs)
+
+    def argmin(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('argmin', fill_value=fill_value, **kwargs)
+
+    def argmax(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('argmax', fill_value=fill_value, **kwargs)
+
+    def median(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('median', fill_value=fill_value, **kwargs)
+
+    def mode(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('mode', fill_value=fill_value, **kwargs)
+
+    def prod(self, fill_value=np.nan, **kwargs):
+        return self.run_np_indexed('prod', fill_value=fill_value, **kwargs)
+
+    def quantile(self, q, fill_value=np.nan, **kwargs):
+        if not isinstance(q, Iterable):
+            return_len = 1
+        else:
+            return_len = len(q)
+        return self.apply_function(np.quantile, q, return_len=return_len, fill_value=fill_value, **kwargs)
 
