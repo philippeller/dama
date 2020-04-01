@@ -5,4 +5,5 @@ from .core.pointarray import PointArray
 from .core.pointdata import PointData
 from .core.gridarray import GridArray
 from .core.griddata import GridData
+from .core.binneddata import BinnedData
 from . import plotting

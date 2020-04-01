@@ -22,39 +22,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-def wrap(func):
-    def wrapped_func(self, *args, **kwargs):
-        axis = kwargs.pop('axis')
-        assert axis is None, 'Axis kw not supported for BinnedData'
-        #print(args, kwargs)
-        if self.indices is None:
-            self.compute_indices()
-        outputs = {}
-        output_maps = {}
-        for var in self.data.vars:
-            if var in self.grid.vars:
-                continue
-            output_maps[var] = np.full(self.grid.shape, fill_value=np.nan)
-            source_data = self.data[var]
-            indices, outputs[var] =  func(self, source_data)
-
-        for i, idx in enumerate(indices):
-            if idx < 0:
-                continue
-            out_idx = np.unravel_index(idx, self.grid.shape)
-            for var in self.data.vars:
-                if var in self.grid.vars:
-                    continue
-                output_maps[var][out_idx] = result = outputs[var][i]
-
-        # Pack into GridData
-        out_data = pn.GridData(self.grid)
-        for var, output_map in output_maps.items():
-            out_data[var] = output_map
-
-        return out_data
-    return wrapped_func
-
 class BinnedData:
     '''
     Class to hold binned data
@@ -161,36 +128,75 @@ class BinnedData:
 
         self.data[var] = data
 
-    @wrap
-    def sum(self, source_data):
-        return self.group.sum(source_data)
-    @wrap
-    def mean(self, source_data):
-        return self.group.mean(source_data)
-    @wrap
-    def min(self, source_data):
-        return self.group.min(source_data)
-    @wrap
-    def max(self, source_data):
-        return self.group.max(source_data)
-    @wrap
-    def std(self, source_data):
-        return self.group.std(source_data)
-    @wrap
-    def var(self, source_data):
-        return self.group.var(source_data)
-    @wrap
-    def argmin(self, source_data):
-        return self.group.argmin(source_data)
-    @wrap
-    def argmax(self, source_data):
-        return self.group.argmax(source_data)
-    @wrap
-    def median(self, source_data):
-        return self.group.median(source_data)
-    @wrap
-    def mode(self, source_data):
-        return self.group.mode(source_data)
-    @wrap
-    def prod(self, source_data):
-        return self.group.prod(source_data)
+    def run_np_indexed(self, method, *args, **kwargs):
+        '''run the numpy indexed methods
+        Parameters:
+        -----------
+
+        method : str
+            choice of ['sum', 'mean', 'min', 'max', 'std', 'var', 'argmin', 'argmax', 'median', 'mode', 'prod']
+        '''
+        axis = kwargs.pop('axis', None)
+        assert axis is None, 'Axis kw not supported for BinnedData'
+
+        if self.indices is None:
+            self.compute_indices()
+        outputs = {}
+        output_maps = {}
+        for var in self.data.vars:
+            if var in self.grid.vars:
+                continue
+            output_maps[var] = np.full(self.grid.shape, fill_value=np.nan)
+            source_data = self.data[var]
+            indices, outputs[var] =  self.group.__getattribute__(method)(source_data)
+
+        for i, idx in enumerate(indices):
+            if idx < 0:
+                continue
+            out_idx = np.unravel_index(idx, self.grid.shape)
+            for var in self.data.vars:
+                if var in self.grid.vars:
+                    continue
+                output_maps[var][out_idx] = result = outputs[var][i]
+
+        # Pack into GridData
+        out_data = pn.GridData(self.grid)
+        for var, output_map in output_maps.items():
+            out_data[var] = output_map
+
+        return out_data
+
+
+    def sum(self, *args, **kwargs):
+        return self.run_np_indexed('sum', *args, **kwargs)
+
+    def mean(self, *args, **kwargs):
+        return self.run_np_indexed('mean', *args, **kwargs)
+
+    def min(self, *args, **kwargs):
+        return self.run_np_indexed('min', *args, **kwargs)
+
+    def max(self, *args, **kwargs):
+        return self.run_np_indexed('max', *args, **kwargs)
+
+    def std(self, *args, **kwargs):
+        return self.run_np_indexed('std', *args, **kwargs)
+
+    def var(self, *args, **kwargs):
+        return self.run_np_indexed('var', *args, **kwargs)
+
+    def argmin(self, *args, **kwargs):
+        return self.run_np_indexed('argmin', *args, **kwargs)
+
+    def argmax(self, *args, **kwargs):
+        return self.run_np_indexed('argmax', *args, **kwargs)
+
+    def median(self, *args, **kwargs):
+        return self.run_np_indexed('median', *args, **kwargs)
+
+    def mode(self, *args, **kwargs):
+        return self.run_np_indexed('mode', *args, **kwargs)
+
+    def prod(self, *args, **kwargs):
+        return self.run_np_indexed('prod', *args, **kwargs)
+
