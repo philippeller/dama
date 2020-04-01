@@ -202,11 +202,9 @@ class BinnedData:
                     source_data = self.data[var]
                     if source_data.ndim > 1:
                         for idx in np.ndindex(*source_data.shape[1:]):
-                            bin_source_data = self.data[var][mask][:, idx]
-                            output_maps[var][out_idx + (idx,)] = function(bin_source_data, *args, **kwargs)
+                            output_maps[var][out_idx + (idx,)] = function(self.data[var][:, idx][mask], *args, **kwargs)
                     else:
-                        bin_source_data = self.data[var][mask]
-                        output_maps[var][out_idx] = function(bin_source_data, *args, **kwargs)
+                        output_maps[var][out_idx] = function(self.data[var][mask], *args, **kwargs)
 
         # Pack into GridData
         out_data = pn.GridData(self.grid)

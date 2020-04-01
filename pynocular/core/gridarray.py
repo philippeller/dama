@@ -351,10 +351,6 @@ class GridArray(np.ma.MaskedArray):
         return translations.Histogram(self, *args, density=density, **kwargs).run()
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
-    def binwise(self, *args, method=None, function=None, fill_value=np.nan, density=False, **kwargs):
-        return translations.Binwise(self, *args, function=function, fill_value=fill_value, **kwargs).run()
-    binwise.__doc__ = translations.Binwise.__init__.__doc__
-
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
     lookup.__doc__ = translations.Lookup.__init__.__doc__
