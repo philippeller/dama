@@ -45,3 +45,5 @@ class PointArray(np.ndarray):
     def flat(self):
         return self
 
+    def plot(self, *args, **kwargs):
+        return pn.plotting.plot1d_all(self, *args, **kwargs)

@@ -205,6 +205,16 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
     ax.set_ylabel(var)
     return s
 
+def plot1d_all(source, *args, **kwargs):
+    fig = kwargs.pop('fig', plt.gcf())
+    ax = kwargs.pop('ax', plt.gca())
+
+    if isinstance(source, pn.PointArray):
+        return ax.plot(source)
+
+    for var in source.vars:
+        ax.plot(source[var], label=var)
+
 
 # --- to be fixed ---
 
@@ -216,14 +226,99 @@ def plot1d(source, x, *args, **kwargs):
     ax.set_ylabel(x)
     return p
 
-def plot(source, x, y, *args, **kwargs):
-    '''2d plot'''
+def plot(source, *args, labels=None, **kwargs):
+    '''2d plot
+    
+    Parameters:
+    -----------
+
+    args[0] : str or Iterable (optional)
+        data variables to plot 
+    args[1] : string or Iterable (optional)
+        data variables to plot resulting in 2d plots
+    labels : string or Iterable (optional)
+    
+    '''
+
+    x = None
+    y = None
+    if len(args) > 0:
+        if isinstance(args[0], str) and args[0] not in source.vars:
+            x = None
+            y = None
+        else:
+            x = args[0]
+            args = args[1:]
+
+        if len(args) > 0:
+            if isinstance(args[0], str) and args[0] not in source.vars:
+                y = None
+            else:
+                y = args[0]
+                args = args[1:]
+
     fig = kwargs.pop('fig', plt.gcf())
     ax = kwargs.pop('ax', plt.gca())
-    p = ax.plot(source[x], source[y], *args, **kwargs)
-    ax.set_xlabel(x)
-    ax.set_ylabel(y)
-    return p
+
+    if x is None and y is None: 
+        if isinstance(source, pn.PointArray):
+            return ax.plot(source, *args, label=labels, **kwargs)
+
+        for i, var in enumerate(source.vars):
+            if labels is None:
+                label = var
+            else:
+                label = labels[i]
+            ax.plot(source[var], *args, label=label, **kwargs)
+
+    elif y is None:
+        if isinstance(x, str):
+            ax.plot(source[x], *args, label=labels, **kwargs)
+            ax.set_ylabel(x)
+        else:
+            for i, x_var in enumerate(x):
+                if labels is not None:
+                    label = labels[i]
+                else:
+                    label = x_var
+                ax.plot(source[x_var], *args, label=label, **kwargs) 
+
+
+    elif isinstance(x, str):
+        if isinstance(y, str):
+            p = ax.plot(source[x], source[y], *args, label=labels, **kwargs)
+            ax.set_xlabel(x)
+            ax.set_ylabel(y)
+            return p
+        else:
+            for i, y_var in enumerate(y):
+                if labels is not None:
+                    label = labels[i]
+                else:
+                    label = None
+                ax.plot(source[x], source[y_var], *args, label=label, **kwargs) 
+            ax.set_xlabel(x)
+    else:
+        if isinstance(y, str):
+            for i, x_var in enumerate(x):
+                if labels is not None:
+                    label = labels[i]
+                else:
+                    label = None
+                ax.plot(source[x_var], source[y], *args, label=label, **kwargs) 
+            ax.set_ylabel(y)
+
+        else:
+
+            assert len(x) == len(y), 'Need same length of x and y variables list'
+
+            for i, (x_var, y_var) in enumerate(zip(x,y)):
+                if labels is not None:
+                    label = labels[i]
+                else:
+                    label = None
+                ax.plot(source[x_var], source[y_var], *args, label=label, **kwargs) 
+
 
 def plot_points_2d(source, x, y, s=None, c=None, cbar=False, fig=None, ax=None, **kwargs):
     '''2d scatter plot'''
