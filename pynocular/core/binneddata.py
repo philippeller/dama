@@ -31,29 +31,57 @@ class BinnedData:
 
     def __init__(self, grid=None, data=None, *args, **kwargs):
         '''
-        Set the grid
-        '''
-        if data is None:
-            self.data = pn.PointData()
-        else:
-            self.data = data
-        self.indices = None
-        self.group = None
-        self.sample = None
- 
-        self.grid = grid
+        grid : pn.Grid
 
+        data : pn.PointData, pn.GridData or pn.GridArray
+            -> if PointArray, sample is needed
+
+        '''
+        # set up grid
         if grid is None:
             if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
                 self.grid = args[0]
             else:
                 self.grid = pn.Grid(*args, **kwargs)
 
-        if not self.grid.initialized:
-            self.grid.initialize(self.data)
 
+        #assert set(self.grid.vars) <= set(data.vars)
+
+        if not self.grid.initialized:
+            self.grid.initialize(data)
+        else:
+            self.grid = grid
+
+
+        # create sample (grid variables) and remove from data
+        self.sample = [data.get_array(var, flat=True) for var in self.grid.vars]
+
+        # The following is a bit wonky, ToDo
+        if isinstance(data, pn.GridArray):
+            self.single = True
+            self.data = pn.PointData(test=data.flat())
+
+        else:
+            self.single = False
+            data_vars = data.vars
+            for var in self.grid.vars:
+                data_vars.remove(var)
+
+            if isinstance(data, pn.PointData):
+                self.data = data[data_vars]
+
+            elif isinstance(data, pn.GridData):
+                self.data = pn.PointData()
+                for var in data_vars:
+                    self.data[var] = data.get_array(var)
+
+            else:
+                raise ValueError()
+
+        self.indices = None
+        self.group = None
+ 
     def compute_indices(self):
-        self.sample = [self.data.get_array(var, flat=True) for var in self.grid.vars]
         self.indices = self.grid.compute_indices(self.sample)
         self.group = npi.group_by(self.indices)
 
@@ -107,6 +135,9 @@ class BinnedData:
             name of data
         data : PointArray, PointData, Array
         '''
+        if self.single:
+            raise Exception('Cannot add data to a singular variable structure')
+
         if isinstance(data, pn.PointData):
             assert len(data.vars) == 1
             data = data[data.vars[0]]
@@ -129,8 +160,6 @@ class BinnedData:
         outputs = {}
         output_maps = {}
         for var in self.data.vars:
-            if var in self.grid.vars:
-                continue
             source_data = self.data[var]
             if source_data.ndim > 1: 
                 output_maps[var] = np.full(self.grid.shape + source_data.shape[1:], fill_value=fill_value, dtype=self.data[var].dtype)
@@ -144,14 +173,17 @@ class BinnedData:
                 continue
             out_idx = np.unravel_index(idx, self.grid.shape)
             for var in self.data.vars:
-                if var in self.grid.vars:
-                    continue
                 output_maps[var][out_idx] = result = outputs[var][i]
 
+        # Pack into GridArray
+        if self.single:
+            out_data = pn.GridArray(output_maps['test'], grid=self.grid)
+
+        else:
         # Pack into GridData
-        out_data = pn.GridData(self.grid)
-        for var, output_map in output_maps.items():
-            out_data[var] = output_map
+            out_data = pn.GridData(self.grid)
+            for var, output_map in output_maps.items():
+                out_data[var] = output_map
 
         return out_data
 
@@ -165,8 +197,6 @@ class BinnedData:
         outputs = {}
         output_maps = {}
         for var in self.data.vars:
-            if var in self.grid.vars:
-                continue
             source_data = self.data[var]
 
             if return_len is None:
@@ -197,8 +227,6 @@ class BinnedData:
             if np.any(mask):
                 out_idx = np.unravel_index(i, self.grid.shape)
                 for var in self.data.vars:
-                    if var in self.grid.vars:
-                        continue
                     source_data = self.data[var]
                     if source_data.ndim > 1:
                         for idx in np.ndindex(*source_data.shape[1:]):
@@ -206,10 +234,15 @@ class BinnedData:
                     else:
                         output_maps[var][out_idx] = function(self.data[var][mask], *args, **kwargs)
 
+        # Pack into GridArray
+        if self.single:
+            out_data = pn.GridArray(output_maps['test'], grid=self.grid)
+
         # Pack into GridData
-        out_data = pn.GridData(self.grid)
-        for var, output_map in output_maps.items():
-            out_data[var] = output_map
+        else:
+            out_data = pn.GridData(self.grid)
+            for var, output_map in output_maps.items():
+                out_data[var] = output_map
 
         return out_data
 

@@ -259,6 +259,9 @@ class GridData:
         return translations.Histogram(self, *args, density=density, **kwargs).run()
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
+    def binwise(self, *args, **kwargs):
+        return pn.BinnedData(data=self, *args, **kwargs)   
+
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
     lookup.__doc__ = translations.Lookup.__init__.__doc__

@@ -38,16 +38,19 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
     labels : iterable
         lables to add for the bands
     '''
+
+    #ToDo: fix invalid values
+
     assert isinstance(source, (pn.GridData, pn.GridArray))
     assert source.grid.nax == 1
 
     if isinstance(source, pn.GridData):
         if var is None and len(source.data_vars) == 1:
             var = source.data_vars[0]
-        data = np.array(source[var])
+        data = np.ma.asarray(source[var])
 
     else:
-        data = np.array(source)
+        data = np.ma.asarray(source)
 
     if fig is None:
         fig = plt.gcf()
