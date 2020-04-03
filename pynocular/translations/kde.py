@@ -84,11 +84,14 @@ class KDE(Translation):
 
     def eval(self, source_data):
 
+        if not self.density:
+            volume = np.prod([ax.edges.width[0] for ax in self.dest.grid])
+
         if source_data is None:
             out_array = self.kde.fit(self.source_sample).evaluate(self.dest_sample)
             out_shape = self.dest.shape
             if not self.density:
-                out_array *= self.source_sample.size
+                out_array *= self.source_sample.size / np.sum(out_array)
 
         else:
             source_data = source_data.flat()
@@ -98,14 +101,14 @@ class KDE(Translation):
                 for idx in np.ndindex(*source_data.shape[1:]):
                     out_array[(Ellipsis,) + idx] = self.kde.fit(self.source_sample, weights=source_data[(Ellipsis,) + idx][self.mask]).evaluate(self.dest_sample)
                     if not self.density:
-                        out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask])
+                        out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask]) / np.sum(out_array[(Ellipsis,) + idx])
                 out_shape = (self.dest.shape) + (-1,)
 
             else:
                 out_array = self.kde.fit(self.source_sample, weights=source_data[self.mask]).evaluate(self.dest_sample)
                 out_shape = self.dest.shape
                 if not self.density:
-                    out_array *= np.sum(source_data[self.mask])
+                    out_array *= np.sum(source_data[self.mask]) / np.sum(out_array)
 
         #if isinstance(self.bw, (np.ndarray, list, tuple)):
         #    out_array *= np.product(self.bw)
