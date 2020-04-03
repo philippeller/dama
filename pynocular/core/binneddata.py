@@ -49,9 +49,6 @@ class BinnedData:
 
         if not self.grid.initialized:
             self.grid.initialize(data)
-        else:
-            self.grid = grid
-
 
         # create sample (grid variables) and remove from data
         self.sample = [data.get_array(var, flat=True) for var in self.grid.vars]
