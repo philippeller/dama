@@ -84,14 +84,21 @@ class KDE(Translation):
 
     def eval(self, source_data):
 
-        if not self.density:
-            volume = np.prod([ax.edges.width[0] for ax in self.dest.grid])
+        if self.density:
+            # since we scale the inputs, we need to re-scale the 
+            # densities such that they integrate out to being 1 again
+            if isinstance(self.bw, (np.ndarray, list, tuple)):
+                scale = 1. / np.prod(self.bw)
+            else:
+                scale = None
 
         if source_data is None:
             out_array = self.kde.fit(self.source_sample).evaluate(self.dest_sample)
             out_shape = self.dest.shape
             if not self.density:
                 out_array *= self.source_sample.size / np.sum(out_array)
+            elif scale is not None:
+                out_array *= scale
 
         else:
             source_data = source_data.flat()
@@ -102,6 +109,8 @@ class KDE(Translation):
                     out_array[(Ellipsis,) + idx] = self.kde.fit(self.source_sample, weights=source_data[(Ellipsis,) + idx][self.mask]).evaluate(self.dest_sample)
                     if not self.density:
                         out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask]) / np.sum(out_array[(Ellipsis,) + idx])
+                    elif scale is not None:
+                        out_array[(Ellipsis,) + idx] *= scale
                 out_shape = (self.dest.shape) + (-1,)
 
             else:
@@ -109,6 +118,8 @@ class KDE(Translation):
                 out_shape = self.dest.shape
                 if not self.density:
                     out_array *= np.sum(source_data[self.mask]) / np.sum(out_array)
+                elif scale is not None:
+                    out_array *= scale
 
         #if isinstance(self.bw, (np.ndarray, list, tuple)):
         #    out_array *= np.product(self.bw)
