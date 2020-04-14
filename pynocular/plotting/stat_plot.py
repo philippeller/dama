@@ -164,7 +164,7 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
                            rasterized=True,
                            **kwargs)
         if cbar:
-            fig.colorbar(pc, ax=ax, label=var)
+            fig.colorbar(pc, ax=ax, label=kwargs.pop('label', var))
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(source.grid.vars[1])
