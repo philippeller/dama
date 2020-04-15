@@ -15,7 +15,7 @@ Convenience `pyplot` plotting functions are also available, in order to produce 
 * `git clone git@github.com:philippeller/dragoman.git`
 * `pip install dragoman`
 
-# Intro
+## Introduction
 
 Different data representations are available, one being the `GridArray`:
 ```python
@@ -80,7 +80,7 @@ currently there are the follwoing translations methods:
 * lookup : Nd lookup of values on grids
 * resample : Nd resampling between different grids
 
-## Other things
+## Plotting
 
 Objects provide matplotlib plotting methods and jupyterlab HTML output for convenience.
 
