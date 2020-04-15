@@ -5,7 +5,7 @@
 
 Similarly, the dragoman python library guides you through your data and translates between different representations.
 Its aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
-A dataset can for insstance be a simple colum/row data, or it can be data on a grid.
+A dataset can for instance be simple colum/row data, or it can be data on a grid.
 
 One of the key features of dragoman is the seamless translation from one data represenation into any other. 
 
