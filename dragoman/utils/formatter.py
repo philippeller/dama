@@ -1,9 +1,12 @@
+""" Module for table formatting """
 from __future__ import absolute_import
+
 from numbers import Number
+
 import numpy as np
-import dragoman as dm
 import tabulate
-import copy
+
+import dragoman as dm
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -39,7 +42,7 @@ def as_str(a):
     if isinstance(a, np.ma.core.MaskedConstant):
         return str(a)
     if isinstance(a, Number):
-        return ('%.'+str(PRECISION)+'g')%a
+        return ('%.' + str(PRECISION) + 'g')%a
     return np.array2string(np.ma.asarray(a), precision=PRECISION, threshold=2, edgeitems=2)
 
 
@@ -57,28 +60,26 @@ def make_table_labels(axis, bold, brk):
     if axis._points is None:
         if len(axis) <= N_MAX:
             return [bold%as_str(axis.edges[i]) for i in range(len(axis))]
-        else:
-            labels = [bold%as_str(axis.edges[i]) for i in range(N_MAX//2)]
-            labels += ['...']
-            labels += [bold%as_str(axis.edges[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
-            return labels
+        labels = [bold%as_str(axis.edges[i]) for i in range(N_MAX//2)]
+        labels += ['...']
+        labels += [bold%as_str(axis.edges[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
+        return labels
+
     # ToDo: a bit too much copy-paste going on here...
     elif axis._edges._edges is None:
         if len(axis) <= N_MAX:
             return [bold%as_str(axis.points[i]) for i in range(len(axis))]
-        else:
-            labels = [bold%as_str(axis.points[i]) for i in range(N_MAX//2)]
-            labels += ['...']
-            labels += [bold%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
-            return labels
-    else:
-        if len(axis) <= N_MAX:
-            return [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(len(axis))]
-        else:
-            labels = [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(N_MAX//2)]
-            labels += ['...']
-            labels += [bold%('[%s | %s | %s]'%(as_str(axis.edges[i,0]), as_str(axis.points[i]), as_str(axis.edges[i,1]))) for i in range(len(axis)-N_MAX//2, len(axis))]
-            return labels
+        labels = [bold%as_str(axis.points[i]) for i in range(N_MAX//2)]
+        labels += ['...']
+        labels += [bold%as_str(axis.points[i]) for i in range(len(axis)-N_MAX//2, len(axis))]
+        return labels
+
+    if len(axis) <= N_MAX:
+        return [bold%('[%s | %s | %s]'%(as_str(axis.edges[i, 0]), as_str(axis.points[i]), as_str(axis.edges[i, 1]))) for i in range(len(axis))]
+    labels = [bold%('[%s | %s | %s]'%(as_str(axis.edges[i, 0]), as_str(axis.points[i]), as_str(axis.edges[i, 1]))) for i in range(N_MAX // 2)]
+    labels += ['...']
+    labels += [bold%('[%s | %s | %s]'%(as_str(axis.edges[i, 0]), as_str(axis.points[i]), as_str(axis.edges[i, 1]))) for i in range(len(axis) - N_MAX // 2, len(axis))]
+    return labels
 
 
 
@@ -94,9 +95,9 @@ def make_table_row(name, array, bold, brk):
     if array.shape[0] <= N_MAX:
         row += [as_str(v) for v in array]
     else:
-        row += [as_str(v) for v in array[:N_MAX//2]]
+        row += [as_str(v) for v in array[:N_MAX // 2]]
         row += ['...']
-        row += [as_str(v) for v in array[-N_MAX//2:]]
+        row += [as_str(v) for v in array[-N_MAX // 2:]]
 
     return row
 
@@ -114,25 +115,25 @@ def make_2d_table(data, bold, brk):
 
     if n_data_rows > N_MAX:
         for i in range(1, min(n_data_cols, 2*(N_MAX//2) + 1) + 1):
-            table[N_MAX//2+1][i] = '...'
-        data_row_idices = list(range(N_MAX//2)) + list(range(n_data_rows - N_MAX//2, n_data_rows))
-        table_row_idices = list(range(N_MAX//2)) + list(range(N_MAX//2+1, 2*(N_MAX//2) + 1))
+            table[N_MAX // 2 + 1][i] = '...'
+        data_row_idices = list(range(N_MAX // 2)) + list(range(n_data_rows - N_MAX // 2, n_data_rows))
+        table_row_idices = list(range(N_MAX // 2)) + list(range(N_MAX // 2 + 1, 2 * (N_MAX // 2) + 1))
     else:
         data_row_idices = list(range(n_data_rows))
         table_row_idices = list(range(n_data_rows))
 
     if n_data_cols > N_MAX:
-        for i in range(1, min(n_data_rows, 2*(N_MAX//2) + 1) + 1):
-            table[i][N_MAX//2+1] = '...'
-        data_col_idices = list(range(N_MAX//2)) + list(range(n_data_cols - N_MAX//2, n_data_cols))
-        table_col_idices = list(range(N_MAX//2)) + list(range(N_MAX//2+1, 2*(N_MAX//2) + 1))
+        for i in range(1, min(n_data_rows, 2*(N_MAX // 2) + 1) + 1):
+            table[i][N_MAX // 2 + 1] = '...'
+        data_col_idices = list(range(N_MAX // 2)) + list(range(n_data_cols - N_MAX // 2, n_data_cols))
+        table_col_idices = list(range(N_MAX // 2)) + list(range(N_MAX // 2 + 1, 2 * (N_MAX // 2) + 1))
     else:
         data_col_idices = list(range(n_data_cols))
         table_col_idices = list(range(n_data_cols))
 
     for i, r_idx in zip(table_row_idices, data_row_idices):
         for j, c_idx in zip(table_col_idices, data_col_idices):
-            table[i+1][j+1] = get_item(data, (c_idx, r_idx), bold, brk)
+            table[i + 1][j + 1] = get_item(data, (c_idx, r_idx), bold, brk)
             
     return table
 
