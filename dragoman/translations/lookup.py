@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 '''Module providing a data translation methods'''
 import numpy as np
-import pynocular as pn
-from pynocular.translations import Translation
+import dragoman as dm
+from dragoman.translations import Translation
 
 __license__ = '''Copyright 2019 Philipp Eller
 

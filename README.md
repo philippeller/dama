@@ -1,24 +1,24 @@
-# Pynocular
+# Dragoman
 
 A consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can be a simple pandas datafrane or other colum/row data, or it can be data on a grid.
 
-The key feature of pynocular is seamless translations from data represenation into any other. See `notebooks/example.ipynb`
+The key feature of dragoman is seamless translations from data represenation into any other. See `notebooks/example.ipynb`
 
 Convenience `pyplot` plotting functions are also defined, in order to produce standard plots without the hassle of figuring out the correct input to the standard matplotlib functions.
 
 ## Installation
 
-* `git clone git@github.com:philippeller/pynocular.git`
-* `pip install pynocular`
+* `git clone git@github.com:philippeller/dragoman.git`
+* `pip install dragoman`
 
 # Intro
 
 Different data representations are available, one being the `GridArray`:
 ```python
-import pynocular as pn
+import dragoman as pn
 
-a = pn.GridArray(np.random.rand(100).reshape(20, 5))
+a = dm.GridArray(np.random.rand(100).reshape(20, 5))
 a
 ```
 <table><tbody><tr><td><b>y\x</b></td><td><b>0</b></td><td><b>1</b></td><td><b>2</b></td><td><b>3</b></td><td><b>4</b></td><td><b>5</b></td><td>...</td><td><b>14</b></td><td><b>15</b></td><td><b>16</b></td><td><b>17</b></td><td><b>18</b></td><td><b>19</b></td></tr><tr><td><b>0</b>    </td><td>0.279   </td><td>0.426   </td><td>0.353   </td><td>0.315   </td><td>0.446   </td><td>0.0913  </td><td>...</td><td>0.712    </td><td>0.564    </td><td>0.24     </td><td>0.925    </td><td>0.00417  </td><td>0.463    </td></tr><tr><td><b>1</b>    </td><td>0.417   </td><td>0.74    </td><td>0.267   </td><td>0.473   </td><td>0.103   </td><td>0.885   </td><td>...</td><td>0.743    </td><td>0.991    </td><td>0.833    </td><td>0.223    </td><td>0.0862   </td><td>0.3      </td></tr><tr><td><b>2</b>    </td><td>0.918   </td><td>0.752   </td><td>0.689   </td><td>0.876   </td><td>0.957   </td><td>0.931   </td><td>...</td><td>0.759    </td><td>0.919    </td><td>0.9      </td><td>0.498    </td><td>0.644    </td><td>0.834    </td></tr><tr><td><b>3</b>    </td><td>0.836   </td><td>0.626   </td><td>0.737   </td><td>0.584   </td><td>0.33    </td><td>0.414   </td><td>...</td><td>0.874    </td><td>0.203    </td><td>0.299    </td><td>0.0643   </td><td>0.372    </td><td>0.604    </td></tr>
@@ -60,7 +60,7 @@ One of the stregth are the avilable translation methods, e.g.
 
 ```python
 
-p = pn.PointData(x = [1, 2, 6, 7.33, ...], a = [55, 1e6, 3, 3.3, ...])
+p = dm.PointData(x = [1, 2, 6, 7.33, ...], a = [55, 1e6, 3, 3.3, ...])
 h = p.histogram(x = 10)
 ```
 or

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data translation methods'''
 import numpy as np
-from pynocular.translations import Translation
+from dragoman.translations import Translation
 from scipy import interpolate
 
 __license__ = '''Copyright 2019 Philipp Eller

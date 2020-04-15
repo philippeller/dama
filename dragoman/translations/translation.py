@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data base class for translation methods'''
 import numpy as np
-import pynocular as pn
+import dragoman as dm
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -29,11 +29,11 @@ class Translation():
                  **kwargs):
 
         self.source = source
-        self.source_has_grid = isinstance(self.source, (pn.GridData, pn.GridArray, pn.Grid))
+        self.source_has_grid = isinstance(self.source, (dm.GridData, dm.GridArray, dm.Grid))
         if source_needs_grid:
             assert self.source_has_grid, 'Source must provide grid'
         self.dest = self.generate_destination(*args, **kwargs)
-        self.dest_has_grid = isinstance(self.dest, (pn.GridData, pn.GridArray, pn.Grid))
+        self.dest_has_grid = isinstance(self.dest, (dm.GridData, dm.GridArray, dm.Grid))
         if dest_needs_grid:
             assert self.dest_has_grid, 'Destination must provide grid'
 
@@ -45,7 +45,7 @@ class Translation():
             self.wrt = self.dest.vars
 
         # checks
-        if not isinstance(self.source, pn.GridArray):
+        if not isinstance(self.source, dm.GridArray):
             if not set(self.wrt) <= set(source.vars):
                 raise TypeError('the following variables are missing in the source: %s'%', '.join(set(self.vars) - (set(self.vars) & set(source.vars))))
 
@@ -67,19 +67,19 @@ class Translation():
         '''
         if len(args) == 1 and len(kwargs) == 0:
             dest = args[0]
-            if isinstance(dest, pn.GridData):
+            if isinstance(dest, dm.GridData):
                 grid = dest.grid
                 grid.initialize(self.source)
-                return pn.GridData(grid)
-            if isinstance(dest, pn.Grid):
+                return dm.GridData(grid)
+            if isinstance(dest, dm.Grid):
                 grid = dest
                 grid.initialize(self.source)
-                return pn.GridData(grid)
-            if isinstance(dest, pn.GridArray):
+                return dm.GridData(grid)
+            if isinstance(dest, dm.GridArray):
                 grid = dest.grid
                 grid.initialize(self.source)
-                return pn.GridArray(np.empty(grid.shape), grid=grid)
-            if isinstance(dest, pn.PointData):
+                return dm.GridArray(np.empty(grid.shape), grid=grid)
+            if isinstance(dest, dm.PointData):
                 # check which vars we need:
                 if self.source_has_grid:
                     return dest[self.source.grid.vars]
@@ -87,7 +87,7 @@ class Translation():
                     return dest
 
         # check if source has a grid and if any args are in there
-        if isinstance(self.source, (pn.GridData, pn.GridArray)):
+        if isinstance(self.source, (dm.GridData, dm.GridArray)):
             dims = []
             for arg in args:
                 # in this case the source may have a grid, get those edges
@@ -99,14 +99,14 @@ class Translation():
             args = dims
 
         # instantiate
-        grid = pn.Grid(*args, **kwargs)
+        grid = dm.Grid(*args, **kwargs)
         grid.initialize(self.source)
 
-        if isinstance(self.source, pn.GridArray):
-            return pn.GridArray(np.empty(grid.shape), grid=grid)
+        if isinstance(self.source, dm.GridArray):
+            return dm.GridArray(np.empty(grid.shape), grid=grid)
 
 
-        return pn.GridData(grid)
+        return dm.GridData(grid)
 
 
     def prepare_source_sample(self, flat=True, stacked=True, transposed=False):
@@ -132,9 +132,9 @@ class Translation():
 
         self.setup()
 
-        if isinstance(self.dest, pn.GridArray):
+        if isinstance(self.dest, dm.GridArray):
             # in this case it is a single array, no vars
-            if isinstance(self.source, (pn.GridData, pn.PointData)):
+            if isinstance(self.source, (dm.GridData, dm.PointData)):
                 assert len(self.source.vars) - len(self.wrt) == 1
                 for var in self.source.vars:
                     if var in self.wrt:
@@ -144,10 +144,10 @@ class Translation():
                 source_data = self.source
 
             result = self.eval(source_data)
-            self.dest = pn.GridArray(result, grid=self.dest.grid)
+            self.dest = dm.GridArray(result, grid=self.dest.grid)
             return self.dest
 
-        if isinstance(self.source, pn.GridArray):
+        if isinstance(self.source, dm.GridArray):
             source_data = self.source
             result = self.eval(source_data)
             self.dest['result'] = result

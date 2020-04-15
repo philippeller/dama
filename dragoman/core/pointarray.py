@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 import numpy as np
 import pandas
-import pynocular as pn
-from pynocular.utils.formatter import format_table
+import dragoman as dm
+from dragoman.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -46,4 +46,4 @@ class PointArray(np.ndarray):
         return self
 
     def plot(self, *args, **kwargs):
-        return pn.plotting.plot1d_all(self, *args, **kwargs)
+        return dm.plotting.plot1d_all(self, *args, **kwargs)

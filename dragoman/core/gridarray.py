@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from collections.abc import Iterable
 import copy
 import numpy as np
-import pynocular as pn
-from pynocular import translations
-from pynocular.utils.formatter import format_table
-import pynocular.plotting
+import dragoman as dm
+from dragoman import translations
+from dragoman.utils.formatter import format_table
+import dragoman.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -30,7 +30,7 @@ def wrap(func):
         inputs = []
         grid = None
         for arg in args:
-            if isinstance(arg, pn.GridArray):
+            if isinstance(arg, dm.GridArray):
                 inputs.append(np.ma.asarray(arg))
                 if first is None:
                     first = arg
@@ -78,7 +78,7 @@ def wrap(func):
                 else:
                     new_grid = first.grid
                 
-                new_obj = pn.GridArray(result, grid=new_grid)
+                new_obj = dm.GridArray(result, grid=new_grid)
                 if new_obj.nax == 0:
                     return new_obj.data
                 return new_obj
@@ -94,7 +94,7 @@ class GridArray(np.ma.MaskedArray):
     Parameters
     ----------
     input_array : ndarray
-    grid : pn.Grid (optional)
+    grid : dm.Grid (optional)
         if not specified, *args and **kwargs will be used to constrcut grid
         if those are also not specified, default grid is added
     '''
@@ -111,7 +111,7 @@ class GridArray(np.ma.MaskedArray):
         if grid is not None:
             obj.grid = grid
         elif not len(args) == 0 or not len(kwargs) == 0:
-            obj.grid = pn.Grid(*args, **kwargs)
+            obj.grid = dm.Grid(*args, **kwargs)
         else:
             # make a default grid:
             if input_array.ndim <= 3:
@@ -121,7 +121,7 @@ class GridArray(np.ma.MaskedArray):
             axes = {}
             for d, n in zip(axes_names, input_array.shape):
                 axes[d] = np.arange(n)
-            obj.grid = pn.Grid(**axes)
+            obj.grid = dm.Grid(**axes)
         return obj
 
     def __array_finalize__(self, obj, *args, **kwargs):
@@ -151,13 +151,13 @@ class GridArray(np.ma.MaskedArray):
         if isinstance(item, str):
             if item in self.grid.vars:
                 data = self.get_array(item)
-                new_data = pn.GridArray(data, grid=self.grid)
+                new_data = dm.GridArray(data, grid=self.grid)
                 return new_data
 
-        if isinstance(item, pn.GridArray):
+        if isinstance(item, dm.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
-                new_item = pn.GridArray(np.ma.asarray(self), grid=self.grid)
+                new_item = dm.GridArray(np.ma.asarray(self), grid=self.grid)
                 new_item.mask = mask
                 return new_item
             raise NotImplementedError('get item %s'%item)
@@ -176,7 +176,7 @@ class GridArray(np.ma.MaskedArray):
             if len(new_grid) == 0:
                 # then we have a single element
                 return np.ma.asarray(self)[item]
-            return pn.GridArray(np.ma.asarray(self)[item], grid=new_grid)
+            return dm.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
     def get_array(self, var, flat=False):
         '''
@@ -207,7 +207,7 @@ class GridArray(np.ma.MaskedArray):
         return self.shape
 
     def __setitem__(self, item, val):
-        if isinstance(item, pn.GridArray):
+        if isinstance(item, dm.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
                 if np.isscalar(val):
@@ -238,7 +238,7 @@ class GridArray(np.ma.MaskedArray):
             new_data = self.data.T
         if self.ndim == self.nax + 1:
             new_data = np.rollaxis(new_data, 0, self.ndim)
-        return pn.GridArray(new_data, grid=self.grid.T)
+        return dm.GridArray(new_data, grid=self.grid.T)
     
     @wrap
     def __add__(self, other):
@@ -331,7 +331,7 @@ class GridArray(np.ma.MaskedArray):
         print('In __array_wrap__:')
         #print('   self is %s' % repr(self))
         #print('   arr is %s' % repr(out_arr))
-        obj = np.ma.asarray(out_arr).view(pn.GridArray)
+        obj = np.ma.asarray(out_arr).view(dm.GridArray)
         obj.grid = self.grid
         return obj
 
@@ -352,7 +352,7 @@ class GridArray(np.ma.MaskedArray):
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return pn.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)   
 
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
@@ -383,11 +383,11 @@ class GridArray(np.ma.MaskedArray):
         ax : pyplot axes object
         '''
         if self.nax == 2:
-            return pn.plotting.plot_map(self, label=label, cbar=cbar, fig=fig, ax=ax, **kwargs)
+            return dm.plotting.plot_map(self, label=label, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
         raise ValueError('Can only plot maps of 2d grids')
 
     def plot_step(self, label=None, fig=None, ax=None, **kwargs):
-        return pn.plotting.plot_step(self, label=label, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_step(self, label=label, fig=fig, ax=ax, **kwargs)
 
-    plot_bands = pn.plotting.plot_bands
+    plot_bands = dm.plotting.plot_bands

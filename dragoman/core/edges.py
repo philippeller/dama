@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from numbers import Number
 from collections.abc import Iterable
 
-import pynocular as pn
+import dragoman as dm
 
 import numpy as np
 
@@ -39,7 +39,7 @@ class Edges(object):
         self._edges = None
         if points is not None:
             self._add_edges(self.edges_from_points(points))
-        elif len(args) == 1 and isinstance(args[0], pn.Edges):
+        elif len(args) == 1 and isinstance(args[0], dm.Edges):
             self._add_edges(args[0].edges)
         elif len(args) == 1 and isinstance(args[0], np.ndarray):
             self._add_edges(args[0])
@@ -148,7 +148,7 @@ class Edges(object):
         new_edges = self._edges[idx]
         if np.isscalar(new_edges):
             return new_edges
-        return pn.Edges(new_edges)
+        return dm.Edges(new_edges)
 
     def __eq__(self, other):
         return np.all(np.equal(self._edges, other._edges))

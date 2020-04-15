@@ -3,7 +3,7 @@ from numbers import Number
 from collections import OrderedDict
 from collections.abc import Iterable
 
-import pynocular as pn
+import dragoman as dm
 
 import numpy as np
 
@@ -50,7 +50,7 @@ class Grid(object):
         
         Parameters
         ----------
-        source : pn.GridData, pn.PointData
+        source : dm.GridData, dm.PointData
         
         '''
         # ToDo: maybe do something smarter with default nbins?
@@ -64,7 +64,7 @@ class Grid(object):
                         self[var].points = np.arange(self[var].nbins)
                         continue
                 # check if it might be from a grid
-                if isinstance(source, (pn.GridData, pn.GridArray)):
+                if isinstance(source, (dm.GridData, dm.GridArray)):
                     if var in source.grid.vars:
                         if isinstance(self[var].nbins, float):
                             # this measn we want to multiply the old nbins
@@ -89,16 +89,16 @@ class Grid(object):
 
         in case of a basestring, a new empty axisension gets added
         '''
-        if isinstance(axis, pn.Axis):
+        if isinstance(axis, dm.Axis):
             if axis.var in self.vars:
                 self.axes[self.vars.index(axis.var)] = axis
             else:
                 self.axes.append(axis)
         elif isinstance(axis, dict):
-            axis = pn.Axis(**axis)
+            axis = dm.Axis(**axis)
             self.add_axis(axis)
         elif isinstance(axis, str):
-            new_axis = pn.Axis(var=axis)
+            new_axis = dm.Axis(var=axis)
             self.add_axis(new_axis)
         else:
             raise TypeError('Cannot add type %s'%type(axis))
@@ -113,7 +113,7 @@ class Grid(object):
     @property
     def T(self):
         '''transpose'''
-        return pn.Grid(*list(self)[::-1])
+        return dm.Grid(*list(self)[::-1])
 
     @property
     def initialized(self):
@@ -245,7 +245,7 @@ class Grid(object):
             return self[(item,)]
         elif isinstance(item, list):
             if all([isinstance(i, str) for i in item]):
-                new_obj = pn.Grid()
+                new_obj = dm.Grid()
                 for var in item:
                     new_obj.axes.append(self[var])
                 return new_obj
@@ -259,7 +259,7 @@ class Grid(object):
             
             item = self.convert_slice(item)
 
-            new_obj = pn.Grid()
+            new_obj = dm.Grid()
             for i in range(len(self)): 
                 if i < len(item):
                     assert item[i] is not Ellipsis
@@ -277,7 +277,7 @@ class Grid(object):
             new_axes = []
             for it in item:
                 new_axes.append(self[it])
-            return pn.Grid(*new_axes)
+            return dm.Grid(*new_axes)
         else:
             raise KeyError('Cannot get key from %s'%type(item))
 

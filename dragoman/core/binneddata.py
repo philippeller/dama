@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from collections.abc import Iterable
 import numpy as np
 import numpy_indexed as npi
-import pynocular as pn
-from pynocular import translations
-from pynocular.utils.formatter import format_table
-from pynocular.utils.bind import bind
-import pynocular.plotting
+import dragoman as dm
+from dragoman import translations
+from dragoman.utils.formatter import format_table
+from dragoman.utils.bind import bind
+import dragoman.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -31,18 +31,18 @@ class BinnedData:
 
     def __init__(self, grid=None, data=None, *args, **kwargs):
         '''
-        grid : pn.Grid
+        grid : dm.Grid
 
-        data : pn.PointData, pn.GridData or pn.GridArray
+        data : dm.PointData, dm.GridData or dm.GridArray
             -> if PointArray, sample is needed
 
         '''
         # set up grid
         if grid is None:
-            if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
+            if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dm.Grid):
                 self.grid = args[0]
             else:
-                self.grid = pn.Grid(*args, **kwargs)
+                self.grid = dm.Grid(*args, **kwargs)
 
 
         #assert set(self.grid.vars) <= set(data.vars)
@@ -54,9 +54,9 @@ class BinnedData:
         self.sample = [data.get_array(var, flat=True) for var in self.grid.vars]
 
         # The following is a bit wonky, ToDo
-        if isinstance(data, pn.GridArray):
+        if isinstance(data, dm.GridArray):
             self.single = True
-            self.data = pn.PointData(test=data.flat())
+            self.data = dm.PointData(test=data.flat())
 
         else:
             self.single = False
@@ -64,11 +64,11 @@ class BinnedData:
             for var in self.grid.vars:
                 data_vars.remove(var)
 
-            if isinstance(data, pn.PointData):
+            if isinstance(data, dm.PointData):
                 self.data = data[data_vars]
 
-            elif isinstance(data, pn.GridData):
-                self.data = pn.PointData()
+            elif isinstance(data, dm.GridData):
+                self.data = dm.PointData()
                 for var in data_vars:
                     self.data[var] = data.get_array(var)
 
@@ -92,7 +92,7 @@ class BinnedData:
             
         item += self.grid.vars
 
-        return pn.BinnedData(grid=self.grid, data=self.data[item])
+        return dm.BinnedData(grid=self.grid, data=self.data[item])
         
     @property
     def vars(self):
@@ -135,7 +135,7 @@ class BinnedData:
         if self.single:
             raise Exception('Cannot add data to a singular variable structure')
 
-        if isinstance(data, pn.PointData):
+        if isinstance(data, dm.PointData):
             assert len(data.vars) == 1
             data = data[data.vars[0]]
 
@@ -174,11 +174,11 @@ class BinnedData:
 
         # Pack into GridArray
         if self.single:
-            out_data = pn.GridArray(output_maps['test'], grid=self.grid)
+            out_data = dm.GridArray(output_maps['test'], grid=self.grid)
 
         else:
         # Pack into GridData
-            out_data = pn.GridData(self.grid)
+            out_data = dm.GridData(self.grid)
             for var, output_map in output_maps.items():
                 out_data[var] = output_map
 
@@ -233,11 +233,11 @@ class BinnedData:
 
         # Pack into GridArray
         if self.single:
-            out_data = pn.GridArray(output_maps['test'], grid=self.grid)
+            out_data = dm.GridArray(output_maps['test'], grid=self.grid)
 
         # Pack into GridData
         else:
-            out_data = pn.GridData(self.grid)
+            out_data = dm.GridData(self.grid)
             for var, output_map in output_maps.items():
                 out_data[var] = output_map
 

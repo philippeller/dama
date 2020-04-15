@@ -1,9 +1,9 @@
 from distutils.core import setup
 
 setup(
-    name='pynocular',
-    version='0.2dev',
-    packages=['pynocular',],
+    name='dragoman',
+    version='0.3dev',
+    packages=['dragoman',],
     license='Apache 2.0',
     author='Philipp Eller',
     long_description=open('README.md').read(),

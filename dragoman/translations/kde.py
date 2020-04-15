@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from KDEpy import FFTKDE
 from collections.abc import Iterable 
 import numpy as np
-from pynocular.translations import Translation
+from dragoman.translations import Translation
 
 __license__ = '''Copyright 2019 Philipp Eller
 

@@ -1,10 +1,10 @@
 from __future__ import absolute_import
 import numpy as np
 import pandas
-import pynocular as pn
-from pynocular import translations
-import pynocular.plotting
-from pynocular.utils.formatter import format_table
+import dragoman as dm
+from dragoman import translations
+import dragoman.plotting
+from dragoman.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -118,13 +118,13 @@ class PointData:
         if len(self) > 0:
             assert len(val) == self.array_shape[0], 'Incompatible dimensions'
 
-        if isinstance(val, pn.PointArray):
+        if isinstance(val, dm.PointArray):
             self.data[var] = val
         elif isinstance(val, np.ndarray):
             if self.type == 'df':
                 self.data[var] = val
             else:
-                val = pn.PointArray(val)
+                val = dm.PointArray(val)
                 self[var] = val
         else:
             raise ValueError()
@@ -133,9 +133,9 @@ class PointData:
         if self.type == 'df':
             result = self.data[var]
             if isinstance(result, pandas.core.frame.DataFrame):
-                return pn.PointData(result)
+                return dm.PointData(result)
             elif isinstance(result, pandas.core.series.Series):
-                return pn.PointArray(result)
+                return dm.PointArray(result)
 
         if isinstance(var, str):
             if var in self.vars:
@@ -152,7 +152,7 @@ class PointData:
         else:
             for n,d in self.items():
                 new_data[n] = d[var]
-        return pn.PointData(new_data)
+        return dm.PointData(new_data)
         
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
@@ -182,7 +182,7 @@ class PointData:
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return pn.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)   
 
     def kde(self, *args, **kwargs):
         return translations.KDE(self, *args, **kwargs).run()
@@ -191,18 +191,18 @@ class PointData:
 
     # --- Plotting functions ---
 
-    plot = pn.plotting.plot
+    plot = dm.plotting.plot
 
     def plot_2d(self, *args, labels=None, **kwargs):
         if len(args) == 2:
-            pn.plotting.plot(self, *args, labels=labels, **kwargs)
+            dm.plotting.plot(self, *args, labels=labels, **kwargs)
         elif len(self) == 2:
-            pn.plotting.plot(self, *self.vars, *args, **kwargs)
+            dm.plotting.plot(self, *self.vars, *args, **kwargs)
         else:
             raise ValueError('Need to specify 2 variables to plot')
 
     def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
-        pn.plotting.plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
+        dm.plotting.plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
 
 

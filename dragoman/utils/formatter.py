@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from numbers import Number
 import numpy as np
-import pynocular as pn
+import dragoman as dm
 import tabulate
 import copy
 
@@ -48,7 +48,7 @@ def make_table_labels(axis, bold, brk):
 
     Parameters
     ----------
-    axis : pn.Axis
+    axis : dm.Axis
 
     Returns
     -------
@@ -139,9 +139,9 @@ def make_2d_table(data, bold, brk):
 
 def get_item(data, idx, bold, brk):
     '''Get a string formatted item from a GridArray or gridData object at index idx'''
-    if isinstance(data, pn.GridArray):
+    if isinstance(data, dm.GridArray):
         return as_str(data[idx])
-    elif isinstance(data, pn.GridData):
+    elif isinstance(data, dm.GridData):
         # collect all items
         all_data = []
         for n, d in data.items():
@@ -158,15 +158,15 @@ def format_table(data, tablefmt='html'):
         bold = '%s'
         brk = '\n'
 
-    if isinstance(data, pn.PointData):
+    if isinstance(data, dm.PointData):
         table = [make_table_row(n, d, bold, brk) for n, d in data.items()]
         return tabulate.tabulate(table, tablefmt=tablefmt)
 
-    if isinstance(data, pn.PointArray):
+    if isinstance(data, dm.PointArray):
         table = [make_table_row(None, data, bold, brk)]
         return tabulate.tabulate(table, tablefmt=tablefmt)
 
-    if isinstance(data, pn.GridArray):
+    if isinstance(data, dm.GridArray):
         if data.nax == 2:
             table = make_2d_table(data, bold, brk)
         
@@ -181,7 +181,7 @@ def format_table(data, tablefmt='html'):
         return tabulate.tabulate(table, tablefmt=tablefmt)
 
 
-    if isinstance(data, pn.GridData):
+    if isinstance(data, dm.GridData):
         if data.grid.nax == 2:
             table = make_2d_table(data, bold, brk)
         

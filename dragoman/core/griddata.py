@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from collections import OrderedDict
 from collections.abc import Iterable
 import numpy as np
-import pynocular as pn
-from pynocular import translations
-from pynocular.utils.formatter import format_table
-from pynocular.utils.bind import bind
-import pynocular.plotting
+import dragoman as dm
+from dragoman import translations
+from dragoman.utils.formatter import format_table
+from dragoman.utils.bind import bind
+import dragoman.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -36,13 +36,13 @@ class GridData:
         # ToDo protect self.grid as private self._grid
         self.grid = None
 
-        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, pn.GridArray) for v in kwargs.values()]):
+        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, dm.GridArray) for v in kwargs.values()]):
             for n,d in kwargs.items():
                 self.add_data(n, d)
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], pn.Grid):
+        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dm.Grid):
             self.grid = args[0]
         else:
-            self.grid = pn.Grid(*args, **kwargs)
+            self.grid = dm.Grid(*args, **kwargs)
 
         self._setup_plotting_methods()
 
@@ -51,9 +51,9 @@ class GridData:
         depending on the number of axes'''
 
         if self.grid.nax == 1:
-            self.plot = bind(self, pn.plotting.plot_step)
+            self.plot = bind(self, dm.plotting.plot_step)
         if self.grid.nax == 2:
-            self.plot = bind(self, pn.plotting.plot_map)
+            self.plot = bind(self, dm.plotting.plot_map)
 
     def __repr__(self):
         return format_table(self, tablefmt='plain')
@@ -75,15 +75,15 @@ class GridData:
                     data = self.data[item]
                 else:
                     data = self.get_array(item)
-                new_data = pn.GridArray(data, grid=self.grid)
+                new_data = dm.GridArray(data, grid=self.grid)
                 return new_data
 
         # mask
-        if isinstance(item, pn.GridArray):
+        if isinstance(item, dm.GridArray):
             if item.dtype == np.bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                new_data = pn.GridData(self.grid)
+                new_data = dm.GridData(self.grid)
                 for v in self.data_vars:
                     new_data[v] = self[v][item]
                 return new_data
@@ -91,7 +91,7 @@ class GridData:
 
         # create new instance with only those vars
         if isinstance(item, Iterable) and all([isinstance(v, str) for v in item]):
-            new_data = pn.GridData(self.grid)
+            new_data = dm.GridData(self.grid)
             for v in item:
                 if v in self.data_vars:
                     new_data[v] = self.data[v]
@@ -101,7 +101,7 @@ class GridData:
         new_grid = self.grid[item]
         if len(new_grid) == 0:
             return {n : d[item] for n,d in self.items()}
-        new_data = pn.GridData(new_grid)
+        new_data = dm.GridData(new_grid)
         for n,d in self.items():
             new_data[n] = d[item]
         return new_data
@@ -110,7 +110,7 @@ class GridData:
     @property
     def T(self):
         '''transpose'''
-        new_obj = pn.GridData()
+        new_obj = dm.GridData()
         new_obj.grid = self.grid.T
         for n, d in self.items():
             new_obj[n] = d.T
@@ -120,11 +120,11 @@ class GridData:
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         '''interface to numpy unversal functions'''
         scalar_results = OrderedDict()
-        array_result = pn.GridData()
+        array_result = dm.GridData()
         for var in inputs[0].data_vars:
             converted_inputs = [inp[var] for inp in inputs]
             result = converted_inputs[0].__array_ufunc__(ufunc, method, *converted_inputs, **kwargs)
-            if isinstance(result, pn.GridArray):
+            if isinstance(result, dm.GridArray):
                 array_result[var] = result
             else:
                 scalar_results[var] = result
@@ -172,7 +172,7 @@ class GridData:
             name of data
         data : GridArray, GridData, Array
         '''
-        if isinstance(data, (pn.GridArray, GridData)):
+        if isinstance(data, (dm.GridArray, GridData)):
             if self.grid is None or not self.grid.initialized:
                 self.grid = data.grid
                 self._setup_plotting_methods()
@@ -182,7 +182,7 @@ class GridData:
         if var in self.grid.vars:
             raise ValueError('Variable `%s` is already a grid dimension!'%var)
 
-        if isinstance(data, pn.GridData):
+        if isinstance(data, dm.GridData):
             assert len(data.data_vars) == 1
             data = data[0]
 
@@ -197,7 +197,7 @@ class GridData:
             axes = {}
             for d, n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n)
-            self.grid = pn.Grid(**axes)
+            self.grid = dm.Grid(**axes)
 
         if data.ndim < self.ndim and self.shape[-1] == 1:
             # add new axis
@@ -247,7 +247,7 @@ class GridData:
         return self.data.values()
 
     def items(self):
-        return [(n, pn.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
+        return [(n, dm.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
 
     # --- Tranlsation methods ---
 
@@ -260,7 +260,7 @@ class GridData:
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return pn.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)   
 
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
@@ -296,23 +296,23 @@ class GridData:
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
         if self.grid.nax == 2:
-            return pn.plotting.plot_map(self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs)
+            return dm.plotting.plot_map(self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs)
 
         raise ValueError('Can only plot maps of 2d grids')
 
     def plot_contour(self, var=None, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return pn.plotting.plot_contour(self, var, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_contour(self, var, fig=fig, ax=ax, **kwargs)
 
     def plot_step(self, var=None, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return pn.plotting.plot_step(self[var], label=var, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_step(self[var], label=var, fig=fig, ax=ax, **kwargs)
 
-    plot_bands = pn.plotting.plot_bands
+    plot_bands = dm.plotting.plot_bands
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return pn.plotting.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)

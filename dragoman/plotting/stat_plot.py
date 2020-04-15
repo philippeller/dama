@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-import pynocular as pn
+import dragoman as dm
 from matplotlib import pyplot as plt
 
 '''Module to provide plotting convenience functions
@@ -41,10 +41,10 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
 
     #ToDo: fix invalid values
 
-    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert isinstance(source, (dm.GridData, dm.GridArray))
     assert source.grid.nax == 1
 
-    if isinstance(source, pn.GridData):
+    if isinstance(source, dm.GridData):
         if var is None and len(source.data_vars) == 1:
             var = source.data_vars[0]
         data = np.ma.asarray(source[var])
@@ -131,10 +131,10 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
         Add colorbar to axis
     fig, ax : matplotlib figure and axis (optional)
     '''
-    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert isinstance(source, (dm.GridData, dm.GridArray))
     assert source.grid.nax == 2
 
-    if isinstance(source, pn.GridData):
+    if isinstance(source, dm.GridData):
         if var is None and len(source.data_vars) == 1:
             var = source.data_vars[0]
         data = np.array(source[var])
@@ -181,10 +181,10 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
     label : str
     fig, ax : matplotlib figure and axis (optional)
     '''
-    assert isinstance(source, (pn.GridData, pn.GridArray))
+    assert isinstance(source, (dm.GridData, dm.GridArray))
     assert source.grid.nax == 1
 
-    if isinstance(source, pn.GridData):
+    if isinstance(source, dm.GridData):
         if var is None and len(source.data_vars) == 1:
             var = source.data_vars[0]
         data = np.array(source[var])
@@ -209,7 +209,7 @@ def plot1d_all(source, *args, **kwargs):
     fig = kwargs.pop('fig', plt.gcf())
     ax = kwargs.pop('ax', plt.gca())
 
-    if isinstance(source, pn.PointArray):
+    if isinstance(source, dm.PointArray):
         return ax.plot(source)
 
     for var in source.vars:
@@ -261,7 +261,7 @@ def plot(source, *args, labels=None, **kwargs):
     ax = kwargs.pop('ax', plt.gca())
 
     if x is None and y is None: 
-        if isinstance(source, pn.PointArray):
+        if isinstance(source, dm.PointArray):
             return ax.plot(source, *args, label=labels, **kwargs)
 
         for i, var in enumerate(source.vars):

@@ -3,7 +3,7 @@ from numbers import Number
 from collections import OrderedDict
 from collections.abc import Iterable
 
-import pynocular as pn
+import dragoman as dm
 
 import numpy as np
 
@@ -33,14 +33,14 @@ class Axis(object):
             var, val = list(kwargs.items())[0]
             if isinstance(val, (list, np.ndarray)):
                 points=np.asanyarray(val)
-            elif isinstance(val, pn.Edges):
+            elif isinstance(val, dm.Edges):
                 edges = val
             elif isinstance(val, Number):
                 nbins = val
             else:
                 raise ValueError()
         self.var = var
-        self._edges = pn.Edges(edges)
+        self._edges = dm.Edges(edges)
         self._points = points
         self._nbins = nbins
 
@@ -83,7 +83,7 @@ class Axis(object):
         if idx is Ellipsis:
             return self
 
-        new_obj = pn.Axis()
+        new_obj = dm.Axis()
         new_obj.var = self.var
         if self._edges._edges is not None:
             new_obj._edges = self._edges[idx]
@@ -199,12 +199,12 @@ class Axis(object):
         if self._edges._edges is not None:
             return self._edges
         elif self._points is not None:
-            return pn.Edges(points=self._points)
+            return dm.Edges(points=self._points)
         return None
 
     @edges.setter
     def edges(self, edges):
-        edges = pn.Edges(edges)
+        edges = dm.Edges(edges)
         if self.has_data:
             if not len(edges) == len(self):
                 raise IndexError('incompatible length of edges')
