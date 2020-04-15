@@ -1,4 +1,5 @@
 # Dragoman
+<img src="dragoman.png" alt="Dragoman" width=200>
 
 A consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can be a simple pandas datafrane or other colum/row data, or it can be data on a grid.
