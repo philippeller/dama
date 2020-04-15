@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 '''Module providing a data base class for translation methods'''
+
 import numpy as np
+
 from dragoman.translations import Translation
 
 __license__ = '''Copyright 2019 Philipp Eller
@@ -45,10 +47,10 @@ class Histogram(Translation):
 
 
     def eval(self, source_data):
-        
+
         if source_data is None:
             output_array, _ = np.histogramdd(sample=self.source_sample, bins=self.dest.grid.squeezed_edges, density=self.density)
-        
+         
         else:
             source_data = source_data.flat()
 

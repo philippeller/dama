@@ -62,8 +62,7 @@ class PointData:
         '''for jupyter'''
         if self.type == 'df':
             return self.data._repr_html_()
-        else:
-            return format_table(self, tablefmt='html')
+        return format_table(self, tablefmt='html')
 
 
     @property
@@ -75,8 +74,7 @@ class PointData:
             return list(self.data.columns)
         elif self.type == 'simple':
             return list(self.data.keys())
-        else:
-            return []
+        return []
 
     @property
     def data_vars(self):
@@ -158,7 +156,7 @@ class PointData:
             for v in var:
                 new_data[v] = self[v]
         else:
-            for n,d in self.items():
+            for n, d in self.items():
                 new_data[n] = d[var]
         return dm.PointData(new_data)
         

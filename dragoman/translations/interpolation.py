@@ -1,8 +1,9 @@
 from __future__ import absolute_import
 '''Module providing a data translation methods'''
 import numpy as np
-from dragoman.translations import Translation
 from scipy import interpolate
+
+from dragoman.translations import Translation
 
 __license__ = '''Copyright 2019 Philipp Eller
 
@@ -59,23 +60,44 @@ class Interpolation(Translation):
             else:
                 dim_mask = mask
 
-            sample = self.source_sample[...,dim_mask] 
+            sample = self.source_sample[..., dim_mask] 
             if source_data.ndim > 1:
                 output_array = self.get_empty_output_array(source_data.shape[1:])
                 for idx in np.ndindex(*source_data.shape[1:]):
-                    output_array[(Ellipsis,) + idx] = interpolate.griddata(points=sample.T, values=source_data[(Ellipsis,) + idx][dim_mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
+                    output_array[(Ellipsis, ) + idx] = interpolate.griddata(points=sample.T,
+                                                                            values=source_data[(Ellipsis, ) + idx][dim_mask],
+                                                                            xi=self.dest_sample.T,
+                                                                            method=self.method,
+                                                                            fill_value=self.fill_value
+                                                                            ).T
             else:
-                output_array = interpolate.griddata(points=sample.T, values=source_data[mask], xi=self.dest_sample.T, method=self.method, fill_value=self.fill_value).T
+                output_array = interpolate.griddata(points=sample.T,
+                                                    values=source_data[mask],
+                                                    xi=self.dest_sample.T,
+                                                    method=self.method,
+                                                    fill_value=self.fill_value
+                                                    ).T
                 output_array = np.squeeze(output_array)
             return output_array
 
         else:
             if len(self.wrt) == 1:
-                f = interpolate.interp1d(self.source_sample[0], source_data, kind=self.method, fill_value=self.fill_value, bounds_error=False)
+                f = interpolate.interp1d(self.source_sample[0],
+                                         source_data,
+                                         kind=self.method,
+                                         fill_value=self.fill_value,
+                                         bounds_error=False
+                                         )
                 return f(self.dest_sample[0])
 
             elif len(self.wrt) == 2:
-                f = interpolate.interp2d(self.source_sample[0], self.source_sample[1], source_data, kind=self.method, fill_value=self.fill_value, bounds_error=False)
+                f = interpolate.interp2d(self.source_sample[0],
+                                         self.source_sample[1],
+                                         source_data,
+                                         kind=self.method,
+                                         fill_value=self.fill_value,
+                                         bounds_error=False
+                                         )
                 return np.array([f(x, y)[0] for x, y in zip(self.dest_sample[0], self.dest_sample[1])])
 
             else:

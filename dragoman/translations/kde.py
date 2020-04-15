@@ -74,8 +74,8 @@ class KDE(Translation):
 
         if isinstance(self.bw, (np.ndarray, list, tuple)):
             for i in range(self.dest.grid.nax):
-                self.source_sample[:,i] /= self.bw[i]
-                self.dest_sample[:,i] /= self.bw[i]
+                self.source_sample[:, i] /= self.bw[i]
+                self.dest_sample[:, i] /= self.bw[i]
             bw = 1
         else:
             bw = self.bw
