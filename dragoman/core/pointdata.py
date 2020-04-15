@@ -1,6 +1,11 @@
 from __future__ import absolute_import
 import numpy as np
-import pandas
+
+try:
+    import pandas
+except ImportError:
+    pandas = None
+
 import dragoman as dm
 from dragoman import translations
 import dragoman.plotting
@@ -31,14 +36,16 @@ class PointData:
         if len(args) == 0 and len(kwargs) == 0:
             pass
         elif len(args) == 1 and len(kwargs) == 0:
-            if isinstance(args[0], pandas.core.series.Series):
-                self.data = pandas.DataFrame(args[0])
-            elif isinstance(args[0], pandas.core.frame.DataFrame):
-                self.data = args[0]
-            elif isinstance(args[0], dict):
-                kwargs = args[0]
+            if pandas is not None:
+                if isinstance(args[0], pandas.core.series.Series):
+                    self.data = pandas.DataFrame(args[0])
+                elif isinstance(args[0], pandas.core.frame.DataFrame):
+                    self.data = args[0]
             else:
-                raise ValueError("Did not understand input arguments")
+                if isinstance(args[0], dict):
+                    kwargs = args[0]
+                else:
+                    raise ValueError("Did not understand input arguments")
         if len(kwargs) > 0:
             for k, v in kwargs.items():
                 self[k] = v
@@ -86,8 +93,9 @@ class PointData:
             if data is a pandas.DataFrame: "df"
             else: "simple"
         '''
-        if isinstance(self.data, pandas.core.frame.DataFrame):
-            return 'df'
+        if pandas is not None:
+            if isinstance(self.data, pandas.core.frame.DataFrame):
+                return 'df'
         return 'simple'
 
     def __len__(self):

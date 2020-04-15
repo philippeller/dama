@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 import numpy as np
-import pandas
 import dragoman as dm
 from dragoman.utils.formatter import format_table
 

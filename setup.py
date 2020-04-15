@@ -21,6 +21,5 @@ setup(
         'tabulate',
         'numpy_indexed',
         'numpy>=1.11',
-        'pandas'
     ],
 )
