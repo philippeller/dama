@@ -8,8 +8,7 @@ Its aim is to offer a consistant and pythonic way to handle different datasaets 
 A dataset can for instance be simple colum/row data, or it can be data on a grid.
 
 One of the key features of dragoman is the seamless translation from one data represenation into any other. 
-
-Convenience `pyplot` plotting functions are also defined, in order to produce standard plots without the hassle of figuring out the correct input to the standard matplotlib functions.
+Convenience `pyplot` plotting functions are also available, in order to produce standard plots without any hassle.
 
 ## Installation
 
