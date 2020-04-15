@@ -3,8 +3,8 @@
 
 > A dragoman was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dragoman had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
 
-Similarly, the dragoman python library guids you through your data and translates between different representations.
-It's aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
+Similarly, the dragoman python library guides you through your data and translates between different representations.
+Its aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can for insstance be a simple colum/row data, or it can be data on a grid.
 
 One of the key features of dragoman is the seamless translation from one data represenation into any other. 
