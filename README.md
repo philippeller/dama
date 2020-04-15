@@ -1,5 +1,7 @@
 # Dragoman
-<img src="dragoman.png" alt="Dragoman" width=200>
+<img align="right" src="dragoman.png" alt="Dragoman" width=150>
+
+> A dragoman was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dragoman had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
 
 A consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can be a simple pandas datafrane or other colum/row data, or it can be data on a grid.
