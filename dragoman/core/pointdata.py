@@ -36,16 +36,14 @@ class PointData:
         if len(args) == 0 and len(kwargs) == 0:
             pass
         elif len(args) == 1 and len(kwargs) == 0:
-            if pandas is not None:
-                if isinstance(args[0], pandas.core.series.Series):
-                    self.data = pandas.DataFrame(args[0])
-                elif isinstance(args[0], pandas.core.frame.DataFrame):
-                    self.data = args[0]
+            if pandas and isinstance(args[0], pandas.core.series.Series):
+                self.data = pandas.DataFrame(args[0])
+            elif pandas and isinstance(args[0], pandas.core.frame.DataFrame):
+                self.data = args[0]
+            elif isinstance(args[0], dict):
+                kwargs = args[0]
             else:
-                if isinstance(args[0], dict):
-                    kwargs = args[0]
-                else:
-                    raise ValueError("Did not understand input arguments")
+                raise ValueError("Did not understand input arguments")
         if len(kwargs) > 0:
             for k, v in kwargs.items():
                 self[k] = v
