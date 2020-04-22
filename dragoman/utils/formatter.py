@@ -23,7 +23,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-N_MAX = 12
+N_MAX = 6
 '''max rows to display in html formatting'''
 PRECISION = 3
 '''signfificant figures to dispay'''
