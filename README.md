@@ -139,8 +139,8 @@ As comparison to point out the convenience, an alternative way without using Dra
 
 
 ```python
-x = np.linspace(0,3*np.pi, 20)
-y = np.linspace(0,2*np.pi, 10) 
+x = np.linspace(0,3*np.pi, 30)
+y = np.linspace(0,2*np.pi, 20) 
 
 xx, yy = np.meshgrid(x, y)
 
@@ -169,7 +169,7 @@ cb.set_label('a')
 from scipy.interpolate import griddata
 
 interp_x = np.linspace(0,3*np.pi, 200)
-interp_y = np.linspace(0,2*np.pi, 100) 
+interp_y = np.linspace(0,2*np.pi, 200) 
 
 grid_x, grid_y = np.meshgrid(interp_x, interp_y)
 
@@ -187,7 +187,7 @@ Another representation of data is `PointData`, which is not any different of a d
 ```python
 p = dm.PointData()
 p['x'] = np.random.randn(10000)
-p['a'] = np.random.rand(p.size)
+p['a'] = np.random.rand(p.size) * p['x']**2
 ```
 
 
@@ -200,8 +200,8 @@ p
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td style="text-align: right;">-1.01 </td><td style="text-align: right;">-0.896</td><td style="text-align: right;">-0.154</td><td style="text-align: right;">0.291</td><td style="text-align: right;">0.775</td><td style="text-align: right;">0.178</td><td>...</td><td style="text-align: right;">0.112</td><td style="text-align: right;">1.52 </td><td style="text-align: right;">1.09 </td><td style="text-align: right;">-0.0441</td><td style="text-align: right;">-0.248</td><td style="text-align: right;">0.267 </td></tr>
-<tr><td><b>a</b></td><td style="text-align: right;"> 0.194</td><td style="text-align: right;"> 0.455</td><td style="text-align: right;"> 0.482</td><td style="text-align: right;">0.656</td><td style="text-align: right;">0.329</td><td style="text-align: right;">0.74 </td><td>...</td><td style="text-align: right;">0.405</td><td style="text-align: right;">0.861</td><td style="text-align: right;">0.535</td><td style="text-align: right;"> 0.966 </td><td style="text-align: right;"> 0.169</td><td style="text-align: right;">0.0294</td></tr>
+<tr><td><b>x</b></td><td style="text-align: right;">0.479</td><td style="text-align: right;">-0.00525</td><td style="text-align: right;">0.379</td><td style="text-align: right;">0.561 </td><td style="text-align: right;">0.94 </td><td style="text-align: right;">-0.201 </td><td>...</td><td style="text-align: right;">0.0417 </td><td style="text-align: right;">0.445</td><td style="text-align: right;">-1.37 </td><td style="text-align: right;">0.992</td><td style="text-align: right;">-0.254 </td><td style="text-align: right;">0.441</td></tr>
+<tr><td><b>a</b></td><td style="text-align: right;">0.22 </td><td style="text-align: right;"> 1.1e-05</td><td style="text-align: right;">0.107</td><td style="text-align: right;">0.0771</td><td style="text-align: right;">0.242</td><td style="text-align: right;"> 0.0237</td><td>...</td><td style="text-align: right;">0.00123</td><td style="text-align: right;">0.145</td><td style="text-align: right;"> 0.125</td><td style="text-align: right;">0.259</td><td style="text-align: right;"> 0.0386</td><td style="text-align: right;">0.13 </td></tr>
 </tbody>
 </table>
 
@@ -217,20 +217,22 @@ plt.legend();
 ![png](README_files/README_21_0.png)
 
 
+Maybe a correlation plot would be more insightful:
+
 
 ```python
 p.plot('x', 'a', '.');
 ```
 
 
-![png](README_files/README_22_0.png)
+![png](README_files/README_23_0.png)
 
 
 This can now seamlessly be translated into `Griddata`, for example taking the data binwise in `x` in 10 bins, and in each bin summing up points:
 
 
 ```python
-p.binwise(x=10).sum()
+p.binwise(x=20).sum()
 ```
 
 
@@ -238,8 +240,8 @@ p.binwise(x=10).sum()
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-3.68  -2.961]</b></td><td><b>[-2.961 -2.242]</b></td><td><b>[-2.242 -1.524]</b></td><td><b>[-1.524 -0.805]</b></td><td><b>[-0.805 -0.086]</b></td><td><b>[-0.086  0.633]</b></td><td><b>[0.633 1.351]</b></td><td><b>[1.351 2.07 ]</b></td><td><b>[2.07  2.789]</b></td><td><b>[2.789 3.507]</b></td></tr>
-<tr><td><b>a</b></td><td>8.86                  </td><td>62.9                  </td><td>256                   </td><td>721                   </td><td>1.22e+03              </td><td>1.39e+03              </td><td>856                 </td><td>345                 </td><td>82.5                </td><td>19                  </td></tr>
+<tr><td><b>x</b></td><td><b>[-3.736 -3.365]</b></td><td><b>[-3.365 -2.994]</b></td><td><b>[-2.994 -2.623]</b></td><td><b>[-2.623 -2.252]</b></td><td><b>[-2.252 -1.882]</b></td><td><b>[-1.882 -1.511]</b></td><td>...</td><td><b>[1.456 1.827]</b></td><td><b>[1.827 2.198]</b></td><td><b>[2.198 2.569]</b></td><td><b>[2.569 2.939]</b></td><td><b>[2.939 3.31 ]</b></td><td><b>[3.31  3.681]</b></td></tr>
+<tr><td><b>a</b></td><td>4.87                  </td><td>29.3                  </td><td>99.7                  </td><td>279                   </td><td>315                   </td><td>556                   </td><td>...</td><td>513                 </td><td>402                 </td><td>214                 </td><td>162                 </td><td>50.1                </td><td>21.4                </td></tr>
 </tbody>
 </table>
 
@@ -247,18 +249,18 @@ p.binwise(x=10).sum()
 
 
 ```python
-p.binwise(x=10).sum().plot();
+p.binwise(x=20).sum().plot();
 ```
 
 
-![png](README_files/README_25_0.png)
+![png](README_files/README_26_0.png)
 
 
 This is equivalent of making a weighted histogram, while the latter is faster.
 
 
 ```python
-p.histogram(x=10)
+p.histogram(x=20)
 ```
 
 
@@ -266,9 +268,9 @@ p.histogram(x=10)
 
 <table>
 <tbody>
-<tr><td><b>x</b>     </td><td><b>[-3.68  -2.961]</b></td><td><b>[-2.961 -2.242]</b></td><td><b>[-2.242 -1.524]</b></td><td><b>[-1.524 -0.805]</b></td><td><b>[-0.805 -0.086]</b></td><td><b>[-0.086  0.633]</b></td><td><b>[0.633 1.351]</b></td><td><b>[1.351 2.07 ]</b></td><td><b>[2.07  2.789]</b></td><td><b>[2.789 3.507]</b></td></tr>
-<tr><td><b>a</b>     </td><td>8.86                  </td><td>62.9                  </td><td>256                   </td><td>721                   </td><td>1.22e+03              </td><td>1.39e+03              </td><td>856                 </td><td>345                 </td><td>82.5                </td><td>19                  </td></tr>
-<tr><td><b>counts</b></td><td>17                    </td><td>117                   </td><td>508                   </td><td>1.46e+03              </td><td>2.5e+03               </td><td>2.8e+03               </td><td>1.72e+03            </td><td>691                 </td><td>157                 </td><td>35                  </td></tr>
+<tr><td><b>x</b>     </td><td><b>[-3.736 -3.365]</b></td><td><b>[-3.365 -2.994]</b></td><td><b>[-2.994 -2.623]</b></td><td><b>[-2.623 -2.252]</b></td><td><b>[-2.252 -1.882]</b></td><td><b>[-1.882 -1.511]</b></td><td>...</td><td><b>[1.456 1.827]</b></td><td><b>[1.827 2.198]</b></td><td><b>[2.198 2.569]</b></td><td><b>[2.569 2.939]</b></td><td><b>[2.939 3.31 ]</b></td><td><b>[3.31  3.681]</b></td></tr>
+<tr><td><b>a</b>     </td><td>4.87                  </td><td>29.3                  </td><td>99.7                  </td><td>279                   </td><td>315                   </td><td>556                   </td><td>...</td><td>513                 </td><td>402                 </td><td>214                 </td><td>162                 </td><td>50.1                </td><td>21.4                </td></tr>
+<tr><td><b>counts</b></td><td>3                     </td><td>8                     </td><td>25                    </td><td>85                    </td><td>156                   </td><td>389                   </td><td>...</td><td>385                 </td><td>199                 </td><td>85                  </td><td>42                  </td><td>10                  </td><td>3                   </td></tr>
 </tbody>
 </table>
 
@@ -294,5 +296,21 @@ p.kde(x=1000)['a'].plot();
 ```
 
 
-![png](README_files/README_30_0.png)
+![png](README_files/README_31_0.png)
 
+
+GridArrays can also hold multi-dimensional values, like RGB images or here 5 values from th percentile function. We can plot those as bands for example:
+
+
+```python
+p.binwise(x=20).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_bands()
+```
+
+
+![png](README_files/README_33_0.png)
+
+
+
+```python
+
+```
