@@ -137,10 +137,10 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
     if isinstance(source, dm.GridData):
         if var is None and len(source.data_vars) == 1:
             var = source.data_vars[0]
-        data = np.array(source[var])
+        data = source[var]
 
     else:
-        data = np.array(source)
+        data = source
     
     if fig is None:
         fig = plt.gcf()
