@@ -1,25 +1,25 @@
 # Dragoman
-<img align="right" src="dragoman.png" alt="Dragoman" width=150>
+<img align="right" src="https://raw.githubusercontent.com/philippeller/dragoman/master/dragoman.png" alt="Dragoman" width=150>
 
 > A dragoman was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dragoman had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
 
-A consistant and pythonic way to handle different datasaets and translations between them.
-A dataset can be a simple pandas datafrane or other colum/row data, or it can be data on a grid.
+Similarly, the dragoman python library guides you through your data and translates between different representations.
+Its aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
+A dataset can for instance be simple colum/row data, or it can be data on a grid.
 
-The key feature of dragoman is seamless translations from data represenation into any other. See `notebooks/example.ipynb`
-
-Convenience `pyplot` plotting functions are also defined, in order to produce standard plots without the hassle of figuring out the correct input to the standard matplotlib functions.
+One of the key features of dragoman is the seamless translation from one data represenation into any other. 
+Convenience `pyplot` plotting functions are also available, in order to produce standard plots without any hassle.
 
 ## Installation
 
 * `git clone git@github.com:philippeller/dragoman.git`
 * `pip install dragoman`
 
-# Intro
+## Introduction
 
 Different data representations are available, one being the `GridArray`:
 ```python
-import dragoman as pn
+import dragoman as dm
 
 a = dm.GridArray(np.random.rand(100).reshape(20, 5))
 a
@@ -80,7 +80,7 @@ currently there are the follwoing translations methods:
 * lookup : Nd lookup of values on grids
 * resample : Nd resampling between different grids
 
-## Other things
+## Plotting
 
 Objects provide matplotlib plotting methods and jupyterlab HTML output for convenience.
 
