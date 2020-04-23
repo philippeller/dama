@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data translation methods'''
 from KDEpy import FFTKDE
-from collections.abc import Iterable 
+from collections.abc import Iterable
 import numpy as np
 from dragoman.translations import Translation
 
@@ -21,8 +21,15 @@ limitations under the License.'''
 
 
 class KDE(Translation):
-
-    def __init__(self, source, *args, bw=None, kernel='gaussian', density=True, **kwargs):
+    def __init__(
+        self,
+        source,
+        *args,
+        bw=None,
+        kernel='gaussian',
+        density=True,
+        **kwargs
+        ):
         '''run KDE on regular grid
 
         Parameters:
@@ -38,10 +45,7 @@ class KDE(Translation):
         density : bool (optional)
             if false, multiply output by sum of data
         '''
-        super().__init__(source,
-                         *args,
-                         dest_needs_grid=True,
-                         **kwargs)
+        super().__init__(source, *args, dest_needs_grid=True, **kwargs)
 
         if bw is None:
             bw = 'silverman' if self.dest.grid.nax == 1 else 1.
@@ -50,24 +54,27 @@ class KDE(Translation):
         self.density = density
 
         if density:
-            self.additional_runs = {'density' : None}
+            self.additional_runs = {'density': None}
         else:
-            self.additional_runs = {'counts' : None}
+            self.additional_runs = {'counts': None}
 
         if not self.dest.grid.regular:
             raise TypeError('dest must have regular grid')
 
-
     def setup(self):
         self.prepare_source_sample(stacked=False)
         # every point must be inside output grid (requirement of KDEpy)
-        masks = [np.logical_and(self.source_sample[i] > dim.points[0], self.source_sample[i] < dim.points[-1]) for i, dim in enumerate(self.dest.grid)]
+        masks = [
+            np.logical_and(
+                self.source_sample[i] > dim.points[0],
+                self.source_sample[i] < dim.points[-1]
+                ) for i, dim in enumerate(self.dest.grid)
+            ]
         self.mask = np.all(masks, axis=0)
         #n_masked = np.sum(~mask)
         #if n_masked > 0:
         #    warnings.warn('Excluding %i points that are outside grid'%n_masked, Warning, stacklevel=0)
         sample = [s[self.mask] for s in self.source_sample]
-
 
         self.source_sample = np.stack(sample).T
         self.prepare_dest_sample(transposed=True)
@@ -85,7 +92,7 @@ class KDE(Translation):
     def eval(self, source_data):
 
         if self.density:
-            # since we scale the inputs, we need to re-scale the 
+            # since we scale the inputs, we need to re-scale the
             # densities such that they integrate out to being 1 again
             if isinstance(self.bw, (np.ndarray, list, tuple)):
                 scale = 1. / np.prod(self.bw)
@@ -93,7 +100,8 @@ class KDE(Translation):
                 scale = None
 
         if source_data is None:
-            out_array = self.kde.fit(self.source_sample).evaluate(self.dest_sample)
+            out_array = self.kde.fit(self.source_sample
+                                     ).evaluate(self.dest_sample)
             out_shape = self.dest.shape
             if not self.density:
                 out_array *= self.source_sample.size / np.sum(out_array)
@@ -104,20 +112,30 @@ class KDE(Translation):
             source_data = source_data.flat()
 
             if source_data.ndim > 1:
-                out_array = self.get_empty_output_array(source_data.shape[1:], flat=True)
+                out_array = self.get_empty_output_array(
+                    source_data.shape[1:], flat=True
+                    )
                 for idx in np.ndindex(*source_data.shape[1:]):
-                    out_array[(Ellipsis,) + idx] = self.kde.fit(self.source_sample, weights=source_data[(Ellipsis,) + idx][self.mask]).evaluate(self.dest_sample)
+                    out_array[(Ellipsis, ) + idx] = self.kde.fit(
+                        self.source_sample,
+                        weights=source_data[(Ellipsis, ) + idx][self.mask]
+                        ).evaluate(self.dest_sample)
                     if not self.density:
-                        out_array[(Ellipsis,) + idx] *= np.sum(source_data[(Ellipsis,) + idx][self.mask]) / np.sum(out_array[(Ellipsis,) + idx])
+                        out_array[(Ellipsis, ) + idx] *= np.sum(
+                            source_data[(Ellipsis, ) + idx][self.mask]
+                            ) / np.sum(out_array[(Ellipsis, ) + idx])
                     elif scale is not None:
-                        out_array[(Ellipsis,) + idx] *= scale
-                out_shape = (self.dest.shape) + (-1,)
+                        out_array[(Ellipsis, ) + idx] *= scale
+                out_shape = (self.dest.shape) + (-1, )
 
             else:
-                out_array = self.kde.fit(self.source_sample, weights=source_data[self.mask]).evaluate(self.dest_sample)
+                out_array = self.kde.fit(
+                    self.source_sample, weights=source_data[self.mask]
+                    ).evaluate(self.dest_sample)
                 out_shape = self.dest.shape
                 if not self.density:
-                    out_array *= np.sum(source_data[self.mask]) / np.sum(out_array)
+                    out_array *= np.sum(source_data[self.mask]
+                                        ) / np.sum(out_array)
                 elif scale is not None:
                     out_array *= scale
 

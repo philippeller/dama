@@ -36,10 +36,13 @@ class GridData:
         # ToDo protect self.grid as private self._grid
         self.grid = None
 
-        if len(args) == 0 and len(kwargs) > 0 and all([isinstance(v, dm.GridArray) for v in kwargs.values()]):
-            for n,d in kwargs.items():
+        if len(args) == 0 and len(kwargs) > 0 and all(
+            [isinstance(v, dm.GridArray) for v in kwargs.values()]
+            ):
+            for n, d in kwargs.items():
                 self.add_data(n, d)
-        elif len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dm.Grid):
+        elif len(args) == 1 and len(kwargs
+                                    ) == 0 and isinstance(args[0], dm.Grid):
             self.grid = args[0]
         else:
             self.grid = dm.Grid(*args, **kwargs)
@@ -87,10 +90,11 @@ class GridData:
                 for v in self.data_vars:
                     new_data[v] = self[v][item]
                 return new_data
-            raise NotImplementedError('get item %s'%item)
+            raise NotImplementedError('get item %s' % item)
 
         # create new instance with only those vars
-        if isinstance(item, Iterable) and all([isinstance(v, str) for v in item]):
+        if isinstance(item,
+                      Iterable) and all([isinstance(v, str) for v in item]):
             new_data = dm.GridData(self.grid)
             for v in item:
                 if v in self.data_vars:
@@ -100,12 +104,11 @@ class GridData:
         # slice
         new_grid = self.grid[item]
         if len(new_grid) == 0:
-            return {n : d[item] for n,d in self.items()}
+            return {n: d[item] for n, d in self.items()}
         new_data = dm.GridData(new_grid)
-        for n,d in self.items():
+        for n, d in self.items():
             new_data[n] = d[item]
         return new_data
-        
 
     @property
     def T(self):
@@ -123,7 +126,9 @@ class GridData:
         array_result = dm.GridData()
         for var in inputs[0].data_vars:
             converted_inputs = [inp[var] for inp in inputs]
-            result = converted_inputs[0].__array_ufunc__(ufunc, method, *converted_inputs, **kwargs)
+            result = converted_inputs[0].__array_ufunc__(
+                ufunc, method, *converted_inputs, **kwargs
+                )
             if isinstance(result, dm.GridArray):
                 array_result[var] = result
             else:
@@ -133,7 +138,7 @@ class GridData:
         if len(scalar_results) == 0:
             return array_result
         return scalar_results, array_result
- 
+
     @property
     def vars(self):
         '''
@@ -180,7 +185,9 @@ class GridData:
                 assert self.grid == data.grid
 
         if var in self.grid.vars:
-            raise ValueError('Variable `%s` is already a grid dimension!'%var)
+            raise ValueError(
+                'Variable `%s` is already a grid dimension!' % var
+                )
 
         if isinstance(data, dm.GridData):
             assert len(data.data_vars) == 1
@@ -192,7 +199,7 @@ class GridData:
             if data.ndim <= 3 and var not in ['x', 'y', 'z']:
                 axes_names = ['x', 'y', 'z']
             else:
-                axes_names = ['x%i' for i in range(data.ndim+1)]
+                axes_names = ['x%i' for i in range(data.ndim + 1)]
                 axes_names.delete(var)
             axes = {}
             for d, n in zip(axes_names, data.shape):
@@ -206,7 +213,10 @@ class GridData:
         data = np.ma.asarray(data)
 
         if not data.shape[:self.ndim] == self.shape:
-            raise ValueError('Incompatible data of shape %s for grid of shape %s'%(data.shape, self.shape))
+            raise ValueError(
+                'Incompatible data of shape %s for grid of shape %s' %
+                (data.shape, self.shape)
+                )
 
         self.data[var] = data
 
@@ -247,34 +257,42 @@ class GridData:
         return self.data.values()
 
     def items(self):
-        return [(n, dm.GridArray(d, grid=self.grid)) for n,d in self.data.items()]
+        return [
+            (n, dm.GridArray(d, grid=self.grid)) for n, d in self.data.items()
+            ]
 
     # --- Tranlsation methods ---
 
     def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
-        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+        return translations.Interpolation(
+            self, *args, method=method, fill_value=fill_value, **kwargs
+            ).run()
+
     interp.__doc__ = translations.Interpolation.__init__.__doc__
 
     def histogram(self, *args, density=False, **kwargs):
-        return translations.Histogram(self, *args, density=density, **kwargs).run()
+        return translations.Histogram(self, *args, density=density,
+                                      **kwargs).run()
+
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return dm.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)
 
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
+
     lookup.__doc__ = translations.Lookup.__init__.__doc__
 
     def kde(self, *args, **kwargs):
         return translations.KDE(self, *args, **kwargs).run()
+
     kde.__doc__ = translations.KDE.__init__.__doc__
 
     def resample(self, *args, **kwargs):
         return translations.Resample(self, *args, **kwargs).run()
+
     resample.__doc__ = translations.Resample.__init__.__doc__
-
-
 
     # --- Plotting methods ---
 
@@ -296,7 +314,9 @@ class GridData:
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
         if self.grid.nax == 2:
-            return dm.plotting.plot_map(self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs)
+            return dm.plotting.plot_map(
+                self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs
+                )
 
         raise ValueError('Can only plot maps of 2d grids')
 
@@ -308,11 +328,15 @@ class GridData:
     def plot_step(self, var=None, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return dm.plotting.plot_step(self[var], label=var, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_step(
+            self[var], label=var, fig=fig, ax=ax, **kwargs
+            )
 
     plot_bands = dm.plotting.plot_bands
 
     def plot_errorband(self, var, errors, fig=None, ax=None, **kwargs):
         if var is None and len(self.data_vars) == 1:
             var = self.data_vars[0]
-        return dm.plotting.plot_errorband(self, var, errors, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_errorband(
+            self, var, errors, fig=fig, ax=ax, **kwargs
+            )

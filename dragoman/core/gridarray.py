@@ -21,6 +21,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
+
 def wrap(func):
     '''wrapper function to translate named axis to int indices
     and to re-pack results into correct form'''
@@ -41,13 +42,12 @@ def wrap(func):
             else:
                 inputs.append(arg)
 
-
         if first is None:
             raise ValueError()
         if 'axis' in kwargs:
             axis = kwargs.get('axis')
             if not isinstance(axis, tuple) and axis is not None:
-                axis = (axis,)
+                axis = (axis, )
             if axis is not None:
                 new_axis = []
                 for a in axis:
@@ -67,17 +67,19 @@ def wrap(func):
 
         result = func(*inputs, **kwargs)
         if isinstance(result, (np.ma.masked_array, np.ndarray)):
-            if result.ndim > 0: 
+            if result.ndim > 0:
                 # new grid
-                if axis is not None and any([a < first.grid.nax for a in axis]):
+                if axis is not None and any(
+                    [a < first.grid.nax for a in axis]
+                    ):
                     new_grid = copy.deepcopy(first.grid)
                     for a in sorted(axis)[::-1]:
                         # need to be careful, and start deleting from last element
                         if a < first.grid.nax:
-                            del(new_grid.axes[a])
+                            del (new_grid.axes[a])
                 else:
                     new_grid = first.grid
-                
+
                 new_obj = dm.GridArray(result, grid=new_grid)
                 if new_obj.nax == 0:
                     return new_obj.data
@@ -85,6 +87,7 @@ def wrap(func):
             if result.ndim == 0:
                 return np.asscalar(result)
         return result
+
     return wrapped_func
 
 
@@ -105,7 +108,14 @@ class GridArray(np.ma.MaskedArray):
         subok = kwargs.pop('subok', False)
         ndmin = kwargs.pop('ndmin', 0)
 
-        super().__new__(cls, input_array, dtype=dtype, order=order, subok=subok, ndmin=ndmin)
+        super().__new__(
+            cls,
+            input_array,
+            dtype=dtype,
+            order=order,
+            subok=subok,
+            ndmin=ndmin
+            )
 
         obj = np.ma.asarray(input_array).view(cls)
         if grid is not None:
@@ -139,7 +149,7 @@ class GridArray(np.ma.MaskedArray):
     def _repr_html_(self):
         '''for jupyter'''
         return format_table(self, tablefmt='html')
-    
+
     def __str__(self):
         return format_table(self, tablefmt='plain')
 
@@ -160,14 +170,14 @@ class GridArray(np.ma.MaskedArray):
                 new_item = dm.GridArray(np.ma.asarray(self), grid=self.grid)
                 new_item.mask = mask
                 return new_item
-            raise NotImplementedError('get item %s'%item)
-        if not isinstance(item, tuple): # and not isinstance(item, slice):
-            return self[(item,)]
+            raise NotImplementedError('get item %s' % item)
+        if not isinstance(item, tuple):  # and not isinstance(item, slice):
+            return self[(item, )]
         if isinstance(item, list):
             if all([isinstance(i, int) for i in item]):
-                return self[(list,)]
+                return self[(list, )]
             else:
-                raise IndexError('Cannot process list of indices %s'%item)
+                raise IndexError('Cannot process list of indices %s' % item)
         if isinstance(item, tuple):
 
             item = self.grid.convert_slice(item)
@@ -239,76 +249,99 @@ class GridArray(np.ma.MaskedArray):
         if self.ndim == self.nax + 1:
             new_data = np.rollaxis(new_data, 0, self.ndim)
         return dm.GridArray(new_data, grid=self.grid.T)
-    
+
     @wrap
     def __add__(self, other):
         return np.ma.add(self, other)
+
     @wrap
     def __radd__(self, other):
         return np.ma.add(other, self)
+
     @wrap
     def __sub__(self, other):
         return np.ma.subtract(self, other)
+
     @wrap
     def __rsub__(self, other):
         return np.ma.subtract(other, self)
+
     @wrap
     def __mul__(self, other):
         return np.ma.multiply(self, other)
+
     @wrap
     def __rmul__(self, other):
         return np.ma.multiply(other, self)
+
     @wrap
     def __truediv__(self, other):
         return np.ma.divide(self, other)
+
     @wrap
     def __rtruediv__(self, other):
         return np.ma.divide(other, self)
+
     @wrap
     def __pow__(self, other):
         return np.ma.power(self, other)
+
     @wrap
     def __rpow__(self, other):
         return np.ma.power(other, other)
+
     @wrap
     def __lt__(self, other):
         return np.ma.less(self, other)
+
     @wrap
     def __le__(self, other):
         return np.ma.less_equal(self, other)
+
     @wrap
     def __eq__(self, other):
         return np.ma.equal(self, other)
+
     @wrap
     def __ne__(self, other):
         return np.ma.not_equal(self, other)
+
     @wrap
     def __gt__(self, other):
         return np.ma.greater(self, other)
+
     @wrap
-    def __ge__(self, other): 
+    def __ge__(self, other):
         return np.ma.greater_equal(self, other)
+
     @wrap
     def sum(self, **kwargs):
         return np.ma.sum(self, **kwargs)
+
     @wrap
     def mean(self, **kwargs):
         return np.ma.mean(self, **kwargs)
+
     @wrap
     def std(self, **kwargs):
         return np.ma.std(self, **kwargs)
+
     @wrap
     def average(self, **kwargs):
         return np.ma.average(self, **kwargs)
+
     @wrap
     def median(self, **kwargs):
         return np.ma.median(self, **kwargs)
+
     @wrap
     def min(self, **kwargs):
         return np.ma.min(self, **kwargs)
+
     @wrap
     def max(self, **kwargs):
         return np.ma.max(self, **kwargs)
+
     @wrap
     def cumsum(self, **kwargs):
         return np.ma.cumsum(self, **kwargs)
@@ -317,11 +350,12 @@ class GridArray(np.ma.MaskedArray):
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         '''callable for numpy ufuncs'''
         #print('ufunc')
-        return np.ma.asarray(self).__array_ufunc__(ufunc, method, *inputs, **kwargs)
-        
+        return np.ma.asarray(self).__array_ufunc__(
+            ufunc, method, *inputs, **kwargs
+            )
+
     def __array__(self):
         print('array')
-
 
     def __array_prepare__(self, result, context=None):
         print('prepare')
@@ -344,26 +378,43 @@ class GridArray(np.ma.MaskedArray):
     # --- Tranlsation methods ---
 
     def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
-        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+        return translations.Interpolation(
+            self, *args, method=method, fill_value=fill_value, **kwargs
+            ).run()
+
     interp.__doc__ = translations.Interpolation.__init__.__doc__
 
     def histogram(self, *args, density=False, **kwargs):
-        return translations.Histogram(self, *args, density=density, **kwargs).run()
+        return translations.Histogram(self, *args, density=density,
+                                      **kwargs).run()
+
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return dm.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)
 
     def lookup(self, *args, **kwargs):
         return translations.Lookup(self, *args, **kwargs).run()
+
     lookup.__doc__ = translations.Lookup.__init__.__doc__
 
-    def kde(self, *args, bw='silverman', kernel='gaussian', density=True, **kwargs):
-        return translations.KDE(self, *args, bw=bw, kernel=kernel, density=density, **kwargs).run()
+    def kde(
+        self,
+        *args,
+        bw='silverman',
+        kernel='gaussian',
+        density=True,
+        **kwargs
+        ):
+        return translations.KDE(
+            self, *args, bw=bw, kernel=kernel, density=density, **kwargs
+            ).run()
+
     kde.__doc__ = translations.KDE.__init__.__doc__
 
     def resample(self, *args, **kwargs):
         return translations.Resample(self, *args, **kwargs).run()
+
     resample.__doc__ = translations.Resample.__init__.__doc__
 
     # --- Plotting ---
@@ -383,11 +434,15 @@ class GridArray(np.ma.MaskedArray):
         ax : pyplot axes object
         '''
         if self.nax == 2:
-            return dm.plotting.plot_map(self, label=label, cbar=cbar, fig=fig, ax=ax, **kwargs)
+            return dm.plotting.plot_map(
+                self, label=label, cbar=cbar, fig=fig, ax=ax, **kwargs
+                )
 
         raise ValueError('Can only plot maps of 2d grids')
 
     def plot_step(self, label=None, fig=None, ax=None, **kwargs):
-        return dm.plotting.plot_step(self, label=label, fig=fig, ax=ax, **kwargs)
+        return dm.plotting.plot_step(
+            self, label=label, fig=fig, ax=ax, **kwargs
+            )
 
     plot_bands = dm.plotting.plot_bands

@@ -21,18 +21,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
+
 class Axis(object):
     '''
     Class to hold a single Axis of a Grid
     which can have points and/or edges
     '''
-    def __init__(self, var=None, edges=None, points=None, nbins=None, **kwargs):
+    def __init__(
+        self, var=None, edges=None, points=None, nbins=None, **kwargs
+        ):
 
         if len(kwargs) == 1:
             assert var is None and edges is None and points is None
             var, val = list(kwargs.items())[0]
             if isinstance(val, (list, np.ndarray)):
-                points=np.asanyarray(val)
+                points = np.asanyarray(val)
             elif isinstance(val, dm.Edges):
                 edges = val
             elif isinstance(val, Number):
@@ -63,17 +66,17 @@ class Axis(object):
 
     def __str__(self):
         strs = []
-        strs.append('(points) %s'%(self._points))
-        strs.append('(edges)  %s'%(self._edges))
-        strs.append('(nbins)  %s'%(self.nbins))
+        strs.append('(points) %s' % (self._points))
+        strs.append('(edges)  %s' % (self._edges))
+        strs.append('(nbins)  %s' % (self.nbins))
         return '\n'.join(strs)
 
     def __repr__(self):
         strs = []
-        strs.append('Axis("%s",'%self.var)
-        strs.append('points = %s,'%(self._points.__repr__()))
-        strs.append('edges = %s)'%(self._edges.__repr__()))
-        strs.append('nbins = %s)'%(self.nbins))
+        strs.append('Axis("%s",' % self.var)
+        strs.append('points = %s,' % (self._points.__repr__()))
+        strs.append('edges = %s)' % (self._edges.__repr__()))
+        strs.append('nbins = %s)' % (self.nbins))
         return '\n'.join(strs)
 
     def __getitem__(self, idx):
@@ -99,7 +102,7 @@ class Axis(object):
         '''
         if isinstance(idx, (int, np.integer, type(Ellipsis))):
             return idx
-        
+
         if isinstance(idx, float):
             return self.convert_index(idx)
 
@@ -123,13 +126,12 @@ class Axis(object):
 
         if isinstance(idx, (int, np.integer)):
             return idx
-        
+
         idx = self.compute_indices(idx)
         if idx >= 0:
             return idx
 
         raise IndexError('Index out of range')
-
 
     def compute_indices(self, sample):
         '''compute bin indices for a sample, return -1 if outise of bins
@@ -145,11 +147,11 @@ class Axis(object):
         '''
         if not self.edges.consecutive:
             raise NotImplementedError()
-        
+
         bins = self.edges.squeezed_edges
         if np.isscalar(sample):
             if sample == bins[-1]:
-                return  len(self)
+                return len(self)
             elif sample < bins[0] or sample > bins[-1]:
                 return -1
             else:
@@ -162,12 +164,10 @@ class Axis(object):
         idx[idx == len(self)] = -1
         return idx
 
-
     @property
     def initialized(self):
         '''wether axis is initialized'''
         return self._edges._edges is not None or self._points is not None
-
 
     @property
     def has_data(self):
@@ -193,7 +193,7 @@ class Axis(object):
         if self._edges.edges is not None:
             regular = regular and self._edges.regular
         return regular
-    
+
     @property
     def edges(self):
         if self._edges._edges is not None:
@@ -242,4 +242,3 @@ class Axis(object):
             self._nbins = nbins
         else:
             raise ValueError('Cannot set n since bins are already defined')
-

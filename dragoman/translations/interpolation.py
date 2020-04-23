@@ -21,7 +21,9 @@ limitations under the License.'''
 
 
 class Interpolation(Translation):
-    def __init__(self, source, *args, method=None, fill_value=np.nan, **kwargs):
+    def __init__(
+        self, source, *args, method=None, fill_value=np.nan, **kwargs
+        ):
         '''interpolation from any data to another
 
         Parameters:
@@ -35,7 +37,9 @@ class Interpolation(Translation):
         '''
         super().__init__(source, *args, **kwargs)
 
-        assert method in [None, 'nearest', 'linear', 'cubic'], 'Illegal method %s'%method
+        assert method in [
+            None, 'nearest', 'linear', 'cubic'
+            ], 'Illegal method %s' % method
 
         if method is None:
             if len(self.wrt) > 2:
@@ -44,7 +48,6 @@ class Interpolation(Translation):
                 method = 'cubic'
         self.method = method
         self.fill_value = fill_value
-
 
     def setup(self):
         self.prepare_source_sample()
@@ -60,51 +63,66 @@ class Interpolation(Translation):
             else:
                 dim_mask = mask
 
-            sample = self.source_sample[..., dim_mask] 
+            sample = self.source_sample[..., dim_mask]
             if source_data.ndim > 1:
-                output_array = self.get_empty_output_array(source_data.shape[1:])
+                output_array = self.get_empty_output_array(
+                    source_data.shape[1:]
+                    )
                 for idx in np.ndindex(*source_data.shape[1:]):
-                    output_array[(Ellipsis, ) + idx] = interpolate.griddata(points=sample.T,
-                                                                            values=source_data[(Ellipsis, ) + idx][dim_mask],
-                                                                            xi=self.dest_sample.T,
-                                                                            method=self.method,
-                                                                            fill_value=self.fill_value
-                                                                            ).T
+                    output_array[(Ellipsis, ) + idx] = interpolate.griddata(
+                        points=sample.T,
+                        values=source_data[(Ellipsis, ) + idx][dim_mask],
+                        xi=self.dest_sample.T,
+                        method=self.method,
+                        fill_value=self.fill_value
+                        ).T
             else:
-                output_array = interpolate.griddata(points=sample.T,
-                                                    values=source_data[mask],
-                                                    xi=self.dest_sample.T,
-                                                    method=self.method,
-                                                    fill_value=self.fill_value
-                                                    ).T
+                output_array = interpolate.griddata(
+                    points=sample.T,
+                    values=source_data[mask],
+                    xi=self.dest_sample.T,
+                    method=self.method,
+                    fill_value=self.fill_value
+                    ).T
                 output_array = np.squeeze(output_array)
             return output_array
 
         else:
             if len(self.wrt) == 1:
-                f = interpolate.interp1d(self.source_sample[0],
-                                         source_data,
-                                         kind=self.method,
-                                         fill_value=self.fill_value,
-                                         bounds_error=False
-                                         )
+                f = interpolate.interp1d(
+                    self.source_sample[0],
+                    source_data,
+                    kind=self.method,
+                    fill_value=self.fill_value,
+                    bounds_error=False
+                    )
                 return f(self.dest_sample[0])
 
             elif len(self.wrt) == 2:
-                f = interpolate.interp2d(self.source_sample[0],
-                                         self.source_sample[1],
-                                         source_data,
-                                         kind=self.method,
-                                         fill_value=self.fill_value,
-                                         bounds_error=False
-                                         )
-                return np.array([f(x, y)[0] for x, y in zip(self.dest_sample[0], self.dest_sample[1])])
+                f = interpolate.interp2d(
+                    self.source_sample[0],
+                    self.source_sample[1],
+                    source_data,
+                    kind=self.method,
+                    fill_value=self.fill_value,
+                    bounds_error=False
+                    )
+                return np.array(
+                    [
+                        f(x, y)[0] for x, y in
+                        zip(self.dest_sample[0], self.dest_sample[1])
+                        ]
+                    )
 
             else:
                 if self.method == 'nearest':
-                    f = interpolate.NearestNDInterpolator(self.source_sample.T, source_data)
+                    f = interpolate.NearestNDInterpolator(
+                        self.source_sample.T, source_data
+                        )
                 else:
-                    f = interpolate.LinearNDInterpolator(self.source_sample.T, source_data, fill_value=self.fill_value)
+                    f = interpolate.LinearNDInterpolator(
+                        self.source_sample.T,
+                        source_data,
+                        fill_value=self.fill_value
+                        )
                 return f(self.dest_sample.T)
-
-

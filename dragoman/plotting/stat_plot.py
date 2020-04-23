@@ -2,7 +2,6 @@ from __future__ import absolute_import
 import numpy as np
 import dragoman as dm
 from matplotlib import pyplot as plt
-
 '''Module to provide plotting convenience functions
 to be used by data source classes
 '''
@@ -22,6 +21,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 # === Modernized ===
+
 
 def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
     '''
@@ -56,15 +56,15 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    
+
     cmap = kwargs.pop('cmap', 'Blues')
     cmap = plt.get_cmap(cmap)
 
     n_points = data.shape[1]
-    
-    n_bands = (n_points+1)//2
 
-    colors = cmap(np.linspace(0, 1, n_bands+1))[1:]
+    n_bands = (n_points + 1) // 2
+
+    colors = cmap(np.linspace(0, 1, n_bands + 1))[1:]
     colors = kwargs.pop('colors', colors)
 
     grid_axis = source.grid.axes[0]
@@ -78,36 +78,46 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
 
         if grid_axis.has_points:
             if not upper_idx == i:
-                ax.fill_between(grid_axis.points,
-                       data[:, i], 
-                       data[:, upper_idx],
-                       color=colors[i],
-                       label=label,
-                       **kwargs)
+                ax.fill_between(
+                    grid_axis.points,
+                    data[:, i],
+                    data[:, upper_idx],
+                    color=colors[i],
+                    label=label,
+                    **kwargs
+                    )
             else:
-                ax.plot(grid_axis.points, data[:, i],
-                        color=colors[i], 
-                        label=label,
-                        **kwargs)
-
+                ax.plot(
+                    grid_axis.points,
+                    data[:, i],
+                    color=colors[i],
+                    label=label,
+                    **kwargs
+                    )
 
         else:
             if not upper_idx == i:
-                ax.bar(grid_axis.edges.edges[:,0],
-                       data[:, upper_idx] - data[:, i],
-                       bottom=data[:, i],
-                       width=grid_axis.edges.width,
-                       color=colors[i],
-                       align='edge',
-                       label=label,
-                       **kwargs)
+                ax.bar(
+                    grid_axis.edges.edges[:, 0],
+                    data[:, upper_idx] - data[:, i],
+                    bottom=data[:, i],
+                    width=grid_axis.edges.width,
+                    color=colors[i],
+                    align='edge',
+                    label=label,
+                    **kwargs
+                    )
             else:
                 band_data = np.ma.asarray(data[:, i])
                 band_data = np.ma.append(band_data, band_data[-1])
-                ax.step(grid_axis.squeezed_edges, band_data,
-                        where='post', 
-                        label=label,
-                        color=colors[i], **kwargs)
+                ax.step(
+                    grid_axis.squeezed_edges,
+                    band_data,
+                    where='post',
+                    label=label,
+                    color=colors[i],
+                    **kwargs
+                    )
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
@@ -116,6 +126,7 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
         ax.set_xlim(grid_axis.points.min(), grid_axis.points.max())
     else:
         ax.set_xlim(grid_axis.edges.min(), grid_axis.edges.max())
+
 
 def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
     '''
@@ -141,7 +152,7 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
 
     else:
         data = source
-    
+
     if fig is None:
         fig = plt.gcf()
     if ax is None:
@@ -151,18 +162,19 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
 
     if data.ndim == source.grid.nax + 1 and data.shape[-1] == 3:
         # plot as image
-        pc = ax.imshow(data.swapaxes(0, 1)[::-1, :, :],
-                       extent=(source.grid.edges[0].min(), 
-                       source.grid.edges[0].max(),
-                       source.grid.edges[1].min(),
-                       source.grid.edges[1].max()),
-                       **kwargs)
+        pc = ax.imshow(
+            data.swapaxes(0, 1)[::-1, :, :],
+            extent=(
+                source.grid.edges[0].min(), source.grid.edges[0].max(),
+                source.grid.edges[1].min(), source.grid.edges[1].max()
+                ),
+            **kwargs
+            )
     else:
         X, Y = source.grid.edge_meshgrid
-        pc = ax.pcolormesh(X, Y, data.T,
-                           linewidth=0,
-                           rasterized=True,
-                           **kwargs)
+        pc = ax.pcolormesh(
+            X, Y, data.T, linewidth=0, rasterized=True, **kwargs
+            )
         if cbar:
             fig.colorbar(pc, ax=ax, label=kwargs.pop('label', var))
 
@@ -171,6 +183,7 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
     ax.set_xlim(source.grid.edges[0].min(), source.grid.edges[0].max())
     ax.set_ylim(source.grid.edges[1].min(), source.grid.edges[1].max())
     return pc
+
 
 def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
     '''
@@ -200,10 +213,17 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
     data = np.ma.asarray(data)
     data = np.ma.append(data, data[-1])
 
-    s = ax.step(source.grid.squeezed_edges[0], data, where='post', label=label, **kwargs)
+    s = ax.step(
+        source.grid.squeezed_edges[0],
+        data,
+        where='post',
+        label=label,
+        **kwargs
+        )
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
     return s
+
 
 def plot1d_all(source, *args, **kwargs):
     fig = kwargs.pop('fig', plt.gcf())
@@ -218,6 +238,7 @@ def plot1d_all(source, *args, **kwargs):
 
 # --- to be fixed ---
 
+
 def plot1d(source, x, *args, **kwargs):
     '''1d plot'''
     fig = kwargs.pop('fig', plt.gcf())
@@ -225,6 +246,7 @@ def plot1d(source, x, *args, **kwargs):
     p = ax.plot(source[x], *args, **kwargs)
     ax.set_ylabel(x)
     return p
+
 
 def plot(source, *args, labels=None, **kwargs):
     '''2d plot
@@ -260,7 +282,7 @@ def plot(source, *args, labels=None, **kwargs):
     fig = kwargs.pop('fig', plt.gcf())
     ax = kwargs.pop('ax', plt.gca())
 
-    if x is None and y is None: 
+    if x is None and y is None:
         if isinstance(source, dm.PointArray):
             return ax.plot(source, *args, label=labels, **kwargs)
 
@@ -281,8 +303,7 @@ def plot(source, *args, labels=None, **kwargs):
                     label = labels[i]
                 else:
                     label = x_var
-                ax.plot(source[x_var], *args, label=label, **kwargs) 
-
+                ax.plot(source[x_var], *args, label=label, **kwargs)
 
     elif isinstance(x, str):
         if isinstance(y, str):
@@ -296,7 +317,7 @@ def plot(source, *args, labels=None, **kwargs):
                     label = labels[i]
                 else:
                     label = None
-                ax.plot(source[x], source[y_var], *args, label=label, **kwargs) 
+                ax.plot(source[x], source[y_var], *args, label=label, **kwargs)
             ax.set_xlabel(x)
     else:
         if isinstance(y, str):
@@ -305,22 +326,28 @@ def plot(source, *args, labels=None, **kwargs):
                     label = labels[i]
                 else:
                     label = None
-                ax.plot(source[x_var], source[y], *args, label=label, **kwargs) 
+                ax.plot(source[x_var], source[y], *args, label=label, **kwargs)
             ax.set_ylabel(y)
 
         else:
 
-            assert len(x) == len(y), 'Need same length of x and y variables list'
+            assert len(x) == len(
+                y
+                ), 'Need same length of x and y variables list'
 
-            for i, (x_var, y_var) in enumerate(zip(x,y)):
+            for i, (x_var, y_var) in enumerate(zip(x, y)):
                 if labels is not None:
                     label = labels[i]
                 else:
                     label = None
-                ax.plot(source[x_var], source[y_var], *args, label=label, **kwargs) 
+                ax.plot(
+                    source[x_var], source[y_var], *args, label=label, **kwargs
+                    )
 
 
-def plot_points_2d(source, x, y, s=None, c=None, cbar=False, fig=None, ax=None, **kwargs):
+def plot_points_2d(
+    source, x, y, s=None, c=None, cbar=False, fig=None, ax=None, **kwargs
+    ):
     '''2d scatter plot'''
     if fig is None:
         fig = plt.gcf()
@@ -334,12 +361,19 @@ def plot_points_2d(source, x, y, s=None, c=None, cbar=False, fig=None, ax=None, 
     if s is not None:
         if isinstance(s, str):
             s = source[s]
-    sc = ax.scatter(np.array(source[x]), np.array(source[y]), s=np.array(s), c=np.array(c), **kwargs)
+    sc = ax.scatter(
+        np.array(source[x]),
+        np.array(source[y]),
+        s=np.array(s),
+        c=np.array(c),
+        **kwargs
+        )
     if cbar:
         fig.colorbar(sc, ax=ax, label=c_label)
     ax.set_xlabel(x)
     ax.set_ylabel(y)
     return sc
+
 
 def plot_contour(source, var, fig=None, ax=None, **kwargs):
     '''
@@ -382,12 +416,16 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
         lower_error = source[errors]
         upper_error = lower_error
     else:
-        raise TypeError('errors must be tuple of variable names or a single variable name')
+        raise TypeError(
+            'errors must be tuple of variable names or a single variable name'
+            )
     assert source.grid.nax == 1
 
-    ax.bar(source.grid[0].points,
-           lower_error + upper_error,
-           bottom=source[var] - lower_error,
-           width=source.grid[0].edges.width,
-           **kwargs)
+    ax.bar(
+        source.grid[0].points,
+        lower_error + upper_error,
+        bottom=source[var] - lower_error,
+        width=source.grid[0].edges.width,
+        **kwargs
+        )
     ax.set_xlabel(source.grid[0].var)

@@ -22,6 +22,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
+
 class BinnedData:
     '''
     Class to hold binned data
@@ -39,11 +40,11 @@ class BinnedData:
         '''
         # set up grid
         if grid is None:
-            if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], dm.Grid):
+            if len(args) == 1 and len(kwargs
+                                      ) == 0 and isinstance(args[0], dm.Grid):
                 self.grid = args[0]
             else:
                 self.grid = dm.Grid(*args, **kwargs)
-
 
         #assert set(self.grid.vars) <= set(data.vars)
 
@@ -51,7 +52,9 @@ class BinnedData:
             self.grid.initialize(data)
 
         # create sample (grid variables) and remove from data
-        self.sample = [data.get_array(var, flat=True) for var in self.grid.vars]
+        self.sample = [
+            data.get_array(var, flat=True) for var in self.grid.vars
+            ]
 
         # The following is a bit wonky, ToDo
         if isinstance(data, dm.GridArray):
@@ -77,7 +80,7 @@ class BinnedData:
 
         self.indices = None
         self.group = None
- 
+
     def compute_indices(self):
         self.indices = self.grid.compute_indices(self.sample)
         self.group = npi.group_by(self.indices)
@@ -89,11 +92,11 @@ class BinnedData:
 
         if isinstance(item, str):
             item = [item]
-            
+
         item += self.grid.vars
 
         return dm.BinnedData(grid=self.grid, data=self.data[item])
-        
+
     @property
     def vars(self):
         '''
@@ -158,12 +161,21 @@ class BinnedData:
         output_maps = {}
         for var in self.data.vars:
             source_data = self.data[var]
-            if source_data.ndim > 1: 
-                output_maps[var] = np.full(self.grid.shape + source_data.shape[1:], fill_value=fill_value, dtype=self.data[var].dtype)
+            if source_data.ndim > 1:
+                output_maps[var] = np.full(
+                    self.grid.shape + source_data.shape[1:],
+                    fill_value=fill_value,
+                    dtype=self.data[var].dtype
+                    )
             else:
-                output_maps[var] = np.full(self.grid.shape, fill_value=fill_value, dtype=self.data[var].dtype)
+                output_maps[var] = np.full(
+                    self.grid.shape,
+                    fill_value=fill_value,
+                    dtype=self.data[var].dtype
+                    )
             source_data = self.data[var]
-            indices, outputs[var] =  self.group.__getattribute__(method)(source_data)
+            indices, outputs[var] = self.group.__getattribute__(method
+                                                                )(source_data)
 
         for i, idx in enumerate(indices):
             if idx < 0:
@@ -177,15 +189,16 @@ class BinnedData:
             out_data = dm.GridArray(output_maps['test'], grid=self.grid)
 
         else:
-        # Pack into GridData
+            # Pack into GridData
             out_data = dm.GridData(self.grid)
             for var, output_map in output_maps.items():
                 out_data[var] = output_map
 
         return out_data
 
-
-    def apply_function(self, function, *args, fill_value=np.nan, return_len=None, **kwargs):
+    def apply_function(
+        self, function, *args, fill_value=np.nan, return_len=None, **kwargs
+        ):
         '''apply function per bin'''
 
         if self.indices is None:
@@ -200,7 +213,10 @@ class BinnedData:
                 # try to figure out return length of function
 
                 if source_data.ndim > 1:
-                    test_value = function(source_data[:3, [0]*(source_data.ndim-1)], *args, **kwargs)
+                    test_value = function(
+                        source_data[:3, [0] * (source_data.ndim - 1)], *args,
+                        **kwargs
+                        )
                 else:
                     test_value = function(source_data[:3], *args, **kwargs)
                 if np.isscalar(test_value):
@@ -210,14 +226,31 @@ class BinnedData:
 
             if source_data.ndim > 1:
                 if return_len > 1:
-                    output_maps[var] = np.full(self.grid.shape + source_data.shape[1:] + (return_len, ), fill_value=fill_value, dtype=source_data.dtype)
+                    output_maps[var] = np.full(
+                        self.grid.shape + source_data.shape[1:] +
+                        (return_len, ),
+                        fill_value=fill_value,
+                        dtype=source_data.dtype
+                        )
                 else:
-                    output_maps[var] = np.full(self.grid.shape + source_data.shape[1:], fill_value=fill_value, dtype=source_data.dtype)
+                    output_maps[var] = np.full(
+                        self.grid.shape + source_data.shape[1:],
+                        fill_value=fill_value,
+                        dtype=source_data.dtype
+                        )
             else:
                 if return_len > 1:
-                    output_maps[var] = np.full(self.grid.shape + (return_len, ), fill_value=fill_value, dtype=source_data.dtype)
+                    output_maps[var] = np.full(
+                        self.grid.shape + (return_len, ),
+                        fill_value=fill_value,
+                        dtype=source_data.dtype
+                        )
                 else:
-                    output_maps[var] = np.full(self.grid.shape, fill_value=fill_value, dtype=source_data.dtype)
+                    output_maps[var] = np.full(
+                        self.grid.shape,
+                        fill_value=fill_value,
+                        dtype=source_data.dtype
+                        )
 
         for i in range(self.grid.size):
             mask = self.indices == i
@@ -227,9 +260,13 @@ class BinnedData:
                     source_data = self.data[var]
                     if source_data.ndim > 1:
                         for idx in np.ndindex(*source_data.shape[1:]):
-                            output_maps[var][out_idx + (idx,)] = function(self.data[var][:, idx][mask], *args, **kwargs)
+                            output_maps[var][out_idx + (idx, )] = function(
+                                self.data[var][:, idx][mask], *args, **kwargs
+                                )
                     else:
-                        output_maps[var][out_idx] = function(self.data[var][mask], *args, **kwargs)
+                        output_maps[var][out_idx] = function(
+                            self.data[var][mask], *args, **kwargs
+                            )
 
         # Pack into GridArray
         if self.single:
@@ -281,5 +318,10 @@ class BinnedData:
             return_len = 1
         else:
             return_len = len(q)
-        return self.apply_function(np.quantile, q, return_len=return_len, fill_value=fill_value, **kwargs)
-
+        return self.apply_function(
+            np.quantile,
+            q,
+            return_len=return_len,
+            fill_value=fill_value,
+            **kwargs
+            )

@@ -36,7 +36,7 @@ class Grid(object):
         kwargs : str,Number or str,array
 
         '''
-        self.axes = [] 
+        self.axes = []
 
         for d in args:
             self.add_axis(d)
@@ -68,16 +68,27 @@ class Grid(object):
                     if var in source.grid.vars:
                         if isinstance(self[var].nbins, float):
                             # this measn we want to multiply the old nbins
-                            new_nbins = int(source.grid[var].nbins * self[var].nbins)
+                            new_nbins = int(
+                                source.grid[var].nbins * self[var].nbins
+                                )
                         else:
                             new_nbins = self[var].nbins
                         if source.grid[var]._edges.edges is not None:
-                            self[var].edges = np.linspace(source.grid[var].edges.min(), source.grid[var].edges.max(), new_nbins+1)
+                            self[var].edges = np.linspace(
+                                source.grid[var].edges.min(),
+                                source.grid[var].edges.max(), new_nbins + 1
+                                )
                         if source.grid[var]._points is not None:
-                            self[var].points = np.linspace(source.grid[var].points.min(), source.grid[var].points.max(), new_nbins)
+                            self[var].points = np.linspace(
+                                source.grid[var].points.min(),
+                                source.grid[var].points.max(), new_nbins
+                                )
                         continue
                 # in this case it's pointdata
-                self[var].edges = np.linspace(np.nanmin(source[var]), np.nanmax(source[var]), self[var].nbins+1)
+                self[var].edges = np.linspace(
+                    np.nanmin(source[var]), np.nanmax(source[var]),
+                    self[var].nbins + 1
+                    )
 
     def add_axis(self, axis):
         '''
@@ -101,14 +112,13 @@ class Grid(object):
             new_axis = dm.Axis(var=axis)
             self.add_axis(new_axis)
         else:
-            raise TypeError('Cannot add type %s'%type(axis))
+            raise TypeError('Cannot add type %s' % type(axis))
 
     def __eq__(self, other):
         if not type(self) == type(other):
             return False
         equal = self.vars == other.vars
         return equal and all([self[var] == other[var] for var in self.vars])
-
 
     @property
     def T(self):
@@ -199,14 +209,14 @@ class Grid(object):
         '''
         strs = []
         for axis in self:
-            strs.append('%s'%axis)
+            strs.append('%s' % axis)
         return '\n'.join(strs)
 
     def __repr__(self):
         strs = []
         strs.append('Grid(')
         for axis in self:
-            strs.append('%s,'%axis.__repr__())
+            strs.append('%s,' % axis.__repr__())
         strs[-1] += ')'
         return '\n'.join(strs)
 
@@ -240,9 +250,9 @@ class Grid(object):
             return self.axes[idx]
 
         elif isinstance(item, Number):
-            return self[(item,)]
+            return self[(item, )]
         elif isinstance(item, slice):
-            return self[(item,)]
+            return self[(item, )]
         elif isinstance(item, list):
             if all([isinstance(i, str) for i in item]):
                 new_obj = dm.Grid()
@@ -250,17 +260,17 @@ class Grid(object):
                     new_obj.axes.append(self[var])
                 return new_obj
             elif all([isinstance(i, (np.integer, int)) for i in item]):
-                return self[(item,)]
+                return self[(item, )]
             else:
-                raise IndexError('Cannot process list of indices %s'%item)
+                raise IndexError('Cannot process list of indices %s' % item)
         elif isinstance(item, tuple):
             if all([isinstance(i, str) for i in item]):
                 return self[list(item)]
-            
+
             item = self.convert_slice(item)
 
             new_obj = dm.Grid()
-            for i in range(len(self)): 
+            for i in range(len(self)):
                 if i < len(item):
                     assert item[i] is not Ellipsis
                     if isinstance(item[i], (np.integer, int)):
@@ -271,15 +281,13 @@ class Grid(object):
                     new_obj.axes.append(self.axes[i])
             return new_obj
 
-
-
         elif isinstance(item, Iterable):
             new_axes = []
             for it in item:
                 new_axes.append(self[it])
             return dm.Grid(*new_axes)
         else:
-            raise KeyError('Cannot get key from %s'%type(item))
+            raise KeyError('Cannot get key from %s' % type(item))
 
     def convert_slice(self, idx):
         ''' convert indices/slices
@@ -297,9 +305,8 @@ class Grid(object):
 
         return tuple(new_idx)
 
-
     def __setitem__(self, item, val):
-        self.add_axis({item:val})
+        self.add_axis({item: val})
         #raise AttributeError("to set a grid axisension, specify if it is `points` or `edges`, e.g.:\ngrid['%s'].edges = %s"%(item, val))
 
     def compute_indices(self, sample):
@@ -311,12 +318,14 @@ class Grid(object):
             assert sample.shape[0] == self.nax
         elif isinstance(sample, list):
             assert len(sample) == self.nax
-        
+
         if not self.consecutive:
             raise NotImplementedError()
 
         # array holding raveld indices
-        multi_index = [self.axes[i].compute_indices(sample[i]) for i in range(self.nax)]
+        multi_index = [
+            self.axes[i].compute_indices(sample[i]) for i in range(self.nax)
+            ]
         # mask where any index is outside binning (= -1)
         mask = np.all([idx >= 0 for idx in multi_index], axis=0)
         if np.isscalar(mask):
@@ -324,7 +333,9 @@ class Grid(object):
                 return -1
             return np.ravel_multi_index(multi_index, self.shape)
         raveled_indices = np.full_like(multi_index[0], fill_value=-1)
-        raveled_indices[mask] = np.ravel_multi_index([idx[mask] for idx in multi_index], self.shape)
+        raveled_indices[mask] = np.ravel_multi_index(
+            [idx[mask] for idx in multi_index], self.shape
+            )
         return raveled_indices
 
 
@@ -337,6 +348,7 @@ def test():
     print(a['x'].points)
     print(a['x'].edges)
     print(a['x', 'y'])
+
 
 if __name__ == '__main__':
     test()

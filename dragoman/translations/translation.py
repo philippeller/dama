@@ -20,20 +20,25 @@ limitations under the License.'''
 
 class Translation():
     '''Base class for translation methods'''
-
-    def __init__(self,
-                 source, 
-                 *args,
-                 source_needs_grid=False,
-                 dest_needs_grid=False,
-                 **kwargs):
+    def __init__(
+        self,
+        source,
+        *args,
+        source_needs_grid=False,
+        dest_needs_grid=False,
+        **kwargs
+        ):
 
         self.source = source
-        self.source_has_grid = isinstance(self.source, (dm.GridData, dm.GridArray, dm.Grid))
+        self.source_has_grid = isinstance(
+            self.source, (dm.GridData, dm.GridArray, dm.Grid)
+            )
         if source_needs_grid:
             assert self.source_has_grid, 'Source must provide grid'
         self.dest = self.generate_destination(*args, **kwargs)
-        self.dest_has_grid = isinstance(self.dest, (dm.GridData, dm.GridArray, dm.Grid))
+        self.dest_has_grid = isinstance(
+            self.dest, (dm.GridData, dm.GridArray, dm.Grid)
+            )
         if dest_needs_grid:
             assert self.dest_has_grid, 'Destination must provide grid'
 
@@ -47,12 +52,16 @@ class Translation():
         # checks
         if not isinstance(self.source, dm.GridArray):
             if not set(self.wrt) <= set(source.vars):
-                raise TypeError('the following variables are missing in the source: %s'%', '.join(set(self.vars) - (set(self.vars) & set(source.vars))))
+                raise TypeError(
+                    'the following variables are missing in the source: %s' %
+                    ', '.
+                    join(set(self.vars) - (set(self.vars) & set(source.vars)))
+                    )
 
         self.source_sample = None
         self.dest_sample = None
 
-        # if there are any special, additional runs to be performed, 
+        # if there are any special, additional runs to be performed,
         # for example for histograms and KDE without source_data
         self.additional_runs = {}
 
@@ -105,13 +114,13 @@ class Translation():
         if isinstance(self.source, dm.GridArray):
             return dm.GridArray(np.empty(grid.shape), grid=grid)
 
-
         return dm.GridData(grid)
-
 
     def prepare_source_sample(self, flat=True, stacked=True, transposed=False):
         if transposed: assert stacked
-        self.source_sample = [self.source.get_array(var, flat=flat) for var in self.wrt]
+        self.source_sample = [
+            self.source.get_array(var, flat=flat) for var in self.wrt
+            ]
         if stacked:
             self.source_sample = np.stack(self.source_sample)
         if transposed:
@@ -119,7 +128,9 @@ class Translation():
 
     def prepare_dest_sample(self, flat=True, stacked=True, transposed=False):
         if transposed: assert stacked
-        self.dest_sample = [self.dest.get_array(var, flat=flat) for var in self.wrt]
+        self.dest_sample = [
+            self.dest.get_array(var, flat=flat) for var in self.wrt
+            ]
         if stacked:
             self.dest_sample = np.stack(self.dest_sample)
         if transposed:
@@ -153,14 +164,13 @@ class Translation():
             self.dest['result'] = result
             return self.dest
 
-
         for var in self.source.vars:
             if var in self.wrt:
                 continue
             source_data = self.source[var]
             result = self.eval(source_data)
             self.dest[var] = result
-        
+
         for var, data in self.additional_runs.items():
             self.dest[var] = self.eval(data)
 
@@ -169,7 +179,9 @@ class Translation():
     def eval(self, data):
         raise NotImplementedError('Translation method must implement this')
 
-    def get_empty_output_array(self, element_shape=tuple(), fill_value=np.nan, flat=False):
+    def get_empty_output_array(
+        self, element_shape=tuple(), fill_value=np.nan, flat=False
+        ):
         '''make empty array in shape of destinaion
     
         element_shape : tuple
@@ -187,5 +199,3 @@ class Translation():
         if fill_value is None:
             return np.empty(array_shape)
         return np.full(array_shape, fill_value)
-
-

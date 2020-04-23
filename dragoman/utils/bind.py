@@ -2,6 +2,7 @@
 From: https://stackoverflow.com/questions/1015307/python-bind-an-unbound-method
 """
 
+
 def bind(instance, func, as_name=None):
     """
     Bind the function *func* to *instance*, with either provided name *as_name*

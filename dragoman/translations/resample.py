@@ -23,24 +23,28 @@ class Resample(Translation):
         '''resample from binned data into other binned data
         ToDo: this is super inefficient
         '''
-        super().__init__(source,
-                         *args,
-                         source_needs_grid=True,
-                         dest_needs_grid=True,
-                         **kwargs)
+        super().__init__(
+            source,
+            *args,
+            source_needs_grid=True,
+            dest_needs_grid=True,
+            **kwargs
+            )
 
         assert self.dest.grid.vars == self.source.grid.vars, 'grid variables of source and destination must be identical'
-
 
     def setup(self):
 
         # we need a super sample of points, i.e. meshgrids of all combinations of source and dest
         # so first create for every dest.grid.var a vector of both, src and dest points
-        lookup_sample = [np.concatenate([self.dest.grid[var].points, self.source.grid[var].points]) for var in self.wrt]
+        lookup_sample = [
+            np.concatenate(
+                [self.dest.grid[var].points, self.source.grid[var].points]
+                ) for var in self.wrt
+            ]
         mesh = np.meshgrid(*lookup_sample)
         self.lookup_sample = [m.flatten() for m in mesh]
         self.indices = self.source.grid.compute_indices(self.lookup_sample)
-        
 
     def eval(self, source_data):
 
@@ -54,7 +58,9 @@ class Resample(Translation):
 
         # now bin both these points into destination
         bins = self.dest.grid.squeezed_edges
-        lu_hist, _ = np.histogramdd(sample=self.lookup_sample, bins=bins, weights=lookup_array)
+        lu_hist, _ = np.histogramdd(
+            sample=self.lookup_sample, bins=bins, weights=lookup_array
+            )
         lu_counts, _ = np.histogramdd(sample=self.lookup_sample, bins=bins)
         lu_hist /= lu_counts
 

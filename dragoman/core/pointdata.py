@@ -62,7 +62,6 @@ class PointData:
             return self.data._repr_html_()
         return format_table(self, tablefmt='html')
 
-
     @property
     def vars(self):
         '''
@@ -110,9 +109,9 @@ class PointData:
         shape : tuple
         '''
         if self.type == 'df':
-            return (len(self.data),)
+            return (len(self.data), )
         elif self.type == 'simple':
-            return (len(self[self.vars[0]]),)
+            return (len(self[self.vars[0]]), )
 
     def __setitem__(self, var, val):
         val = np.asanyarray(val)
@@ -145,19 +144,20 @@ class PointData:
             if var in self.vars:
                 return self.data[var]
             else:
-                raise IndexError('No variable %s in DataSet'%var)
+                raise IndexError('No variable %s in DataSet' % var)
 
         # create new instance with mask or slice applied
         new_data = {}
 
-        if isinstance(var, (tuple, list)) and all([isinstance(v, str) for v in var]):
+        if isinstance(var, (tuple,
+                            list)) and all([isinstance(v, str) for v in var]):
             for v in var:
                 new_data[v] = self[v]
         else:
             for n, d in self.items():
                 new_data[n] = d[var]
         return dm.PointData(new_data)
-        
+
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
 
@@ -178,20 +178,25 @@ class PointData:
     # --- Tranlsation methods ---
 
     def interp(self, *args, method=None, fill_value=np.nan, **kwargs):
-        return translations.Interpolation(self, *args, method=method, fill_value=fill_value, **kwargs).run()
+        return translations.Interpolation(
+            self, *args, method=method, fill_value=fill_value, **kwargs
+            ).run()
+
     interp.__doc__ = translations.Interpolation.__init__.__doc__
 
     def histogram(self, *args, density=False, **kwargs):
-        return translations.Histogram(self, *args, density=density, **kwargs).run()
+        return translations.Histogram(self, *args, density=density,
+                                      **kwargs).run()
+
     histogram.__doc__ = translations.Histogram.__init__.__doc__
 
     def binwise(self, *args, **kwargs):
-        return dm.BinnedData(data=self, *args, **kwargs)   
+        return dm.BinnedData(data=self, *args, **kwargs)
 
     def kde(self, *args, **kwargs):
         return translations.KDE(self, *args, **kwargs).run()
-    kde.__doc__ = translations.KDE.__init__.__doc__
 
+    kde.__doc__ = translations.KDE.__init__.__doc__
 
     # --- Plotting functions ---
 
@@ -205,8 +210,9 @@ class PointData:
         else:
             raise ValueError('Need to specify 2 variables to plot')
 
-    def plot_scatter(self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs):
-        dm.plotting.plot_points_2d(self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs)
-
-
-
+    def plot_scatter(
+        self, x, y, c=None, s=None, cbar=False, fig=None, ax=None, **kwargs
+        ):
+        dm.plotting.plot_points_2d(
+            self, x, y, c=c, s=s, cbar=cbar, fig=fig, ax=ax, **kwargs
+            )

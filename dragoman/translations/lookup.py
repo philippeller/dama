@@ -20,7 +20,6 @@ limitations under the License.'''
 
 
 class Lookup(Translation):
-
     def __init__(self, source, *args, **kwargs):
         '''lookup the bin content at given points
 
@@ -29,16 +28,16 @@ class Lookup(Translation):
 
         ToDo: use ndimage.map_coordinates for regular grids
         '''
-        super().__init__(source, *args,
-                         source_needs_grid=True,
-                         **kwargs)
+        super().__init__(source, *args, source_needs_grid=True, **kwargs)
 
     def setup(self):
         self.prepare_dest_sample()
         self.indices = self.source.grid.compute_indices(self.dest_sample)
 
     def eval(self, source_data):
-        output_array = self.get_empty_output_array(source_data.shape[source_data.nax:], flat=True)
+        output_array = self.get_empty_output_array(
+            source_data.shape[source_data.nax:], flat=True
+            )
 
         for i in range(len(output_array)):
             # check we're inside grid:
@@ -47,7 +46,5 @@ class Lookup(Translation):
                 ind = np.unravel_index(idx, self.source.grid.shape)
                 output_array[i] = source_data[ind]
         if output_array.size > self.dest.size:
-            return output_array.reshape((self.dest.array_shape) + (-1,))
+            return output_array.reshape((self.dest.array_shape) + (-1, ))
         return output_array.reshape(self.dest.array_shape)
-
-

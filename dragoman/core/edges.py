@@ -23,7 +23,6 @@ limitations under the License.'''
 
 class Edges(object):
     '''Holding binning edges'''
-    
     def __init__(self, *args, delta=None, points=None, **kwargs):
         '''
         Paramters
@@ -70,12 +69,17 @@ class Edges(object):
         if len(points) == 1:
             # in this case we cannot do a delta, just make the binwidth = 1.0 by default
             return np.array([[points[0] - 0.5, points[0] + 0.5]])
-        diff = np.diff(points)/2.
-        return np.concatenate([[points[0] - diff[0]], points[:-1] + diff, [points[-1] + diff[-1]]])
+        diff = np.diff(points) / 2.
+        return np.concatenate(
+            [
+                [points[0] - diff[0]], points[:-1] + diff,
+                [points[-1] + diff[-1]]
+                ]
+            )
 
     def min(self):
         return np.min(self.edges)
-    
+
     def max(self):
         return np.max(self.edges)
 
@@ -84,7 +88,7 @@ class Edges(object):
         '''
         create points from centers between edges
         '''
-        points = np.average(self._edges, axis=1) 
+        points = np.average(self._edges, axis=1)
         if isinstance(points, Number):
             return np.array(points)
         return points
@@ -140,7 +144,9 @@ class Edges(object):
             squeezed_edges[-1] = self._edges[-1, 1]
             return squeezed_edges
         else:
-            raise ValueError('Can only provide squeezed edges for consecutive edges')
+            raise ValueError(
+                'Can only provide squeezed edges for consecutive edges'
+                )
 
     def __getitem__(self, idx):
         if idx is Ellipsis:
@@ -152,7 +158,6 @@ class Edges(object):
 
     def __eq__(self, other):
         return np.all(np.equal(self._edges, other._edges))
-
 
 
 def test_edges():
