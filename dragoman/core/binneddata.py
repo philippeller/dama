@@ -206,6 +206,9 @@ class BinnedData:
 
         outputs = {}
         output_maps = {}
+
+        weights = kwargs.pop('weights', None)
+
         for var in self.data.vars:
             source_data = self.data[var]
 
@@ -258,14 +261,21 @@ class BinnedData:
                 out_idx = np.unravel_index(i, self.grid.shape)
                 for var in self.data.vars:
                     source_data = self.data[var]
+
                     if source_data.ndim > 1:
                         for idx in np.ndindex(*source_data.shape[1:]):
+                            if weights is not None:
+                                kwargs['weights'] = self.data[weights][:, idx][mask]
+
                             output_maps[var][out_idx + (idx, )] = function(
-                                self.data[var][:, idx][mask], *args, **kwargs
+                                source_data[:, idx][mask], *args, **kwargs
                                 )
                     else:
+                        if weights is not None:
+                            kwargs['weights'] = self.data[weights][mask]
+
                         output_maps[var][out_idx] = function(
-                            self.data[var][mask], *args, **kwargs
+                            source_data[mask], *args, **kwargs
                             )
 
         # Pack into GridArray
