@@ -440,6 +440,9 @@ class GridArray(np.ma.MaskedArray):
 
         raise ValueError('Can only plot maps of 2d grids')
 
+    def plot_contour(self, fig=None, ax=None, **kwargs):
+        return dm.plotting.plot_contour(self, fig=fig, ax=ax, **kwargs)
+
     def plot_step(self, label=None, fig=None, ax=None, **kwargs):
         return dm.plotting.plot_step(
             self, label=label, fig=fig, ax=ax, **kwargs

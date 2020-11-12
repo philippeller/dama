@@ -375,21 +375,33 @@ def plot_points_2d(
     return sc
 
 
-def plot_contour(source, var, fig=None, ax=None, **kwargs):
+def plot_contour(source, var=None, fig=None, ax=None, **kwargs):
     '''
     contours from gird data
     '''
+    assert isinstance(source, (dm.GridData, dm.GridArray))
+    assert source.grid.nax == 2
+
+    if isinstance(source, dm.GridData):
+        if var is None and len(source.data_vars) == 1:
+            var = source.data_vars[0]
+        data = np.ma.asarray(source[var])
+
+    else:
+        data = np.ma.asarray(source)
+
+
+
     if fig is None:
         fig = plt.gcf()
     if ax is None:
         ax = plt.gca()
-    assert source.grid.nax == 2
     X, Y = source.grid.point_meshgrid
 
     labels = kwargs.pop('labels', None)
     inline = kwargs.pop('inline', True)
 
-    cs = ax.contour(X, Y, source[var], **kwargs)
+    cs = ax.contour(X, Y, data, **kwargs)
 
     if labels is not None:
         fmt = {}
