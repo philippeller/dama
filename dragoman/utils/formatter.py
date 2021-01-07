@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 
 from numbers import Number
-
+import html
 import numpy as np
 import tabulate
 
@@ -190,6 +190,12 @@ def get_item(data, idx, bold, brk):
         return brk.join(all_data)
 
 
+def unescape_tabulate(table, tablefmt):
+    """wrapper for tabulate to unescape html"""
+    if tablefmt == 'html':
+        return html.unescape(tabulate.tabulate(table, tablefmt=tablefmt))
+    return tabulate.tabulate(table, tablefmt=tablefmt)
+
 def format_table(data, tablefmt='html'):
 
     if tablefmt == 'html':
@@ -201,11 +207,11 @@ def format_table(data, tablefmt='html'):
 
     if isinstance(data, dm.PointData):
         table = [make_table_row(n, d, bold, brk) for n, d in data.items()]
-        return tabulate.tabulate(table, tablefmt=tablefmt)
+        return unescape_tabulate(table, tablefmt=tablefmt)
 
     if isinstance(data, dm.PointArray):
         table = [make_table_row(None, data, bold, brk)]
-        return tabulate.tabulate(table, tablefmt=tablefmt)
+        return unescape_tabulate(table, tablefmt=tablefmt)
 
     if isinstance(data, dm.GridArray):
         if data.nax == 2:
@@ -222,7 +228,7 @@ def format_table(data, tablefmt='html'):
         else:
             return None
 
-        return tabulate.tabulate(table, tablefmt=tablefmt)
+        return unescape_tabulate(table, tablefmt=tablefmt)
 
     if isinstance(data, dm.GridData):
         if data.grid.nax == 2:
@@ -237,6 +243,6 @@ def format_table(data, tablefmt='html'):
             for d in data.items():
                 table.append(make_table_row(*d, bold, brk))
 
-        return tabulate.tabulate(table, tablefmt=tablefmt)
+        return unescape_tabulate(table, tablefmt=tablefmt)
 
     return data.__repr__()
