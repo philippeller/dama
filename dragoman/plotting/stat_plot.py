@@ -23,7 +23,7 @@ limitations under the License.'''
 # === Modernized ===
 
 
-def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
+def plot_bands(source, var=None, fig=None, ax=None, labels=None, filled=True, lines=False, **kwargs):
     '''
     plot band between the variable's values (expect each bin to have a 1d array)
 
@@ -37,6 +37,12 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
 
     labels : iterable
         lables to add for the bands
+
+    filled : bool
+        Draw filled areas between bands
+
+    lines : bool
+        Draw lines at bands
     '''
 
     #ToDo: fix invalid values
@@ -61,8 +67,11 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
     cmap = plt.get_cmap(cmap)
 
     n_points = data.shape[1]
-
     n_bands = (n_points + 1) // 2
+
+    if lines:
+        linestyles = kwargs.pop('linestyles', ['-']*n_bands)
+        linecolors = kwargs.pop('linecolors', ['k']*n_bands)
 
     colors = cmap(np.linspace(0, 1, n_bands + 1))[1:]
     colors = kwargs.pop('colors', colors)
@@ -78,46 +87,109 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, **kwargs):
 
         if grid_axis.has_points:
             if not upper_idx == i:
-                ax.fill_between(
-                    grid_axis.points,
-                    data[:, i],
-                    data[:, upper_idx],
-                    color=colors[i],
-                    label=label,
-                    **kwargs
-                    )
+                if filled:
+                    ax.fill_between(
+                        grid_axis.points,
+                        data[:, i],
+                        data[:, upper_idx],
+                        color=colors[i],
+                        label=label,
+                        **kwargs
+                        )
+                if lines:
+                    ax.plot(
+                        grid_axis.points,
+                        data[:, i],
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        label=label,
+                        **kwargs
+                        )
+                    ax.plot(
+                        grid_axis.points,
+                        data[:, upper_idx],
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        label=label,
+                        **kwargs
+                        )
             else:
-                ax.plot(
-                    grid_axis.points,
-                    data[:, i],
-                    color=colors[i],
-                    label=label,
-                    **kwargs
-                    )
+                if filled:
+                    ax.plot(
+                        grid_axis.points,
+                        data[:, i],
+                        color=colors[i],
+                        label=label,
+                        **kwargs
+                        )
+                if lines:
+                    ax.plot(
+                        grid_axis.points,
+                        data[:, i],
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        label=label,
+                        **kwargs
+                        )
 
         else:
             if not upper_idx == i:
-                ax.bar(
-                    grid_axis.edges.edges[:, 0],
-                    data[:, upper_idx] - data[:, i],
-                    bottom=data[:, i],
-                    width=grid_axis.edges.width,
-                    color=colors[i],
-                    align='edge',
-                    label=label,
-                    **kwargs
-                    )
+                if filled:
+                    ax.bar(
+                        grid_axis.edges.edges[:, 0],
+                        data[:, upper_idx] - data[:, i],
+                        bottom=data[:, i],
+                        width=grid_axis.edges.width,
+                        color=colors[i],
+                        align='edge',
+                        label=label,
+                        **kwargs
+                        )
+                if lines:
+                    band_data = np.ma.asarray(data[:, i])
+                    band_data = np.ma.append(band_data, band_data[-1])
+                    ax.step(
+                        grid_axis.squeezed_edges,
+                        band_data,
+                        where='post',
+                        label=label,
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        **kwargs
+                        )
+                    band_data = np.ma.asarray(data[:, upper_idx])
+                    band_data = np.ma.append(band_data, band_data[-1])
+                    ax.step(
+                        grid_axis.squeezed_edges,
+                        band_data,
+                        where='post',
+                        label=label,
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        **kwargs
+                        )
             else:
                 band_data = np.ma.asarray(data[:, i])
                 band_data = np.ma.append(band_data, band_data[-1])
-                ax.step(
-                    grid_axis.squeezed_edges,
-                    band_data,
-                    where='post',
-                    label=label,
-                    color=colors[i],
-                    **kwargs
-                    )
+                if filled:
+                    ax.step(
+                        grid_axis.squeezed_edges,
+                        band_data,
+                        where='post',
+                        label=label,
+                        color=colors[i],
+                        **kwargs
+                        )
+                if lines:
+                    ax.step(
+                        grid_axis.squeezed_edges,
+                        band_data,
+                        where='post',
+                        label=label,
+                        color=linecolors[i],
+                        linestyle=linestyles[i],
+                        **kwargs
+                        )
 
     ax.set_xlabel(source.grid.vars[0])
     ax.set_ylabel(var)
