@@ -110,7 +110,6 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, filled=True, li
                         data[:, upper_idx],
                         color=linecolors[i],
                         linestyle=linestyles[i],
-                        label=label,
                         **kwargs
                         )
             else:
@@ -163,7 +162,6 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, filled=True, li
                         grid_axis.squeezed_edges,
                         band_data,
                         where='post',
-                        label=label,
                         color=linecolors[i],
                         linestyle=linestyles[i],
                         **kwargs
