@@ -142,8 +142,8 @@ class PointData:
             else:
                 raise IndexError('No variable %s in DataSet' % var)
             if callable(data):
-                self[item] = data()
-                data = self.data[item]
+                self[var] = data()
+                data = self.data[var]
             if self.type == 'df':
                 if isinstance(data, pandas.core.frame.DataFrame):
                     return dm.PointData(data)
