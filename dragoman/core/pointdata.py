@@ -114,7 +114,7 @@ class PointData:
             return (len(self[self.vars[0]]), )
 
     def __setitem__(self, var, val):
-        if callable(var):
+        if callable(val):
             self.data[var] = val
             return
         val = np.asanyarray(val)
@@ -162,6 +162,12 @@ class PointData:
             for n, d in self.items():
                 new_data[n] = d[var]
         return dm.PointData(new_data)
+
+    def __getattr__(self, var):
+        try:
+            return self[var]
+        except Exception as e:
+            raise AttributeError from e
 
     def get_array(self, var, flat=False):
         return np.asarray(self[var])

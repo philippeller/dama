@@ -163,6 +163,8 @@ class GridArray(np.ma.MaskedArray):
                 data = self.get_array(item)
                 new_data = dm.GridArray(data, grid=self.grid)
                 return new_data
+            else:
+                raise IndexError('No variable %s in DataSet' % item)
 
         if isinstance(item, dm.GridArray):
             if item.dtype == np.bool:
