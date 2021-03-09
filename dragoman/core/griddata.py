@@ -50,7 +50,7 @@ class GridData:
         self._setup_plotting_methods()
 
     def _setup_plotting_methods(self):
-        '''dynamically set up plotting methods, 
+        '''dynamically set up plotting methods,
         depending on the number of axes'''
 
         if self.grid.nax == 1:
@@ -83,6 +83,8 @@ class GridData:
                     data = self.get_array(item)
                 new_data = dm.GridArray(data, grid=self.grid)
                 return new_data
+            else:
+                raise IndexError('No variable %s in DataSet' % item)
 
         # mask
         if isinstance(item, dm.GridArray):
@@ -112,6 +114,12 @@ class GridData:
         for n, d in self.items():
             new_data[n] = d[item]
         return new_data
+
+    def __getattr__(self, item):
+        try:
+            return self[item]
+        except Exception as e:
+            raise AttributeError from e
 
     @property
     def T(self):
