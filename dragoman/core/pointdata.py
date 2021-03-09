@@ -146,9 +146,9 @@ class PointData:
                 data = self.data[item]
             if self.type == 'df':
                 if isinstance(data, pandas.core.frame.DataFrame):
-                    return dm.PointData(result)
+                    return dm.PointData(data)
                 elif isinstance(data, pandas.core.series.Series):
-                    return dm.PointArray(result)
+                    return dm.PointArray(data)
             return data
 
         # create new instance with mask or slice applied
