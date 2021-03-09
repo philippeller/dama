@@ -114,6 +114,9 @@ class PointData:
             return (len(self[self.vars[0]]), )
 
     def __setitem__(self, var, val):
+        if callable(var):
+            self.data[var] = val
+            return
         val = np.asanyarray(val)
         if val.ndim == 0:
             val = val[np.newaxis]
@@ -133,18 +136,20 @@ class PointData:
             raise ValueError()
 
     def __getitem__(self, var):
-        if self.type == 'df':
-            result = self.data[var]
-            if isinstance(result, pandas.core.frame.DataFrame):
-                return dm.PointData(result)
-            elif isinstance(result, pandas.core.series.Series):
-                return dm.PointArray(result)
-
         if isinstance(var, str):
             if var in self.vars:
-                return self.data[var]
+                data = self.data[var]
             else:
                 raise IndexError('No variable %s in DataSet' % var)
+            if callable(data):
+                self[item] = data()
+                data = self.data[item]
+            if self.type == 'df':
+                if isinstance(data, pandas.core.frame.DataFrame):
+                    return dm.PointData(result)
+                elif isinstance(data, pandas.core.series.Series):
+                    return dm.PointArray(result)
+            return data
 
         # create new instance with mask or slice applied
         new_data = {}

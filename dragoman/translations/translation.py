@@ -168,11 +168,10 @@ class Translation():
             if var in self.wrt:
                 continue
             source_data = self.source[var]
-            result = self.eval(source_data)
-            self.dest[var] = result
+            self.dest[var] = lambda: self.eval(source_data)
 
         for var, data in self.additional_runs.items():
-            self.dest[var] = self.eval(data)
+            self.dest[var] = lambda: self.eval(data)
 
         return self.dest
 

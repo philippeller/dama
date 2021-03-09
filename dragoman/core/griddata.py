@@ -76,6 +76,9 @@ class GridData:
             if item in self.vars:
                 if item in self.data_vars:
                     data = self.data[item]
+                    if callable(data):
+                        self[item] = data()
+                        data = self.data[item]
                 else:
                     data = self.get_array(item)
                 new_data = dm.GridArray(data, grid=self.grid)
@@ -98,7 +101,7 @@ class GridData:
             new_data = dm.GridData(self.grid)
             for v in item:
                 if v in self.data_vars:
-                    new_data[v] = self.data[v]
+                    new_data[v] = self[v]
             return new_data
 
         # slice
@@ -177,6 +180,10 @@ class GridData:
             name of data
         data : GridArray, GridData, Array
         '''
+        if callable(data):
+            self.data[var] = data
+            return
+
         if isinstance(data, (dm.GridArray, GridData)):
             if self.grid is None or not self.grid.initialized:
                 self.grid = data.grid
@@ -251,14 +258,11 @@ class GridData:
         '''
         iterate over dimensions
         '''
-        return iter(self.values())
-
-    def values(self):
-        return self.data.values()
+        return iter([self[v] for v in self.data_vars])
 
     def items(self):
         return [
-            (n, dm.GridArray(d, grid=self.grid)) for n, d in self.data.items()
+            (v, self[v]) for v in self.data_vars
             ]
 
     # --- Tranlsation methods ---
