@@ -160,6 +160,97 @@ class Edges(object):
         return np.all(np.equal(self._edges, other._edges))
 
 
+def BayesianEdges(sample):
+    """Bayesian Blocks Implementation
+
+    By Jake Vanderplas.  License: BSD
+    Based on algorithm outlined in http://adsabs.harvard.edu/abs/2012arXiv1207.5578S
+
+    Edit: Small bugfix (P. Eller)
+
+    Parameters
+    ----------
+    sample : ndarray, length N
+        data to be histogrammed
+        
+    weights : ndarray, length N (optional)
+        weights of data
+
+    Returns
+    -------
+    bins : ndarray
+        array containing the (N+1) bin edges
+
+    Notes
+    -----
+    This is an incomplete implementation: it may fail for some
+    datasets.  Alternate fitness functions and prior forms can
+    be found in the paper listed above.
+    """
+    # copy and sort the array
+    sample = np.sort(sample)
+    N = sample.size
+
+    # create length-(N + 1) array of cell edges
+    edges = np.concatenate([sample[:1],
+                            0.5 * (sample[1:] + sample[:-1]),
+                            sample[-1:]])
+    block_length = sample[-1] - edges
+
+    
+    #print(np.diff(edges))
+    #print(block_length)
+    
+    # arrays needed for the iteration
+    nn_vec = np.ones(N)
+    best = np.zeros(N, dtype=float)
+    last = np.zeros(N, dtype=int)
+
+    
+    #-----------------------------------------------------------------
+    # Start with first data cell; add one cell at each iteration
+    #-----------------------------------------------------------------
+    for K in range(N):
+        # Compute the width and count of the final bin for all possible
+        # locations of the K^th changepoint
+        width = block_length[:K + 1] - block_length[K + 1]
+        count_vec = np.cumsum(nn_vec[:K + 1][::-1])[::-1]
+        # evaluate fitness function for these possibilities
+        
+        fit_vec = count_vec * (np.log(count_vec) - np.log(width))
+        fit_vec -= 4  # 4 comes from the prior on the number of changepoints
+        fit_vec[1:] += best[:K]
+
+        # find the max of the fitness: this is the K^th changepoint
+        i_max = np.argmax(fit_vec)
+        last[K] = i_max
+        best[K] = fit_vec[i_max]
+        
+    #-----------------------------------------------------------------
+    # Recover changepoints by iteratively peeling off the last block
+    #-----------------------------------------------------------------
+    change_points =  np.zeros(N+1, dtype=int)
+    i_cp = N+1
+    ind = N
+    while True:
+        i_cp -= 1
+        change_points[i_cp] = ind
+        if ind == 0:
+            break
+        ind = last[ind - 1]
+        
+    change_points = change_points[i_cp:]
+
+    return dm.Edges(edges[change_points])
+
+def QuantileEdges(sample, n=10):
+    """
+    Return binning edges each containing the same quantile of the sample
+    """
+    qs = np.linspace(0, 1, n+1)
+    edges = np.quantile(sample, qs)
+    return dm.Edges(edges)
+
 def test_edges():
     edges = Edges(np.arange(10))
     assert np.allclose(edges.points, np.linspace(0.5, 8.5, 9))
