@@ -1,9 +1,6 @@
-# Dragoman
-<img align="right" src="https://raw.githubusercontent.com/philippeller/dama/master/dama.png" alt="Dragoman" width=150>
+# dama - Data Manipulator
 
-> A dama was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dama had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
-
-Similarly, the dama python library guides you through your data and translates between different representations.
+The dama python library guides you through your data and translates between different representations.
 Its aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can for instance be simple colum/row data, or it can be data on a grid.
 
@@ -12,7 +9,6 @@ Convenience `pyplot` plotting functions are also available, in order to produce 
 
 ## Installation
 
-* `git clone git@github.com:philippeller/dama.git`
 * `pip install dama`
 
 ## Getting Started
@@ -59,7 +55,7 @@ g.plot(cbar=True);
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_10_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_10_0.png)
     
 
 
@@ -72,7 +68,7 @@ g.interp(x=200, y=200).plot(cbar=True);
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_12_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_12_0.png)
     
 
 
@@ -144,7 +140,7 @@ np.sum(g[10::-1, :np.pi:2].T, axis='x')
 
 
 ### Comparison
-As comparison to point out the convenience, an alternative way without using Dragoman to achieve the above would look something like the follwoing for creating and plotting the array:
+As comparison to point out the convenience, an alternative way without using `dama` to achieve the above would look something like the follwoing for creating and plotting the array:
 > ```
 > x = np.linspace(0,3*np.pi, 30)
 > y = np.linspace(0,2*np.pi, 20) 
@@ -203,8 +199,8 @@ p
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td style="text-align: right;">-0.0697  </td><td style="text-align: right;">-0.311 </td><td style="text-align: right;">-0.439 </td><td>...</td><td style="text-align: right;">-0.0637 </td><td style="text-align: right;">-0.455</td><td style="text-align: right;">0.399 </td></tr>
-<tr><td><b>a</b></td><td style="text-align: right;"> 0.000593</td><td style="text-align: right;"> 0.0533</td><td style="text-align: right;"> 0.0693</td><td>...</td><td style="text-align: right;"> 0.00173</td><td style="text-align: right;"> 0.046</td><td style="text-align: right;">0.0425</td></tr>
+<tr><td><b>x</b></td><td style="text-align: right;">-0.362 </td><td style="text-align: right;">1.44</td><td style="text-align: right;">1.26</td><td>...</td><td style="text-align: right;">0.311 </td><td style="text-align: right;">-0.43  </td><td style="text-align: right;">0.249 </td></tr>
+<tr><td><b>a</b></td><td style="text-align: right;"> 0.0771</td><td style="text-align: right;">1.21</td><td style="text-align: right;">1.18</td><td>...</td><td style="text-align: right;">0.0836</td><td style="text-align: right;"> 0.0183</td><td style="text-align: right;">0.0133</td></tr>
 </tbody>
 </table>
 
@@ -217,7 +213,7 @@ p.plot()
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_23_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_23_0.png)
     
 
 
@@ -230,7 +226,7 @@ p.plot('x', 'a', '.');
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_25_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_25_0.png)
     
 
 
@@ -246,8 +242,8 @@ p.binwise(x=20).sum()
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.646 -4.207]</b></td><td><b>[-4.207 -3.768]</b></td><td><b>[-3.768 -3.328]</b></td><td>...</td><td><b>[2.821 3.26 ]</b></td><td><b>[3.26  3.699]</b></td><td><b>[3.699 4.139]</b></td></tr>
-<tr><td><b>a</b></td><td>38.7                  </td><td>49.5                  </td><td>197                   </td><td>...</td><td>953                 </td><td>310                 </td><td>82.3                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.133 -3.702]</b></td><td><b>[-3.702 -3.271]</b></td><td><b>[-3.271 -2.84 ]</b></td><td>...</td><td><b>[3.196 3.627]</b></td><td><b>[3.627 4.058]</b></td><td><b>[4.058 4.489]</b></td></tr>
+<tr><td><b>a</b></td><td>90.8                  </td><td>212                   </td><td>910                   </td><td>...</td><td>354                 </td><td>98.6                </td><td>29.1                </td></tr>
 </tbody>
 </table>
 
@@ -260,7 +256,7 @@ p.binwise(x=20).sum().plot();
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_28_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_28_0.png)
     
 
 
@@ -276,8 +272,8 @@ p.histogram(x=20).a
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.646 -4.207]</b></td><td><b>[-4.207 -3.768]</b></td><td><b>[-3.768 -3.328]</b></td><td>...</td><td><b>[2.821 3.26 ]</b></td><td><b>[3.26  3.699]</b></td><td><b>[3.699 4.139]</b></td></tr>
-<tr><td><b></b> </td><td>38.7                  </td><td>49.5                  </td><td>197                   </td><td>...</td><td>953                 </td><td>310                 </td><td>82.3                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.133 -3.702]</b></td><td><b>[-3.702 -3.271]</b></td><td><b>[-3.271 -2.84 ]</b></td><td>...</td><td><b>[3.196 3.627]</b></td><td><b>[3.627 4.058]</b></td><td><b>[4.058 4.489]</b></td></tr>
+<tr><td><b></b> </td><td>90.8                  </td><td>212                   </td><td>910                   </td><td>...</td><td>354                 </td><td>98.6                </td><td>29.1                </td></tr>
 </tbody>
 </table>
 
@@ -304,7 +300,7 @@ p.kde(x=1000).a.plot();
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_33_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_33_0.png)
     
 
 
@@ -317,7 +313,7 @@ p.binwise(x=20).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_bands()
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_35_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_35_0.png)
     
 
 
@@ -330,7 +326,7 @@ p.binwise(x=np.linspace(-3,3,10)).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_ban
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_37_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_37_0.png)
     
 
 
@@ -343,6 +339,6 @@ p.binwise(x=dm.Edges(np.linspace(-3,3,10))).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
     
 
