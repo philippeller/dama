@@ -164,14 +164,19 @@ class Translation():
             self.dest['result'] = result
             return self.dest
 
+        def make_closure(data):
+            def f():
+                return self.eval(data)
+            return f
+
         for var in self.source.vars:
             if var in self.wrt:
                 continue
-            source_data = self.source[var]
-            self.dest[var] = lambda: self.eval(source_data)
+            self.dest[var] = make_closure(self.source[var])
 
         for var, data in self.additional_runs.items():
-            self.dest[var] = lambda: self.eval(data)
+            self.dest[var] = make_closure(data)
+
 
         return self.dest
 

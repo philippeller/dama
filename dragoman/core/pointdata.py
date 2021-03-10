@@ -26,20 +26,24 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class PointData:
+class PointData(object):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
+    __slots__ = [
+            '_data',
+            ]
+
     def __init__(self, *args, **kwargs):
-        self.data = {}
+        self._data = {}
 
         if len(args) == 0 and len(kwargs) == 0:
             pass
         elif len(args) == 1 and len(kwargs) == 0:
             if pandas and isinstance(args[0], pandas.core.series.Series):
-                self.data = pandas.DataFrame(args[0])
+                self._data = pandas.DataFrame(args[0])
             elif pandas and isinstance(args[0], pandas.core.frame.DataFrame):
-                self.data = args[0]
+                self._data = args[0]
             elif isinstance(args[0], dict):
                 kwargs = args[0]
             else:
@@ -59,8 +63,12 @@ class PointData:
     def _repr_html_(self):
         '''for jupyter'''
         if self.type == 'df':
-            return self.data._repr_html_()
+            return self._data._repr_html_()
         return format_table(self, tablefmt='html')
+
+    @property
+    def data(self):
+        return self._data
 
     @property
     def vars(self):
@@ -68,10 +76,14 @@ class PointData:
         Available variables
         '''
         if self.type == 'df':
-            return list(self.data.columns)
+            return list(self._data.columns)
         elif self.type == 'simple':
-            return list(self.data.keys())
+            return list(self._data.keys())
         return []
+
+    def __dir__(self):
+        """for tab completion"""
+        return self.vars + object.__dir__(self)
 
     @property
     def data_vars(self):
@@ -89,12 +101,12 @@ class PointData:
             else: "simple"
         '''
         if pandas is not None:
-            if isinstance(self.data, pandas.core.frame.DataFrame):
+            if isinstance(self._data, pandas.core.frame.DataFrame):
                 return 'df'
         return 'simple'
 
     def __len__(self):
-        return len(self.data)
+        return len(self._data)
 
     @property
     def size(self):
@@ -109,13 +121,13 @@ class PointData:
         shape : tuple
         '''
         if self.type == 'df':
-            return (len(self.data), )
+            return (len(self._data), )
         elif self.type == 'simple':
             return (len(self[self.vars[0]]), )
 
     def __setitem__(self, var, val):
         if callable(val):
-            self.data[var] = val
+            self._data[var] = val
             return
         val = np.asanyarray(val)
         if val.ndim == 0:
@@ -125,10 +137,10 @@ class PointData:
             assert len(val) == self.array_shape[0], 'Incompatible dimensions'
 
         if isinstance(val, dm.PointArray):
-            self.data[var] = val
+            self._data[var] = val
         elif isinstance(val, np.ndarray):
             if self.type == 'df':
-                self.data[var] = val
+                self._data[var] = val
             else:
                 val = dm.PointArray(val)
                 self[var] = val
@@ -138,12 +150,12 @@ class PointData:
     def __getitem__(self, var):
         if isinstance(var, str):
             if var in self.vars:
-                data = self.data[var]
+                data = self._data[var]
             else:
                 raise IndexError('No variable %s in DataSet' % var)
             if callable(data):
                 self[var] = data()
-                data = self.data[var]
+                data = self._data[var]
             if self.type == 'df':
                 if isinstance(data, pandas.core.frame.DataFrame):
                     return dm.PointData(data)
@@ -163,11 +175,17 @@ class PointData:
                 new_data[n] = d[var]
         return dm.PointData(new_data)
 
-    def __getattr__(self, var):
+    def __getattr__(self, item):
         try:
-            return self[var]
+            return self[item]
         except Exception as e:
             raise AttributeError from e
+
+    def __setattr__(self, item, value):
+        if item in self.__slots__:
+            object.__setattr__(self, item, value)
+        else:
+            self[item] = value
 
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
@@ -177,14 +195,14 @@ class PointData:
         iterate over dimensions
         '''
         if self.type == 'df':
-            return iter([self.data[var] for var in self.vars])
-        return iter(self.data)
+            return iter([self._data[var] for var in self.vars])
+        return iter(self._data)
 
     def values(self):
-        return self.data.values()
+        return self._data.values()
 
     def items(self):
-        return self.data.items()
+        return self._data.items()
 
     # --- Tranlsation methods ---
 

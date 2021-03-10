@@ -27,14 +27,19 @@ class GridData:
     '''
     Class to hold grid data
     '''
+    __slots__ = [
+            '_data',
+            '_grid',
+            'plot',
+            ]
+
     def __init__(self, *args, **kwargs):
         '''
         Set the grid
         '''
-        self.data = {}
+        self._data = {}
 
-        # ToDo protect self.grid as private self._grid
-        self.grid = None
+        self._grid = dm.Grid()
 
         if len(args) == 0 and len(kwargs) > 0 and all(
             [isinstance(v, dm.GridArray) for v in kwargs.values()]
@@ -43,20 +48,23 @@ class GridData:
                 self.add_data(n, d)
         elif len(args) == 1 and len(kwargs
                                     ) == 0 and isinstance(args[0], dm.Grid):
-            self.grid = args[0]
+            self._grid = args[0]
         else:
-            self.grid = dm.Grid(*args, **kwargs)
+            self._grid = dm.Grid(*args, **kwargs)
 
         self._setup_plotting_methods()
+
 
     def _setup_plotting_methods(self):
         '''dynamically set up plotting methods,
         depending on the number of axes'''
 
-        if self.grid.nax == 1:
-            self.plot = bind(self, dm.plotting.plot_step)
-        if self.grid.nax == 2:
-            self.plot = bind(self, dm.plotting.plot_map)
+        if self._grid.nax == 1:
+            #self.plot = 
+            bind(self, dm.plotting.plot_step, 'plot')
+        if self._grid.nax == 2:
+            #self.plot =
+            bind(self, dm.plotting.plot_map, 'plot')
 
     def __repr__(self):
         return format_table(self, tablefmt='plain')
@@ -75,13 +83,13 @@ class GridData:
         if isinstance(item, str):
             if item in self.vars:
                 if item in self.data_vars:
-                    data = self.data[item]
+                    data = self._data[item]
                     if callable(data):
                         self[item] = data()
-                        data = self.data[item]
+                        data = self._data[item]
                 else:
                     data = self.get_array(item)
-                new_data = dm.GridArray(data, grid=self.grid)
+                new_data = dm.GridArray(data, grid=self._grid)
                 return new_data
             else:
                 raise IndexError('No variable %s in DataSet' % item)
@@ -91,7 +99,7 @@ class GridData:
             if item.dtype == np.bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
-                new_data = dm.GridData(self.grid)
+                new_data = dm.GridData(self._grid)
                 for v in self.data_vars:
                     new_data[v] = self[v][item]
                 return new_data
@@ -100,14 +108,14 @@ class GridData:
         # create new instance with only those vars
         if isinstance(item,
                       Iterable) and all([isinstance(v, str) for v in item]):
-            new_data = dm.GridData(self.grid)
+            new_data = dm.GridData(self._grid)
             for v in item:
                 if v in self.data_vars:
                     new_data[v] = self[v]
             return new_data
 
         # slice
-        new_grid = self.grid[item]
+        new_grid = self._grid[item]
         if len(new_grid) == 0:
             return {n: d[item] for n, d in self.items()}
         new_data = dm.GridData(new_grid)
@@ -121,11 +129,17 @@ class GridData:
         except Exception as e:
             raise AttributeError from e
 
+    def __setattr__(self, item, value):
+        if item in self.__slots__:
+            object.__setattr__(self, item, value)
+        else:
+            self[item] = value
+
     @property
     def T(self):
         '''transpose'''
         new_obj = dm.GridData()
-        new_obj.grid = self.grid.T
+        new_obj._grid = self._grid.T
         for n, d in self.items():
             new_obj[n] = d.T
         return new_obj
@@ -155,22 +169,26 @@ class GridData:
         '''
         Available variables
         '''
-        return self.grid.vars + self.data_vars
+        return self._grid.vars + self.data_vars
+
+    def __dir__(self):
+        """for tab completion"""
+        return self.vars + object.__dir__(self)
 
     @property
     def data_vars(self):
         '''
         only data variables (no grid vars)
         '''
-        return list(self.data.keys())
+        return list(self._data.keys())
 
     @property
     def shape(self):
-        return self.grid.shape
+        return self._grid.shape
 
     @property
     def ndim(self):
-        return self.grid.nax
+        return self._grid.nax
 
     @property
     def array_shape(self):
@@ -178,6 +196,14 @@ class GridData:
         shape of a single variable
         '''
         return self.shape
+
+    @property
+    def grid(self):
+        return self._grid
+
+    @property
+    def data(self):
+        return self._data
 
     def add_data(self, var, data):
         '''Add data
@@ -189,17 +215,17 @@ class GridData:
         data : GridArray, GridData, Array
         '''
         if callable(data):
-            self.data[var] = data
+            self._data[var] = data
             return
 
         if isinstance(data, (dm.GridArray, GridData)):
-            if self.grid is None or not self.grid.initialized:
-                self.grid = data.grid
+            if self._grid is None or not self._grid.initialized:
+                self._grid = data.grid
                 self._setup_plotting_methods()
             else:
-                assert self.grid == data.grid
+                assert self._grid == data.grid
 
-        if var in self.grid.vars:
+        if var in self._grid.vars:
             raise ValueError(
                 'Variable `%s` is already a grid dimension!' % var
                 )
@@ -219,7 +245,7 @@ class GridData:
             axes = {}
             for d, n in zip(axes_names, data.shape):
                 axes[d] = np.arange(n)
-            self.grid = dm.Grid(**axes)
+            self._grid = dm.Grid(**axes)
 
         if data.ndim < self.ndim and self.shape[-1] == 1:
             # add new axis
@@ -233,7 +259,7 @@ class GridData:
                 (data.shape, self.shape)
                 )
 
-        self.data[var] = data
+        self._data[var] = data
 
     def get_array(self, var, flat=False):
         '''
@@ -247,14 +273,14 @@ class GridData:
         flat : bool (optional)
             if true return flattened (1d) array
         '''
-        if var in self.grid.vars:
-            array = self.grid.point_meshgrid[self.grid.vars.index(var)]
+        if var in self._grid.vars:
+            array = self._grid.point_meshgrid[self._grid.vars.index(var)]
         else:
-            array = self.data[var]
+            array = self._data[var]
         if flat:
-            if array.ndim == self.grid.nax:
+            if array.ndim == self._grid.nax:
                 return array.ravel()
-            return array.reshape(self.grid.size, -1)
+            return array.reshape(self._grid.size, -1)
 
         return array
 
@@ -323,9 +349,12 @@ class GridData:
         ax : pyplot axes object
         var : str
         '''
-        if var is None and len(self.data_vars) == 1:
-            var = self.data_vars[0]
-        if self.grid.nax == 2:
+        if var is None:
+            if len(self.data_vars) == 1:
+                var = self.data_vars[0]
+            else:
+                raise ValueError('Need to specify variable to plot')
+        if self._grid.nax == 2:
             return dm.plotting.plot_map(
                 self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs
                 )
