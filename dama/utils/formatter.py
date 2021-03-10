@@ -6,7 +6,7 @@ import html
 import numpy as np
 import tabulate
 
-import dragoman as dm
+import dama as dm
 
 __license__ = '''Copyright 2019 Philipp Eller
 

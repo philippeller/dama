@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from collections.abc import Iterable
 import numpy as np
 import numpy_indexed as npi
-import dragoman as dm
-from dragoman import translations
-from dragoman.utils.formatter import format_table
-import dragoman.plotting
+import dama as dm
+from dama import translations
+from dama.utils.formatter import format_table
+import dama.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
 

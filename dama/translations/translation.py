@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 '''Module providing a data base class for translation methods'''
 import numpy as np
-import dragoman as dm
+import dama as dm
 
 __license__ = '''Copyright 2019 Philipp Eller
 

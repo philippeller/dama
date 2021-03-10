@@ -3,7 +3,7 @@ from numbers import Number
 from collections import OrderedDict
 from collections.abc import Iterable
 
-import dragoman as dm
+import dama as dm
 
 import numpy as np
 

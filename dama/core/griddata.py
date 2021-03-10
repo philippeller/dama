@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from collections import OrderedDict
 from collections.abc import Iterable
 import numpy as np
-import dragoman as dm
-from dragoman import translations
-from dragoman.utils.formatter import format_table
-from dragoman.utils.bind import bind
-import dragoman.plotting
+import dama as dm
+from dama import translations
+from dama.utils.formatter import format_table
+from dama.utils.bind import bind
+import dama.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
 

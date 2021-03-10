@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 from scipy import interpolate
 
-from dragoman.translations import Translation
+from dama.translations import Translation
 
 __license__ = '''Copyright 2019 Philipp Eller
 

@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from numbers import Number
 from collections.abc import Iterable
 
-import dragoman as dm
+import dama as dm
 
 import numpy as np
 

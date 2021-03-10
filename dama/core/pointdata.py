@@ -6,10 +6,10 @@ try:
 except ImportError:
     pandas = None
 
-import dragoman as dm
-from dragoman import translations
-import dragoman.plotting
-from dragoman.utils.formatter import format_table
+import dama as dm
+from dama import translations
+import dama.plotting
+from dama.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 

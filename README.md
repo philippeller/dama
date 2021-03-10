@@ -1,26 +1,26 @@
 # Dragoman
-<img align="right" src="https://raw.githubusercontent.com/philippeller/dragoman/master/dragoman.png" alt="Dragoman" width=150>
+<img align="right" src="https://raw.githubusercontent.com/philippeller/dama/master/dama.png" alt="Dragoman" width=150>
 
-> A dragoman was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dragoman had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
+> A dama was an interpreter, translator, and official guide between Turkish, Arabic, and Persian-speaking countries and polities of the Middle East and European embassies, consulates, vice-consulates and trading posts. A dama had to have a knowledge of Arabic, Persian, Turkish, and European languages. (Source: wikipedia)
 
-Similarly, the dragoman python library guides you through your data and translates between different representations.
+Similarly, the dama python library guides you through your data and translates between different representations.
 Its aim is to offer a consistant and pythonic way to handle different datasaets and translations between them.
 A dataset can for instance be simple colum/row data, or it can be data on a grid.
 
-One of the key features of dragoman is the seamless translation from one data represenation into any other. 
+One of the key features of dama is the seamless translation from one data represenation into any other. 
 Convenience `pyplot` plotting functions are also available, in order to produce standard plots without any hassle.
 
 ## Installation
 
-* `git clone git@github.com:philippeller/dragoman.git`
-* `pip install dragoman`
+* `git clone git@github.com:philippeller/dama.git`
+* `pip install dama`
 
 ## Getting Started
 
 
 ```python
 import numpy as np
-import dragoman as dm
+import dama as dm
 ```
 
 ### Grid Data
@@ -59,7 +59,7 @@ g.plot(cbar=True);
 
 
     
-![png](README_files/README_10_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_10_0.png)
     
 
 
@@ -72,7 +72,7 @@ g.interp(x=200, y=200).plot(cbar=True);
 
 
     
-![png](README_files/README_12_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_12_0.png)
     
 
 
@@ -217,7 +217,7 @@ p.plot()
 
 
     
-![png](README_files/README_23_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_23_0.png)
     
 
 
@@ -230,7 +230,7 @@ p.plot('x', 'a', '.');
 
 
     
-![png](README_files/README_25_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_25_0.png)
     
 
 
@@ -260,7 +260,7 @@ p.binwise(x=20).sum().plot();
 
 
     
-![png](README_files/README_28_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_28_0.png)
     
 
 
@@ -304,7 +304,7 @@ p.kde(x=1000).a.plot();
 
 
     
-![png](README_files/README_33_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_33_0.png)
     
 
 
@@ -317,7 +317,7 @@ p.binwise(x=20).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_bands()
 
 
     
-![png](README_files/README_35_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_35_0.png)
     
 
 
@@ -330,7 +330,7 @@ p.binwise(x=np.linspace(-3,3,10)).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_ban
 
 
     
-![png](README_files/README_37_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_37_0.png)
     
 
 
@@ -343,6 +343,6 @@ p.binwise(x=dm.Edges(np.linspace(-3,3,10))).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]
 
 
     
-![png](README_files/README_39_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
     
 

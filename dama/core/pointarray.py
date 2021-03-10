@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 import numpy as np
-import dragoman as dm
-from dragoman.utils.formatter import format_table
+import dama as dm
+from dama.utils.formatter import format_table
 
 __license__ = '''Copyright 2019 Philipp Eller
 

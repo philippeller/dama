@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 import numpy as np
-import dragoman as dm
+import dama as dm
 from matplotlib import pyplot as plt
 '''Module to provide plotting convenience functions
 to be used by data source classes

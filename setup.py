@@ -12,7 +12,7 @@ setup(
     license='Apache 2.0',
     author='Philipp Eller',
     author_email='peller.phys@gmail.com',
-    url='https://github.com/philippeller/dragoman',
+    url='https://github.com/philippeller/dama',
     description='Look at data in different ways',
     long_description=long_description,
     long_description_content_type='text/markdown',
