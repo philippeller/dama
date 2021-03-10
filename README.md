@@ -59,7 +59,7 @@ g.plot(cbar=True);
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_10_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_10_0.png)
     
 
 
@@ -72,7 +72,7 @@ g.interp(x=200, y=200).plot(cbar=True);
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_12_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_12_0.png)
     
 
 
@@ -217,7 +217,7 @@ p.plot()
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_23_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_23_0.png)
     
 
 
@@ -230,7 +230,7 @@ p.plot('x', 'a', '.');
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_25_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_25_0.png)
     
 
 
@@ -260,7 +260,7 @@ p.binwise(x=20).sum().plot();
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_28_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_28_0.png)
     
 
 
@@ -304,7 +304,7 @@ p.kde(x=1000).a.plot();
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_33_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_33_0.png)
     
 
 
@@ -317,7 +317,7 @@ p.binwise(x=20).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_bands()
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_35_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_35_0.png)
     
 
 
@@ -330,7 +330,7 @@ p.binwise(x=np.linspace(-3,3,10)).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).plot_ban
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_37_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_37_0.png)
     
 
 
@@ -343,6 +343,6 @@ p.binwise(x=dm.Edges(np.linspace(-3,3,10))).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
     
 
