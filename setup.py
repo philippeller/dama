@@ -1,4 +1,9 @@
-from distutils.core import setup
+from setuptools import setup
+from os import path
+
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+        long_description = f.read()
 
 setup(
     name='dragoman',
@@ -9,14 +14,14 @@ setup(
     author_email='peller.phys@gmail.com',
     url='https://github.com/philippeller/dragoman',
     description='Look at data in different ways',
-    long_description=open('README.md').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
 
-    setup_requires=[
-        'python>=3.0',
-        'pip>=1.8',
-        'setuptools>18.5',
-    ],
+    #setup_requires=[
+    #    'python>=3.6',
+    #    'pip>=1.8',
+    #    'setuptools>18.5',
+    #],
 
     install_requires=[
         'scipy>=0.17',
