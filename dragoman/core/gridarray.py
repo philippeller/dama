@@ -169,7 +169,7 @@ class GridArray(np.ma.MaskedArray):
         if isinstance(item, dm.GridArray):
             if item.dtype == np.bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
-                new_item = dm.GridArray(np.ma.asarray(self), grid=self.grid)
+                new_item = dm.GridArray(np.asarray(self), grid=self.grid)
                 new_item.mask = mask
                 return new_item
             raise NotImplementedError('get item %s' % item)
