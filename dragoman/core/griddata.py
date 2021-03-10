@@ -27,6 +27,12 @@ class GridData:
     '''
     Class to hold grid data
     '''
+    __slots__ = [
+            '_data',
+            '_grid',
+            'plot',
+            ]
+
     def __init__(self, *args, **kwargs):
         '''
         Set the grid
@@ -54,9 +60,11 @@ class GridData:
         depending on the number of axes'''
 
         if self._grid.nax == 1:
-            self.plot = bind(self, dm.plotting.plot_step)
+            #self.plot = 
+            bind(self, dm.plotting.plot_step, 'plot')
         if self._grid.nax == 2:
-            self.plot = bind(self, dm.plotting.plot_map)
+            #self.plot =
+            bind(self, dm.plotting.plot_map, 'plot')
 
     def __repr__(self):
         return format_table(self, tablefmt='plain')
@@ -122,10 +130,10 @@ class GridData:
             raise AttributeError from e
 
     def __setattr__(self, item, value):
-        if '_grid' in self.__dict__ and item in self.vars:
-            self[item] = value
-        else:
+        if item in self.__slots__:
             object.__setattr__(self, item, value)
+        else:
+            self[item] = value
 
     @property
     def T(self):
@@ -337,8 +345,11 @@ class GridData:
         ax : pyplot axes object
         var : str
         '''
-        if var is None and len(self.data_vars) == 1:
-            var = self.data_vars[0]
+        if var is None:
+            if len(self.data_vars) == 1:
+                var = self.data_vars[0]
+            else:
+                raise ValueError('Need to specify variable to plot')
         if self._grid.nax == 2:
             return dm.plotting.plot_map(
                 self[var], label=var, cbar=cbar, fig=fig, ax=ax, **kwargs

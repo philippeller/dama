@@ -26,10 +26,14 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 
-class PointData:
+class PointData(object):
     '''
     Data Layer to hold point-type data structures (Pandas DataFrame, Dict, )
     '''
+    __slots__ = [
+            '_data',
+            ]
+
     def __init__(self, *args, **kwargs):
         self._data = {}
 
@@ -167,17 +171,17 @@ class PointData:
                 new_data[n] = d[var]
         return dm.PointData(new_data)
 
-    def __getattr__(self, var):
+    def __getattr__(self, item):
         try:
-            return self[var]
+            return self[item]
         except Exception as e:
             raise AttributeError from e
 
-    def __setattr__(self, var, value):
-        if '_data' in self.__dict__ and var in self.vars:
-            self[var] = value
+    def __setattr__(self, item, value):
+        if item in self.__slots__:
+            object.__setattr__(self, item, value)
         else:
-            object.__setattr__(self, var, value)
+            self[item] = value
 
     def get_array(self, var, flat=False):
         return np.asarray(self[var])
