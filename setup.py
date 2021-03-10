@@ -2,11 +2,15 @@ from distutils.core import setup
 
 setup(
     name='dragoman',
-    version='0.3dev',
+    version='0.4dev',
     packages=['dragoman',],
     license='Apache 2.0',
     author='Philipp Eller',
+    author_email='peller.phys@gmail.com',
+    url='https://github.com/philippeller/dragoman',
+    description='Look at data in different ways',
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
 
     setup_requires=[
         'python>=3.0',
