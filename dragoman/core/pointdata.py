@@ -81,6 +81,10 @@ class PointData(object):
             return list(self._data.keys())
         return []
 
+    def __dir__(self):
+        """for tab completion"""
+        return self.vars + object.__dir__(self)
+
     @property
     def data_vars(self):
         '''Available variables'''

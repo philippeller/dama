@@ -171,6 +171,10 @@ class GridData:
         '''
         return self._grid.vars + self.data_vars
 
+    def __dir__(self):
+        """for tab completion"""
+        return self.vars + object.__dir__(self)
+
     @property
     def data_vars(self):
         '''
