@@ -5,7 +5,6 @@ import numpy_indexed as npi
 import dragoman as dm
 from dragoman import translations
 from dragoman.utils.formatter import format_table
-from dragoman.utils.bind import bind
 import dragoman.plotting
 
 __license__ = '''Copyright 2019 Philipp Eller
