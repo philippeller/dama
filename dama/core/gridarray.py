@@ -349,6 +349,10 @@ class GridArray(np.ma.MaskedArray):
         return np.ma.cumsum(self, **kwargs)
 
     @wrap
+    def quantile(self, q, **kwargs):
+        return np.swapaxes(np.quantile(self, q, **kwargs), 0, -1)
+
+    @wrap
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         '''callable for numpy ufuncs'''
         #print('ufunc')
