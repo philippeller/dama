@@ -137,7 +137,7 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, filled=True, li
                     ax.bar(
                         grid_axis.edges.edges[:, 0],
                         data[:, upper_idx] - data[:, i],
-                        bottom=data[:, i],
+                        bottom=np.nan_to_num(data[:, i]),
                         width=grid_axis.edges.width,
                         color=colors[i],
                         align='edge',
