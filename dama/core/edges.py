@@ -44,6 +44,8 @@ class Edges(object):
             self._add_edges(args[0])
         elif len(args) == 1 and isinstance(args[0], list):
             self._add_edges(np.array(args[0]))
+        elif len(args) == 3:
+            self._add_edges(np.linspace(*args))
         elif len(args) == 0 and delta is None and len(kwargs) == 0:
             pass
         elif len(args) == 1 and args[0] is None:

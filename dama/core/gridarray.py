@@ -190,6 +190,12 @@ class GridArray(np.ma.MaskedArray):
                 return np.ma.asarray(self)[item]
             return dm.GridArray(np.ma.asarray(self)[item], grid=new_grid)
 
+    def __getattr__(self, item):
+        try:
+            return self[item]
+        except Exception as e:
+            raise AttributeError from e
+
     def get_array(self, var, flat=False):
         '''
         return bare array of data
