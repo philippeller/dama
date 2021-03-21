@@ -334,3 +334,38 @@ class BinnedData:
             fill_value=fill_value,
             **kwargs
             )
+
+    def std_devs(self, sigmas=[1.,], fill_value=np.nan, **kwargs):
+        """ Mean + Sigma values
+        sigmas : iterable
+            values to produce bands = mean =/- sigmas * std
+        """
+        mean = self.mean(fill_value=np.nan, **kwargs)
+        std = self.std(fill_value=np.nan, **kwargs)
+
+        output_maps = {}
+
+        for var in self.data.vars:
+            m = np.ma.asarray(mean[var])
+            s = np.ma.asarray(std[var])
+
+            arrays = [m]
+            for sigma in sigmas:
+                delta = sigma * s
+                arrays.append(m + delta)
+                arrays.insert(0, m - delta)
+        
+            output_maps[var] = np.swapaxes(np.stack(arrays), 0, -1)
+            
+
+        # Pack into GridArray
+        if self.single:
+            out_data = dm.GridArray(output_maps['test'], grid=self.grid)
+
+        # Pack into GridData
+        else:
+            out_data = dm.GridData(self.grid)
+            for var, output_map in output_maps.items():
+                out_data[var] = output_map
+
+        return out_data
