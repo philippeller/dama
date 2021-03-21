@@ -3,8 +3,7 @@ import matplotlib
 import glob
 import os
 
-maps = glob.glob('*.npy')
-
+maps = glob.glob(os.path.join(os.path.dirname(__file__),'*.npy'))
 cms = {}
 
 for m in maps:
