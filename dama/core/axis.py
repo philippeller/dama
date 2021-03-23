@@ -108,7 +108,7 @@ class Axis(object):
 
         new_obj = dm.Axis()
         new_obj.var = self.var
-        if if self._edges is not None and self._edges._edges is not None:
+        if self._edges is not None and self._edges._edges is not None:
             new_obj._edges = self._edges[idx]
         if self._points is not None:
             new_obj._points = self._points[idx]
