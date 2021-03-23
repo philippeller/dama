@@ -434,6 +434,70 @@ class GridArray(np.ma.MaskedArray):
 
     gaussian_filter.__doc__ = translations.gaussian_filter.__init__.__doc__
 
+    def convolve(self, *args, **kwargs):
+        return translations.convolve(self, *args, **kwargs).run()
+
+    convolve.__doc__ = translations.convolve.__init__.__doc__
+
+    def correlate(self, *args, **kwargs):
+        return translations.correlate(self, *args, **kwargs).run()
+
+    correlate.__doc__ = translations.correlate.__init__.__doc__
+
+    def gaussian_laplace(self, *args, **kwargs):
+        return translations.gaussian_laplace(self, *args, **kwargs).run()
+
+    gaussian_laplace.__doc__ = translations.gaussian_laplace.__init__.__doc__
+
+    def generic_filter(self, *args, **kwargs):
+        return translations.generic_filter(self, *args, **kwargs).run()
+
+    generic_filter.__doc__ = translations.generic_filter.__init__.__doc__
+
+    def laplace(self, *args, **kwargs):
+        return translations.laplace(self, *args, **kwargs).run()
+
+    laplace.__doc__ = translations.laplace.__init__.__doc__
+
+    def maximum_filter(self, *args, **kwargs):
+        return translations.maximum_filter(self, *args, **kwargs).run()
+
+    maximum_filter.__doc__ = translations.maximum_filter.__init__.__doc__
+
+    def median_filter(self, *args, **kwargs):
+        return translations.median_filter(self, *args, **kwargs).run()
+
+    median_filter.__doc__ = translations.median_filter.__init__.__doc__
+
+    def minimum_filter(self, *args, **kwargs):
+        return translations.minimum_filter(self, *args, **kwargs).run()
+
+    minimum_filter.__doc__ = translations.minimum_filter.__init__.__doc__
+
+    def percentile_filter(self, *args, **kwargs):
+        return translations.percentile_filter(self, *args, **kwargs).run()
+
+    percentile_filter.__doc__ = translations.percentile_filter.__init__.__doc__
+
+    def prewitt(self, *args, **kwargs):
+        return translations.prewitt(self, *args, **kwargs).run()
+
+    prewitt.__doc__ = translations.prewitt.__init__.__doc__
+
+    def rank_filter(self, *args, **kwargs):
+        return translations.rank_filter(self, *args, **kwargs).run()
+
+    rank_filter.__doc__ = translations.rank_filter.__init__.__doc__
+
+    def sobel(self, *args, **kwargs):
+        return translations.sobel(self, *args, **kwargs).run()
+
+    sobel.__doc__ = translations.sobel.__init__.__doc__
+
+    def uniform_filter(self, *args, **kwargs):
+        return translations.uniform_filter(self, *args, **kwargs).run()
+
+    uniform_filter.__doc__ = translations.uniform_filter.__init__.__doc__
     # --- Plotting ---
 
     def plot(self, **kwargs):

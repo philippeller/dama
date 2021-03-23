@@ -4,4 +4,4 @@ from .interpolation import Interpolation
 from .histogram import Histogram
 from .kde import KDE
 from .resample import Resample
-from .ndimage import gaussian_filter
+from .ndimage import *
