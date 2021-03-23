@@ -205,7 +205,7 @@ class Axis(object):
         regular = True
         if self._points is not None:
             if self.log:
-                d = np.diff(self.log(self._points))
+                d = np.diff(np.log(self._points))
             else:
                 d = np.diff(self._points)
             regular = regular and np.allclose(d[0], d)

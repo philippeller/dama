@@ -332,6 +332,11 @@ class GridData:
 
     resample.__doc__ = translations.Resample.__init__.__doc__
 
+    def gaussian_filter(self, *args, **kwargs):
+        return translations.gaussian_filter(self, *args, **kwargs).run()
+
+    gaussian_filter.__doc__ = translations.gaussian_filter.__init__.__doc__
+
     # --- Plotting methods ---
 
     #def plot(self, var=None, **kwargs):
