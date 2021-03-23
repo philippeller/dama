@@ -28,7 +28,7 @@ class Axis(object):
     which can have points and/or edges
     '''
     def __init__(
-        self, var=None, edges=None, points=None, nbins=None, **kwargs
+        self, var=None, edges=None, points=None, nbins=None, log=None, label=None, **kwargs
         ):
 
         if len(kwargs) == 1:
@@ -42,15 +42,35 @@ class Axis(object):
                 nbins = val
             else:
                 raise ValueError()
+
         self.var = var
-        self._edges = dm.Edges(edges)
+        self.label = label
+        self._edges = edges
         self._points = points
         self._nbins = nbins
+        self._log = log
 
     @property
     def has_points(self):
         '''True if points are set'''
         return self._points is not None
+
+    @property
+    def log(self):
+        if self._log is not None:
+            return self._log
+        if self.has_edges:
+            return self._edges.log
+        if self.has_points and np.all(self._points > 0):
+            d = np.diff(np.log(self._points))
+            return np.allclose(d[0], d)
+        return False
+
+    @log.setter
+    def log(self, log):
+        if self.has_edges:
+            self._edges.log = log
+        self._log = log
 
     @property
     def has_edges(self):
@@ -189,17 +209,21 @@ class Axis(object):
         '''True if spacing of egdges and/or points is regular'''
         regular = True
         if self._points is not None:
-            regular = regular and np.equal.reduce(np.diff(self._points))
+            if self.log:
+                d = np.diff(self.log(self._points))
+            else:
+                d = np.diff(self._points)
+            regular = regular and np.allclose(d[0], d)
         if self._edges.edges is not None:
             regular = regular and self._edges.regular
         return regular
 
     @property
     def edges(self):
-        if self._edges._edges is not None:
+        if self.has_edges and self._edges._edges is not None:
             return self._edges
-        elif self._points is not None:
-            return dm.Edges(points=self._points)
+        if self.has_points:
+            return dm.Edges(points=self._points, log=self.log)
         return None
 
     @edges.setter

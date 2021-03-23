@@ -190,6 +190,8 @@ def plot_bands(source, var=None, fig=None, ax=None, labels=None, filled=True, li
                         )
 
     ax.set_xlabel(source.grid.vars[0])
+    if source.grid.axes[0].log:
+        ax.set_xscale('log')
     ax.set_ylabel(var)
 
     if grid_axis.has_points:
@@ -249,7 +251,11 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
             fig.colorbar(pc, ax=ax, label=kwargs.pop('label', var))
 
     ax.set_xlabel(source.grid.vars[0])
+    if source.grid.axes[0].log:
+        ax.set_xscale('log')
     ax.set_ylabel(source.grid.vars[1])
+    if source.grid.axes[1].log:
+        ax.set_yscale('log')
     ax.set_xlim(source.grid.edges[0].min(), source.grid.edges[0].max())
     ax.set_ylim(source.grid.edges[1].min(), source.grid.edges[1].max())
     return pc
@@ -291,6 +297,8 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
         **kwargs
         )
     ax.set_xlabel(source.grid.vars[0])
+    if source.grid.axes[0].log:
+        ax.set_xscale('log')
     ax.set_ylabel(var)
     return s
 
@@ -480,6 +488,11 @@ def plot_contour(source, var=None, fig=None, ax=None, **kwargs):
 
         ax.clabel(cs, cs.levels, inline=inline, fmt=fmt)
 
+    if source.grid.axes[0].log:
+        ax.set_xscale('log')
+    if source.grid.axes[1].log:
+        ax.set_yscale('log')
+
     return cs
 
 
@@ -511,3 +524,6 @@ def plot_errorband(source, var, errors, fig=None, ax=None, **kwargs):
         **kwargs
         )
     ax.set_xlabel(source.grid[0].var)
+
+    if source.grid.axes[0].log:
+        ax.set_xscale('log')

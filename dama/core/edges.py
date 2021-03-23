@@ -23,7 +23,7 @@ limitations under the License.'''
 
 class Edges(object):
     '''Holding binning edges'''
-    def __init__(self, *args, delta=None, points=None, **kwargs):
+    def __init__(self, *args, delta=None, points=None, log=None, **kwargs):
         '''
         Paramters
         ---------
@@ -32,10 +32,13 @@ class Edges(object):
             specify the the delta between two subsequent edges
         points : array (optional)
             create edges from points
+        log : bool (optional)
+            spacing is logarthmic
 
         '''
         #print(args, kwargs)
         self._edges = None
+        self._log = log
         if points is not None:
             self._add_edges(self.edges_from_points(points))
         elif len(args) == 1 and isinstance(args[0], dm.Edges):
@@ -45,13 +48,32 @@ class Edges(object):
         elif len(args) == 1 and isinstance(args[0], list):
             self._add_edges(np.array(args[0]))
         elif len(args) == 3:
-            self._add_edges(np.linspace(*args))
+            if self.log:
+                self._add_edges(np.logspace(np.log(args[0]), np.log(args[1]), args[2]))
+            else:
+                self._add_edges(np.linspace(*args))
         elif len(args) == 0 and delta is None and len(kwargs) == 0:
             pass
         elif len(args) == 1 and args[0] is None:
             pass
         else:
             raise NotImplementedError()
+
+    @property
+    def log(self):
+        if self._log is not None:
+            return self._log
+        if self._edges is None:
+            return False
+        if np.all(self._edges > 0):
+            d = np.log(self._edges[:, 1]) - np.log(self._edges[:, 0])
+            return np.allclose(d[0], d)
+        return False
+
+    @log.setter
+    def log(self, log):
+        self._log = log
+
 
     def __array__(self):
         if len(self) == 1:
@@ -69,8 +91,20 @@ class Edges(object):
         create edges around points
         '''
         if len(points) == 1:
-            # in this case we cannot do a delta, just make the binwidth = 1.0 by default
+            # in this case we cannot do a delta, just do some sensible default behaviour
+            if self.log:
+                return np.array([points[0]/2, points[0]*2])
             return np.array([[points[0] - 0.5, points[0] + 0.5]])
+        if self.log:
+            lp = np.log(points)
+            diff = np.diff(lp) / 2.
+            return np.exp(np.concatenate(
+                [
+                    [lp[0] - diff[0]], lp[:-1] + diff,
+                    [lp[-1] + diff[-1]]
+                    ]
+                ))
+
         diff = np.diff(points) / 2.
         return np.concatenate(
             [
@@ -90,7 +124,10 @@ class Edges(object):
         '''
         create points from centers between edges
         '''
-        points = np.average(self._edges, axis=1)
+        if self.log:
+            points = np.sqrt(self._edges[:,0] * self._edges[:,1])
+        else:
+            points = np.average(self._edges, axis=1)
         if isinstance(points, Number):
             return np.array(points)
         return points
@@ -114,7 +151,11 @@ class Edges(object):
     @property
     def regular(self):
         '''True if spacing of edges is regular'''
-        return np.equal.reduce(self._edges[:, 1] - self._edges[:, 0])
+        if self.log:
+            d = np.log(self._edges[:, 1]) - np.log(self._edges[:, 0])
+        else:
+            d = self._edges[:, 1] - self._edges[:, 0]
+        return np.allclose(d[0], d)
 
     def __len__(self):
         if self._edges is None:

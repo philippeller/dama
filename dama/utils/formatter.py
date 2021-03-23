@@ -71,7 +71,7 @@ def make_table_labels(axis, bold, brk):
         return labels
 
     # ToDo: a bit too much copy-paste going on here...
-    elif axis._edges._edges is None:
+    elif not axis.has_edges or axis._edges._edges is None:
         if len(axis) <= N_MAX:
             return [bold % as_str(axis.points[i]) for i in range(len(axis))]
         labels = [bold % as_str(axis.points[i]) for i in range(N_MAX // 2)]
