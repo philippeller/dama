@@ -73,7 +73,7 @@ class Grid(object):
                                 )
                         else:
                             new_nbins = self[var].nbins
-                        if source.grid[var]._edges is not None and source.grid[var]._edges.edges is not None:
+                        if source.grid[var].has_edges:
                             self[var].edges = np.linspace(
                                 source.grid[var].edges.min(),
                                 source.grid[var].edges.max(), new_nbins + 1

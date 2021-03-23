@@ -68,14 +68,14 @@ class Axis(object):
 
     @log.setter
     def log(self, log):
-        if self.has_edges:
+        if self._edges is not None:
             self._edges.log = log
         self._log = log
 
     @property
     def has_edges(self):
         '''True if edges are set'''
-        return self._edges is not None
+        return self._edges is not None and self._edges._edges is not None
 
     def __len__(self):
         if self._points is not None:
@@ -108,7 +108,7 @@ class Axis(object):
 
         new_obj = dm.Axis()
         new_obj.var = self.var
-        if self._edges is not None and self._edges._edges is not None:
+        if self.has_edges:
             new_obj._edges = self._edges[idx]
         if self._points is not None:
             new_obj._points = self._points[idx]
@@ -186,15 +186,10 @@ class Axis(object):
 
     @property
     def initialized(self):
-        '''wether axis is initialized'''
-        return self._edges._edges is not None or self._points is not None
-
-    @property
-    def has_data(self):
         '''
         True if either edges or points are not None
         '''
-        return (self._edges.edges is not None) or (self._points is not None)
+        return self.has_edges or self.has_points
 
     def __eq__(self, other):
         if not type(self) == type(other):
@@ -214,13 +209,13 @@ class Axis(object):
             else:
                 d = np.diff(self._points)
             regular = regular and np.allclose(d[0], d)
-        if self._edges.edges is not None:
+        if self.has_edges:
             regular = regular and self._edges.regular
         return regular
 
     @property
     def edges(self):
-        if self.has_edges and self._edges._edges is not None:
+        if self.has_edges:
             return self._edges
         if self.has_points:
             return dm.Edges(points=self._points, log=self.log)
@@ -229,22 +224,22 @@ class Axis(object):
     @edges.setter
     def edges(self, edges):
         edges = dm.Edges(edges)
-        if self.has_data:
+        if self.initialized:
             if not len(edges) == len(self):
                 raise IndexError('incompatible length of edges')
         self._edges = edges
 
     @property
     def points(self):
-        if self._points is not None:
+        if self.has_points:
             return self._points
-        elif self._edges is not None:
+        elif self.has_edges:
             return self._edges.points
         return None
 
     @points.setter
     def points(self, points):
-        if self.has_data:
+        if self.initialized:
             if not len(points) == len(self):
                 raise IndexError('incompatible length of points')
         self._points = points
@@ -255,7 +250,7 @@ class Axis(object):
 
     @property
     def nbins(self):
-        if self._points is None and self._edges._edges is None:
+        if not (self.has_points and self.has_edges):
             return self._nbins
         else:
             return len(self.points)
