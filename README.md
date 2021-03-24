@@ -186,7 +186,7 @@ Another representation of data is `PointData`, which is not any different of a d
 ```python
 p = dm.PointData()
 p.x = np.random.randn(100_000)
-p.a = np.random.rand(p.size) * p['x']**2
+p.a = np.random.rand(p.size) * p.x**2
 ```
 
 
@@ -199,8 +199,8 @@ p
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td style="text-align: right;">-0.362 </td><td style="text-align: right;">1.44</td><td style="text-align: right;">1.26</td><td>...</td><td style="text-align: right;">0.311 </td><td style="text-align: right;">-0.43  </td><td style="text-align: right;">0.249 </td></tr>
-<tr><td><b>a</b></td><td style="text-align: right;"> 0.0771</td><td style="text-align: right;">1.21</td><td style="text-align: right;">1.18</td><td>...</td><td style="text-align: right;">0.0836</td><td style="text-align: right;"> 0.0183</td><td style="text-align: right;">0.0133</td></tr>
+<tr><td><b>x</b></td><td style="text-align: right;">1.73</td><td style="text-align: right;">-0.484</td><td style="text-align: right;">0.0993 </td><td>...</td><td style="text-align: right;">0.226 </td><td style="text-align: right;">-0.0637 </td><td style="text-align: right;">0.378  </td></tr>
+<tr><td><b>a</b></td><td style="text-align: right;">0.14</td><td style="text-align: right;"> 0.105</td><td style="text-align: right;">0.00459</td><td>...</td><td style="text-align: right;">0.0174</td><td style="text-align: right;"> 0.00351</td><td style="text-align: right;">0.00574</td></tr>
 </tbody>
 </table>
 
@@ -242,8 +242,8 @@ p.binwise(x=20).sum()
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.133 -3.702]</b></td><td><b>[-3.702 -3.271]</b></td><td><b>[-3.271 -2.84 ]</b></td><td>...</td><td><b>[3.196 3.627]</b></td><td><b>[3.627 4.058]</b></td><td><b>[4.058 4.489]</b></td></tr>
-<tr><td><b>a</b></td><td>90.8                  </td><td>212                   </td><td>910                   </td><td>...</td><td>354                 </td><td>98.6                </td><td>29.1                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.377 -3.93 ]</b></td><td><b>[-3.93  -3.483]</b></td><td><b>[-3.483 -3.036]</b></td><td>...</td><td><b>[3.225 3.672]</b></td><td><b>[3.672 4.12 ]</b></td><td><b>[4.12  4.567]</b></td></tr>
+<tr><td><b>a</b></td><td>30.8                  </td><td>119                   </td><td>686                   </td><td>...</td><td>357                 </td><td>75.6                </td><td>20.6                </td></tr>
 </tbody>
 </table>
 
@@ -272,8 +272,8 @@ p.histogram(x=20).a
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.133 -3.702]</b></td><td><b>[-3.702 -3.271]</b></td><td><b>[-3.271 -2.84 ]</b></td><td>...</td><td><b>[3.196 3.627]</b></td><td><b>[3.627 4.058]</b></td><td><b>[4.058 4.489]</b></td></tr>
-<tr><td><b></b> </td><td>90.8                  </td><td>212                   </td><td>910                   </td><td>...</td><td>354                 </td><td>98.6                </td><td>29.1                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.377 -3.93 ]</b></td><td><b>[-3.93  -3.483]</b></td><td><b>[-3.483 -3.036]</b></td><td>...</td><td><b>[3.225 3.672]</b></td><td><b>[3.672 4.12 ]</b></td><td><b>[4.12  4.567]</b></td></tr>
+<tr><td><b></b> </td><td>30.8                  </td><td>119                   </td><td>686                   </td><td>...</td><td>357                 </td><td>75.6                </td><td>20.6                </td></tr>
 </tbody>
 </table>
 
@@ -342,3 +342,70 @@ p.binwise(x=dm.Edges(np.linspace(-3,3,10))).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]
 ![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_39_0.png)
     
 
+
+# Example gallery
+
+This is just to illustrate some different, seemingly random applications, resulting in various plots. All starting from some random data points
+
+
+```python
+from matplotlib import pyplot as plt
+```
+
+
+```python
+p = dm.PointData()
+p.x = np.random.rand(10_000)
+p.y = np.random.randn(p.size) * np.sin(p.x*3*np.pi) * p.x
+p.a = p.y/p.x
+```
+
+
+```python
+fig, ax = plt.subplots(4,4,figsize=(20,20))
+ax = ax.flatten()
+
+# First row
+p.y.plot(ax=ax[0])
+p.plot('x', 'y', '.', ax=ax[1])
+p.plot_scatter('x', 'y', c='a', s=1, cmap=dm.cm.spectrum, ax=ax[2])
+p.interp(x=100, y=100, method="nearest").a.plot(ax=ax[3])
+
+# Second row
+np.log(1 + p.histogram(x=100, y=100).counts).plot(ax=ax[4])
+p.kde(x=100, y=100, bw=(0.02, 0.05)).density.plot(cmap=dm.cm.afterburner_r, ax=ax[5])
+p.histogram(x=10, y=10).interp(x=100,y=100).a.plot(cmap="RdBu", ax=ax[6])
+p.histogram(x=100, y=100).counts.median_filter(10).plot(ax=ax[7])
+
+# Third row
+p.binwise(x=100).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).y.plot_bands(ax=ax[8])
+p.binwise(x=100).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).y.gaussian_filter((2.5,0)).interp(x=500).plot_bands(filled=False, lines=True, linestyles=[':', '--', '-'],ax=ax[9])
+p.binwise(a=100).mean().y.plot(ax=ax[10])
+p.binwise(a=100).std().y.plot(ax=ax[10])
+
+# Fourth row
+p.histogram(x=100, y=100).counts.std(axis='x').plot(ax=ax[11])
+np.log(p.histogram(x=100, y=100).counts + 1).gaussian_filter(0.5).plot_contour(cmap=dm.cm.passion_r, ax=ax[12])
+p.histogram(x=30, y=30).gaussian_filter(1).lookup(p).plot_scatter('x', 'y', 'a', 1, cmap='Spectral', ax=ax[13])
+h = p.histogram(y=100, x=100).a.T
+h[h>0].plot(ax=ax[14])
+h[1/3:2/3].plot(ax=ax[15])
+```
+
+
+
+
+    <matplotlib.collections.QuadMesh at 0x7efbec64b8e0>
+
+
+
+
+    
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_43_1.png)
+    
+
+
+
+```python
+
+```
