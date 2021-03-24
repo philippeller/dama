@@ -194,15 +194,10 @@ class PointData(object):
         '''
         iterate over dimensions
         '''
-        if self.type == 'df':
-            return iter([self._data[var] for var in self.vars])
-        return iter(self._data)
-
-    def values(self):
-        return self._data.values()
+        return iter([self[var] for var in self.vars])
 
     def items(self):
-        return self._data.items()
+        return iter([(var, self[var]) for var in self.vars])
 
     # --- Tranlsation methods ---
 
