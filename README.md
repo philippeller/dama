@@ -387,7 +387,7 @@ p.binwise(a=100).std().y.plot(ax=ax[10])
 p.histogram(x=100, y=100).counts.std(axis='x').plot(ax=ax[11])
 np.log(p.histogram(x=100, y=100).counts + 1).gaussian_filter(0.5).plot_contour(cmap=dm.cm.passion_r, ax=ax[12])
 p.histogram(x=30, y=30).gaussian_filter(1).lookup(p).plot_scatter('x', 'y', 'a', 1, cmap='Spectral', ax=ax[13])
-h = p.histogram(y=100, x=100).a.T
+h = p.histogram(y=100, x=np.logspace(-1,0,100)).a.T
 h[h>0].plot(ax=ax[14])
 h[1/3:2/3].plot(ax=ax[15])
 ```
@@ -395,7 +395,7 @@ h[1/3:2/3].plot(ax=ax[15])
 
 
 
-    <matplotlib.collections.QuadMesh at 0x7efbec64b8e0>
+    <matplotlib.collections.QuadMesh at 0x7efbe96989a0>
 
 
 
