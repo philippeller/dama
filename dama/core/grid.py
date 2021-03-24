@@ -74,15 +74,27 @@ class Grid(object):
                         else:
                             new_nbins = self[var].nbins
                         if source.grid[var].has_edges:
-                            self[var].edges = np.linspace(
-                                source.grid[var].edges.min(),
-                                source.grid[var].edges.max(), new_nbins + 1
-                                )
+                            if source.grid[var].log:
+                                self[var].edges = np.logspace(
+                                    np.log(source.grid[var].edges.min()),
+                                    np.log(source.grid[var].edges.max()), new_nbins + 1
+                                    )
+                            else:
+                                self[var].edges = np.linspace(
+                                    source.grid[var].edges.min(),
+                                    source.grid[var].edges.max(), new_nbins + 1
+                                    )
                         if source.grid[var]._points is not None:
-                            self[var].points = np.linspace(
-                                source.grid[var].points.min(),
-                                source.grid[var].points.max(), new_nbins
-                                )
+                            if source.grid[var].log:
+                                self[var].points = np.logspace(
+                                    np.log(source.grid[var].points.min()),
+                                    np.log(source.grid[var].points.max()), new_nbins
+                                    )
+                            else:
+                                self[var].points = np.linspace(
+                                    source.grid[var].points.min(),
+                                    source.grid[var].points.max(), new_nbins
+                                    )
                         continue
                 # in this case it's pointdata
                 self[var].edges = np.linspace(
