@@ -82,6 +82,8 @@ class Axis(object):
             return len(self._points)
         elif self._edges is not None:
             return len(self._edges)
+        elif self._nbins is not None:
+            return self._nbins
         return None
 
     def __str__(self):
