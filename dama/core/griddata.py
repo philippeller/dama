@@ -30,7 +30,6 @@ class GridData:
     __slots__ = [
             '_data',
             '_grid',
-            'plot',
             ]
 
     def __init__(self, *args, **kwargs):
@@ -52,20 +51,6 @@ class GridData:
         else:
             self._grid = dm.Grid(*args, **kwargs)
 
-        self._setup_plotting_methods()
-
-
-    def _setup_plotting_methods(self):
-        '''dynamically set up plotting methods,
-        depending on the number of axes'''
-
-        if self._grid.nax == 1:
-            #self.plot = 
-            bind(self, dm.plotting.plot_step, 'plot')
-        if self._grid.nax == 2:
-            #self.plot =
-            bind(self, dm.plotting.plot_map, 'plot')
-
     def __repr__(self):
         return format_table(self, tablefmt='plain')
 
@@ -75,6 +60,12 @@ class GridData:
     def _repr_html_(self):
         '''for jupyter'''
         return format_table(self, tablefmt='html')
+
+    def __getstate__(self):
+        return self._data, self._grid
+
+    def __setstate__(self, state):
+        self._data, self._grid = state
 
     def __setitem__(self, var, val):
         self.add_data(var, val)
@@ -221,7 +212,6 @@ class GridData:
         if isinstance(data, (dm.GridArray, GridData)):
             if self._grid is None or not self._grid.initialized:
                 self._grid = data.grid
-                self._setup_plotting_methods()
             else:
                 assert self._grid == data.grid
 
@@ -404,13 +394,13 @@ class GridData:
 
     # --- Plotting methods ---
 
-    #def plot(self, var=None, **kwargs):
-    #    if var is None and len(self.data_vars) == 1:
-    #        var = self.data_vars[0]
-    #    if self.ndim == 1:
-    #        return self.plot_step(var, **kwargs)
-    #    elif self.ndim == 2:
-    #        return self.plot_map(var, **kwargs)
+    def plot(self, var=None, **kwargs):
+        if var is None and len(self.data_vars) == 1:
+            var = self.data_vars[0]
+        if self.ndim == 1:
+            return self.plot_step(var, **kwargs)
+        elif self.ndim == 2:
+            return self.plot_map(var, **kwargs)
 
     def plot_map(self, var=None, cbar=False, fig=None, ax=None, **kwargs):
         '''

@@ -54,6 +54,12 @@ class PointData(object):
         #else:
         #    raise ValueError("Did not understand input arguments")
 
+    def __getstate__(self):
+        return self._data
+
+    def __setstate__(self, state):
+        self._data = state
+
     def __repr__(self):
         return format_table(self, tablefmt='plain')
 
