@@ -8,3 +8,4 @@ from .core.griddata import GridData
 from .core.binneddata import BinnedData
 from . import plotting
 from . import cm
+from .utils.fileio import save, load
