@@ -276,9 +276,7 @@ class Grid(object):
         if isinstance(item, str):
             # by name
             if not item in self.vars:
-                # if it does not exist, add empty axis: ToDo: really?
-                print('needs to be checked, is weird behaviour')
-                self.add_axis(item)
+                raise IndexError('Variable %s not present'%item)
             idx = self.vars.index(item)
             return self.axes[idx]
 
