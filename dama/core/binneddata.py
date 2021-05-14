@@ -198,7 +198,15 @@ class BinnedData:
     def apply_function(
         self, function, *args, fill_value=np.nan, return_len=None, **kwargs
         ):
-        '''apply function per bin'''
+        '''apply function per bin
+
+        function : callable
+        return_len : int (optional)
+            the shape (array length) of the `function` output. If None is passed, 
+            `return_len` is (tried to be) determined on the fly
+
+        if weights are passed as kwarg, they are interpreted as being a variable in the dataset
+        '''
 
         if self.indices is None:
             self.compute_indices()
@@ -215,11 +223,15 @@ class BinnedData:
                 # try to figure out return length of function
 
                 if source_data.ndim > 1:
+                    if weights is not None:
+                        kwargs['weights'] = self.data[weights][:3, [0] * (source_data.ndim - 1)]
                     test_value = function(
                         source_data[:3, [0] * (source_data.ndim - 1)], *args,
                         **kwargs
                         )
                 else:
+                    if weights is not None:
+                        kwargs['weights'] = self.data[weights][:3]
                     test_value = function(source_data[:3], *args, **kwargs)
                 if np.isscalar(test_value):
                     return_len = 1
