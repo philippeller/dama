@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from numbers import Number
 from collections import OrderedDict
 from collections.abc import Iterable
+import copy
 
 import dama as dm
 
@@ -26,6 +27,9 @@ class Grid(object):
     '''
     Class to hold a number of axes
     '''
+
+    __slots__ = ['axes',]
+
     def __init__(self, *args, **kwargs):
         '''
         Paramters:
@@ -43,6 +47,23 @@ class Grid(object):
 
         for k, v in kwargs.items():
             self[k] = v
+
+
+    def __getattr__(self, item):
+        try:
+            return self[item]
+        except Exception as e:
+            raise AttributeError from e
+
+    def __setattr__(self, item, value):
+        if item in self.__slots__:
+            object.__setattr__(self, item, value)
+        else:
+            self[item] = value
+
+    def __deepcopy__(self, memo=None):
+        return dm.Grid(*copy.deepcopy(self.axes, memo=memo))
+
 
     def initialize(self, source=None):
         '''Method to initialize the grid if grid is not fully set up
