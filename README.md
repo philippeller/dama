@@ -160,7 +160,7 @@ As comparison to point out the convenience, an alternative way without using `da
 > plt.gca().set_ylabel('y')
 > cb = plt.colorbar(pc)
 > cb.set_label('a')
-```
+> ```
 
 and for doing the interpolation:
 
@@ -175,8 +175,8 @@ and for doing the interpolation:
 > points = np.vstack([xx.flatten(), yy.flatten()]).T
 > values = a.flatten()
 > 
->interp_a = griddata(points, values, (grid_x, grid_y), method='cubic')
-```
+> interp_a = griddata(points, values, (grid_x, grid_y), method='cubic')
+> ```
 
 ### PointData
 
@@ -199,8 +199,8 @@ p
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td style="text-align: right;">1.73</td><td style="text-align: right;">-0.484</td><td style="text-align: right;">0.0993 </td><td>...</td><td style="text-align: right;">0.226 </td><td style="text-align: right;">-0.0637 </td><td style="text-align: right;">0.378  </td></tr>
-<tr><td><b>a</b></td><td style="text-align: right;">0.14</td><td style="text-align: right;"> 0.105</td><td style="text-align: right;">0.00459</td><td>...</td><td style="text-align: right;">0.0174</td><td style="text-align: right;"> 0.00351</td><td style="text-align: right;">0.00574</td></tr>
+<tr><td><b>x</b></td><td style="text-align: right;">-1.69</td><td style="text-align: right;">-0.744</td><td style="text-align: right;">0.796</td><td>...</td><td style="text-align: right;">1.22</td><td style="text-align: right;">-0.653</td><td style="text-align: right;">1.09 </td></tr>
+<tr><td><b>a</b></td><td style="text-align: right;"> 1.52</td><td style="text-align: right;"> 0.409</td><td style="text-align: right;">0.418</td><td>...</td><td style="text-align: right;">1.32</td><td style="text-align: right;"> 0.124</td><td style="text-align: right;">0.784</td></tr>
 </tbody>
 </table>
 
@@ -242,8 +242,8 @@ p.binwise(x=20).sum()
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.377 -3.93 ]</b></td><td><b>[-3.93  -3.483]</b></td><td><b>[-3.483 -3.036]</b></td><td>...</td><td><b>[3.225 3.672]</b></td><td><b>[3.672 4.12 ]</b></td><td><b>[4.12  4.567]</b></td></tr>
-<tr><td><b>a</b></td><td>30.8                  </td><td>119                   </td><td>686                   </td><td>...</td><td>357                 </td><td>75.6                </td><td>20.6                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.554 -4.12 ]</b></td><td><b>[-4.12  -3.686]</b></td><td><b>[-3.686 -3.253]</b></td><td>...</td><td><b>[2.822 3.255]</b></td><td><b>[3.255 3.689]</b></td><td><b>[3.689 4.123]</b></td></tr>
+<tr><td><b>a</b></td><td>44                    </td><td>95.8                  </td><td>205                   </td><td>...</td><td>862                 </td><td>252                 </td><td>73.7                </td></tr>
 </tbody>
 </table>
 
@@ -272,8 +272,8 @@ p.histogram(x=20).a
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.377 -3.93 ]</b></td><td><b>[-3.93  -3.483]</b></td><td><b>[-3.483 -3.036]</b></td><td>...</td><td><b>[3.225 3.672]</b></td><td><b>[3.672 4.12 ]</b></td><td><b>[4.12  4.567]</b></td></tr>
-<tr><td><b></b> </td><td>30.8                  </td><td>119                   </td><td>686                   </td><td>...</td><td>357                 </td><td>75.6                </td><td>20.6                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.554 -4.12 ]</b></td><td><b>[-4.12  -3.686]</b></td><td><b>[-3.686 -3.253]</b></td><td>...</td><td><b>[2.822 3.255]</b></td><td><b>[3.255 3.689]</b></td><td><b>[3.689 4.123]</b></td></tr>
+<tr><td><b></b> </td><td>44                    </td><td>95.8                  </td><td>205                   </td><td>...</td><td>862                 </td><td>252                 </td><td>73.7                </td></tr>
 </tbody>
 </table>
 
@@ -343,6 +343,18 @@ p.binwise(x=dm.Edges(np.linspace(-3,3,10))).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]
     
 
 
+### Saving and loading
+
+Dama supports the pickle protocol, and objects can be stored like:
+```python
+dm.save("filename.pkl", obj)
+```
+
+And read back like:
+```python
+obj = dm.read("filename.pkl")
+```
+
 # Example gallery
 
 This is just to illustrate some different, seemingly random applications, resulting in various plots. All starting from some random data points
@@ -395,13 +407,13 @@ h[1/3:2/3].plot(ax=ax[15])
 
 
 
-    <matplotlib.collections.QuadMesh at 0x7efbe96989a0>
+    <matplotlib.collections.QuadMesh at 0x7f95bb992130>
 
 
 
 
     
-![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_43_1.png)
+![png](https://raw.githubusercontent.com/philippeller/dama/master/README_files/README_44_1.png)
     
 
 
