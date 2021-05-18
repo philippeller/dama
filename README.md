@@ -199,8 +199,8 @@ p
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td style="text-align: right;">-1.69</td><td style="text-align: right;">-0.744</td><td style="text-align: right;">0.796</td><td>...</td><td style="text-align: right;">1.22</td><td style="text-align: right;">-0.653</td><td style="text-align: right;">1.09 </td></tr>
-<tr><td><b>a</b></td><td style="text-align: right;"> 1.52</td><td style="text-align: right;"> 0.409</td><td style="text-align: right;">0.418</td><td>...</td><td style="text-align: right;">1.32</td><td style="text-align: right;"> 0.124</td><td style="text-align: right;">0.784</td></tr>
+<tr><td><b>x</b></td><td style="text-align: right;">0.0341 </td><td style="text-align: right;">0.212</td><td style="text-align: right;">0.517</td><td>...</td><td style="text-align: right;">1.27</td><td style="text-align: right;">0.827</td><td style="text-align: right;">1.57 </td></tr>
+<tr><td><b>a</b></td><td style="text-align: right;">0.00106</td><td style="text-align: right;">0.035</td><td style="text-align: right;">0.18 </td><td>...</td><td style="text-align: right;">1.59</td><td style="text-align: right;">0.246</td><td style="text-align: right;">0.201</td></tr>
 </tbody>
 </table>
 
@@ -242,8 +242,8 @@ p.binwise(x=20).sum()
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.554 -4.12 ]</b></td><td><b>[-4.12  -3.686]</b></td><td><b>[-3.686 -3.253]</b></td><td>...</td><td><b>[2.822 3.255]</b></td><td><b>[3.255 3.689]</b></td><td><b>[3.689 4.123]</b></td></tr>
-<tr><td><b>a</b></td><td>44                    </td><td>95.8                  </td><td>205                   </td><td>...</td><td>862                 </td><td>252                 </td><td>73.7                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.392 -3.962]</b></td><td><b>[-3.962 -3.532]</b></td><td><b>[-3.532 -3.102]</b></td><td>...</td><td><b>[2.916 3.346]</b></td><td><b>[3.346 3.776]</b></td><td><b>[3.776 4.206]</b></td></tr>
+<tr><td><b>a</b></td><td>29                    </td><td>131                   </td><td>456                   </td><td>...</td><td>631                 </td><td>163                 </td><td>77.7                </td></tr>
 </tbody>
 </table>
 
@@ -272,8 +272,8 @@ p.histogram(x=20).a
 
 <table>
 <tbody>
-<tr><td><b>x</b></td><td><b>[-4.554 -4.12 ]</b></td><td><b>[-4.12  -3.686]</b></td><td><b>[-3.686 -3.253]</b></td><td>...</td><td><b>[2.822 3.255]</b></td><td><b>[3.255 3.689]</b></td><td><b>[3.689 4.123]</b></td></tr>
-<tr><td><b></b> </td><td>44                    </td><td>95.8                  </td><td>205                   </td><td>...</td><td>862                 </td><td>252                 </td><td>73.7                </td></tr>
+<tr><td><b>x</b></td><td><b>[-4.392 -3.962]</b></td><td><b>[-3.962 -3.532]</b></td><td><b>[-3.532 -3.102]</b></td><td>...</td><td><b>[2.916 3.346]</b></td><td><b>[3.346 3.776]</b></td><td><b>[3.776 4.206]</b></td></tr>
+<tr><td><b></b> </td><td>29                    </td><td>131                   </td><td>456                   </td><td>...</td><td>631                 </td><td>163                 </td><td>77.7                </td></tr>
 </tbody>
 </table>
 
@@ -394,9 +394,9 @@ p.binwise(x=100).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).y.plot_bands(ax=ax[8])
 p.binwise(x=100).quantile(q=[0.1, 0.3, 0.5, 0.7, 0.9]).y.gaussian_filter((2.5,0)).interp(x=500).plot_bands(filled=False, lines=True, linestyles=[':', '--', '-'],ax=ax[9])
 p.binwise(a=100).mean().y.plot(ax=ax[10])
 p.binwise(a=100).std().y.plot(ax=ax[10])
+p.histogram(x=100, y=100).counts.std(axis='x').plot(ax=ax[11])
 
 # Fourth row
-p.histogram(x=100, y=100).counts.std(axis='x').plot(ax=ax[11])
 np.log(p.histogram(x=100, y=100).counts + 1).gaussian_filter(0.5).plot_contour(cmap=dm.cm.passion_r, ax=ax[12])
 p.histogram(x=30, y=30).gaussian_filter(1).lookup(p).plot_scatter('x', 'y', 'a', 1, cmap='Spectral', ax=ax[13])
 h = p.histogram(y=100, x=np.logspace(-1,0,100)).a.T
@@ -407,7 +407,7 @@ h[1/3:2/3].plot(ax=ax[15])
 
 
 
-    <matplotlib.collections.QuadMesh at 0x7f95bb992130>
+    <matplotlib.collections.QuadMesh at 0x7f8a0315d1f0>
 
 
 
