@@ -61,6 +61,12 @@ class Grid(object):
         else:
             self[item] = value
 
+    def __getstate__(self):
+        return self.axes
+
+    def __setstate__(self, state):
+        self.axes = state
+
     def __deepcopy__(self, memo=None):
         return dm.Grid(*copy.deepcopy(self.axes, memo=memo))
 
