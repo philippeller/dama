@@ -261,7 +261,7 @@ def plot_map(source, var=None, cbar=False, fig=None, ax=None, **kwargs):
     return pc
 
 
-def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
+def plot_step(source, var=None, label=None, fig=None, ax=None, step=None, **kwargs):
     '''
     plot a step function, i.e. histogram
     var : str
@@ -269,9 +269,14 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
         a single variable, then that one is used by default)
     label : str
     fig, ax : matplotlib figure and axis (optional)
+    step : bool, (optional)
+        whether to plot as steps or lines
     '''
     assert isinstance(source, (dm.GridData, dm.GridArray))
     assert source.grid.nax == 1
+
+    if step is None:
+        step = source.grid.axes[0].has_edges
 
     if isinstance(source, dm.GridData):
         if var is None and len(source.data_vars) == 1:
@@ -287,15 +292,22 @@ def plot_step(source, var=None, label=None, fig=None, ax=None, **kwargs):
         ax = plt.gca()
 
     data = np.ma.asarray(data)
-    data = np.ma.append(data, data[-1])
 
-    s = ax.step(
-        source.grid.squeezed_edges[0],
-        data,
-        where='post',
-        label=label,
-        **kwargs
-        )
+    if step:
+        s = ax.step(
+            source.grid.squeezed_edges[0],
+            np.ma.append(data, data[-1]),
+            where='post',
+            label=label,
+            **kwargs
+            )
+    else:
+        s = ax.plot(
+                source.grid.points[0],
+                data,
+                label=label,
+                **kwargs                                                                                                                                                                               )
+
     ax.set_xlabel(source.grid.vars[0])
     if source.grid.axes[0].log:
         ax.set_xscale('log')
