@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='dama',
-    version='0.4.6',
+    version='0.4.8',
     packages=find_packages(),
     license='Apache 2.0',
     author='Philipp Eller',

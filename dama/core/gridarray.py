@@ -176,7 +176,7 @@ class GridArray(np.ma.MaskedArray):
                 raise IndexError('No variable %s in DataSet' % item)
 
         if isinstance(item, dm.GridArray):
-            if item.dtype == np.bool:
+            if item.dtype == bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
                 new_item = dm.GridArray(np.asarray(self), grid=self.grid)
                 new_item.mask = mask
@@ -235,7 +235,7 @@ class GridArray(np.ma.MaskedArray):
 
     def __setitem__(self, item, val):
         if isinstance(item, dm.GridArray):
-            if item.dtype == np.bool:
+            if item.dtype == bool:
                 mask = np.logical_and(~self.mask, ~np.asarray(item))
                 if np.isscalar(val):
                     self[item].data[mask] = val

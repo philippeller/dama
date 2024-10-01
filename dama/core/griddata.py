@@ -87,7 +87,7 @@ class GridData:
 
         # mask
         if isinstance(item, dm.GridArray):
-            if item.dtype == np.bool:
+            if item.dtype == bool:
                 # in this case it is a mask
                 # ToDo: masked operations behave strangely, operations are applyed to all elements, even if masked
                 new_data = dm.GridData(self._grid)
